@@ -1,0 +1,17 @@
+INSERT INTO tags VALUES(1, "foo");
+INSERT INTO tags VALUES(2, "bar");
+INSERT INTO tags VALUES(3, "baz");
+INSERT INTO tags VALUES(4, "qux");
+INSERT INTO tags VALUES(5, "quux");
+INSERT INTO tags VALUES(6, "corge");
+INSERT INTO tags VALUES(7, "gault");
+INSERT INTO tags VALUES(8, "garply");
+INSERT INTO tags VALUES(9, "waldo");
+INSERT INTO tags VALUES(10, "fred");
+INSERT INTO tags VALUES(11, "plugh"v
+INSERT INTO tags VALUES(12, "xyzzy");
+INSERT INTO tags VALUES(13, "thud");
+INSERT INTO tags VALUES(14, "wibble");
+INSERT INTO tags VALUES(15, "wobble");
+INSERT INTO tags VALUES(16, "wubble");
+INSERT INTO tags VALUES(17, "flob");
