@@ -298,8 +298,6 @@ static bool unique_tags_in_path(const char *path) {
 
 bool valid_path_to_tag(const char *path) {
 	bool valid = false;
-	char **file_array = NULL;
-	int num_files = 0;
 
 	DEBUG(D_FUNCTION_VALID_PATH_TO_TAG, D_LEVEL_ENTRY, "valid_path_to_tag");
 
@@ -309,12 +307,8 @@ bool valid_path_to_tag(const char *path) {
 
 	if(strcmp(path, "/") == 0) { valid = true; }
 	else {
-		num_files = db_files_from_query(path, &file_array);
-
-		if(!unique_tags_in_path(path)/* || num_files == 0*/) { valid = false; }
+		if(!unique_tags_in_path(path)) { valid = false; }
 		else {valid = true; }
-
-		free_char_ptr_array(&file_array, num_files);
 	}
 
 	DEBUG(D_FUNCTION_VALID_PATH_TO_TAG, D_LEVEL_DEBUG, "%s is %sa valid path to a tag", path, valid ? "" : "not a ");
