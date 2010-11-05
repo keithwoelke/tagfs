@@ -307,12 +307,15 @@ bool valid_path_to_tag(const char *path) {
 
 	DEBUG(D_FUNCTION_VALID_PATH_TO_TAG, D_LEVEL_DEBUG, "Checking that %s is a valid path to a tag", path);
 
-	num_files = db_files_from_query(path, &file_array);
+	if(strcmp(path, "/") == 0) { valid = true; }
+	else {
+		num_files = db_files_from_query(path, &file_array);
 
-	if(!unique_tags_in_path(path) || num_files == 0) { valid = false; }
-	else {valid = true; }
+		if(!unique_tags_in_path(path) || num_files == 0) { valid = false; }
+		else {valid = true; }
 
-	free_char_ptr_array(&file_array, num_files);
+		free_char_ptr_array(&file_array, num_files);
+	}
 
 	DEBUG(D_FUNCTION_VALID_PATH_TO_TAG, D_LEVEL_DEBUG, "%s is %sa valid path to a tag", path, valid ? "" : "not a ");
 	DEBUG(D_FUNCTION_VALID_PATH_TO_TAG, D_LEVEL_EXIT, "valid_path_to_tag");
@@ -333,4 +336,4 @@ int num_digits(int num) {
 	DEBUG(D_FUNCTION_NUM_DIGITS, D_LEVEL_DEBUG, "Number of digits: %d", count);
 	DEBUG(D_FUNCTION_NUM_DIGITS, D_LEVEL_EXIT, "num_digits");
 	return count;
-}
+} /* num_digits */

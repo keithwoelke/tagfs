@@ -419,19 +419,20 @@ void db_delete_file(const char *file_path) {
 	char **file_id = NULL;
 	char **file_name = NULL;
 	char **tag_array = NULL;
+	char *delete_query = NULL;
 	char *file = NULL;
 	char delete_from[] = "DELETE FROM files WHERE file_id = ";
 	const char *dir_path = NULL;
 	const char *file_query = NULL;
 	const char *tail = NULL;
+	int delete_query_length = 0;
+	int file_id_count = 0;
+	int file_name_count = 0;
 	int i = 0;
 	int num_tokens = 0;
+	int rc = 0;
 	sqlite3 *conn = NULL;
 	sqlite3_stmt *res = NULL;
-//	char *delete_query = NULL;
-	int rc = 0;
-	int file_name_count = 0;
-	int file_id_count = 0;
 
 	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_ENTRY, "db_delete_file");
 
@@ -471,30 +472,36 @@ void db_delete_file(const char *file_path) {
 	debug_indent_level--;
 	sem_post(&debug_sem);
 
-	for(i = 0; i < num_tokens; i++) {
+	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_FOLDER_CONTENTS, "Checking query results:");
+	sem_wait(&debug_sem);
+	debug_indent_level++;
+	sem_post(&debug_sem);
+	for(i = 0; i < file_id_count; i++) {
 		if(strcmp(file, file_name[i]) == 0) { 
-
+			DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "File ID: %s; File name: %s == %s", file_id[i], file_name[i], file);
 			break;
 		}
+		else {
+			DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_FOLDER_CONTENTS, "File ID: %s; File name: %s != %s", file_id[i], file_name[i], file);
+		}
 	}
+	sem_wait(&debug_sem);
+	debug_indent_level--;
+	sem_post(&debug_sem);
 
-//	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "File located at file_id: %d", atoi(file_id[i]));
-
-
-//	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "%s : %s", file_name[0], file_id[0]);
-
-//	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "Checking for: %s", file_query);
+	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "File located at file_id: %s", file_id[i]);
 
 	conn = db_connect(DB_LOCATION);
-//	assert(conn != NULL);
+	assert(conn != NULL);
 
-	(void)sqlite3_prepare_v2(conn, delete_from, strlen(delete_from), &res, &tail);
+	delete_query_length = strlen(delete_from) + strlen(file_id[i]) + 1; /* 2 for end quote and null terminating character */
+	delete_query = calloc(delete_query_length, sizeof(*delete_query));
+	assert(delete_query != NULL);
+	strcat(strcat(delete_query, delete_from), file_id[i]);
 
+	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "Delete query: %s", delete_query);
 
-//	char *foo = NULL;
-//	foo = sqlite3_column_name(res, 0);
-//	printf("COLUMN: %s", foo);
-//	const unsigned char *result = NULL;
+	(void)sqlite3_prepare_v2(conn, delete_query, strlen(delete_query), &res, &tail);
 
 	rc = sqlite3_step(res);
 
@@ -504,13 +511,6 @@ void db_delete_file(const char *file_path) {
 	else if(rc == SQLITE_CONSTRAINT) {
 		DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_WARNING, "SQLite constraint violation");
 	}
-
-//	result = sqlite3_column_text(res, 0);
-
-//	printf("%s\n", result);
-//	(void)sqlite3_step(res);
-//	result = sqlite3_column_text(res, 1);
-//	printf("%s\n", result);
 
 	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_EXIT, "db_delete_file");
 } /* db_delete_file */
