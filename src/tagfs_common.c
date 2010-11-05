@@ -311,7 +311,7 @@ bool valid_path_to_tag(const char *path) {
 	else {
 		num_files = db_files_from_query(path, &file_array);
 
-		if(!unique_tags_in_path(path) || num_files == 0) { valid = false; }
+		if(!unique_tags_in_path(path)/* || num_files == 0*/) { valid = false; }
 		else {valid = true; }
 
 		free_char_ptr_array(&file_array, num_files);
