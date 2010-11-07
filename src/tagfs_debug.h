@@ -81,9 +81,6 @@
 /* Debug final */
 #define DEBUG_PATH 				(DEBUG_FILE | (D_FILE_NONE & DEBUG_FUNCTION))
 
-extern int debug_indent_level;
-extern sem_t debug_sem;
-
 /*
  * Identical to the standand printf.
  * @param format String that contains the text to be written to stderr. It can optionally contain embedded format tags that are substituted by the values specified in subsequent argument(s). In this respect, the function is identical to printf, but outputs to stderr instead.
@@ -91,5 +88,8 @@ extern sem_t debug_sem;
  * @return On success, the total number of characters written. On failure, a negative number is returned.
  */
 void DEBUG(int function, int msg_level, char *format, ...);
+void debug_init();
+void debug_indent();
+void debug_deindent();
 
 #endif

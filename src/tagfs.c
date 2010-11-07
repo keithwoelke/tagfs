@@ -90,7 +90,7 @@ static struct fuse_operations tagfs_oper = {
 
 int main(int argc, char *argv[])
 {
-	sem_init(&debug_sem, 0, 1);
+	debug_init();
 
 //	db_delete_file("/zouch");
 //	return 0;
