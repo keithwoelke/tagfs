@@ -411,58 +411,7 @@ int db_tags_from_query(const char *path, /*@out@*/ char ***tag_array) {
 	return num_tags;
 } /* db_tags_from_query */
 
-void db_delete_file(const char *path) {
-	char *delete_query = NULL;
-	char *file_id_str = NULL;
-	char delete_from[] = "DELETE FROM files WHERE file_id = ";
-	const char *tail = NULL;
-	int delete_query_length = 0;
-	int file_id = 0;
-	int rc = 0;
-	sqlite3 *conn = NULL;
-	sqlite3_stmt *res = NULL;
-
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_ENTRY, "db_delete_file");
-
-	assert(path != NULL);
-
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "Deleting file: %s", path);
-
-	file_id = db_get_file_id(path);
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "File ID to delete: %d", file_id);
-
-	conn = db_connect(DB_LOCATION);
-	assert(conn != NULL);
-
-	delete_query_length = strlen(delete_from) + num_digits(file_id) + 1;
-	delete_query = calloc(delete_query_length, sizeof(*delete_query));
-	assert(delete_query != NULL);
-
-	file_id_str = malloc(num_digits(file_id) * sizeof(*file_id_str) + 1);
-	(void)snprintf(file_id_str, num_digits(file_id), "%d", file_id);
-	strcat(strcat(delete_query, delete_from), file_id_str);
-	free(file_id_str);
-
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "Delete query: %s", delete_query);
-
-	(void)sqlite3_prepare_v2(conn, delete_query, strlen(delete_query), &res, &tail);
-	free(delete_query);
-
-	rc = sqlite3_step(res);
-	db_disconnect(conn);
-
-	if(rc == SQLITE_MISUSE) {
-		DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_WARNING, "SQLite library used incorrectly");
-	}
-	else if(rc == SQLITE_CONSTRAINT) {
-		DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_WARNING, "SQLite constraint violation");
-	}
-
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "%s deleted successfully", path);
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_EXIT, "db_delete_file");
-} /* db_delete_file */
-
-int db_get_file_id(const char *file_path) {
+static int db_get_file_id(const char *file_path) {
 	char **file_id_array = NULL;
 	char **file_name_array = NULL;
 	char **tag_array = NULL;
@@ -534,3 +483,54 @@ int db_get_file_id(const char *file_path) {
 
 	return file_id;
 } /* db_get_file_id_array */
+
+void db_delete_file(const char *path) {
+	char *delete_query = NULL;
+	char *file_id_str = NULL;
+	char delete_from[] = "DELETE FROM files WHERE file_id = ";
+	const char *tail = NULL;
+	int delete_query_length = 0;
+	int file_id = 0;
+	int rc = 0;
+	sqlite3 *conn = NULL;
+	sqlite3_stmt *res = NULL;
+
+	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_ENTRY, "db_delete_file");
+
+	assert(path != NULL);
+
+	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "Deleting file: %s", path);
+
+	file_id = db_get_file_id(path);
+	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "File ID to delete: %d", file_id);
+
+	conn = db_connect(DB_LOCATION);
+	assert(conn != NULL);
+
+	delete_query_length = strlen(delete_from) + num_digits(file_id) + 1;
+	delete_query = calloc(delete_query_length, sizeof(*delete_query));
+	assert(delete_query != NULL);
+
+	file_id_str = malloc(num_digits(file_id) * sizeof(*file_id_str) + 1);
+	(void)snprintf(file_id_str, num_digits(file_id), "%d", file_id);
+	strcat(strcat(delete_query, delete_from), file_id_str);
+	free(file_id_str);
+
+	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "Delete query: %s", delete_query);
+
+	(void)sqlite3_prepare_v2(conn, delete_query, strlen(delete_query), &res, &tail);
+	free(delete_query);
+
+	rc = sqlite3_step(res);
+	db_disconnect(conn);
+
+	if(rc == SQLITE_MISUSE) {
+		DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_WARNING, "SQLite library used incorrectly");
+	}
+	else if(rc == SQLITE_CONSTRAINT) {
+		DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_WARNING, "SQLite constraint violation");
+	}
+
+	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "%s deleted successfully", path);
+	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_EXIT, "db_delete_file");
+} /* db_delete_file */

@@ -69,6 +69,6 @@ void debug_indent() {
 }
 void debug_deindent() {
 	sem_wait(&debug_sem);
-	debug_indent_level++;
+	debug_indent_level--;
 	sem_post(&debug_sem);
 }
