@@ -31,6 +31,4 @@ int db_tags_from_query(const char *path, /*@out@*/ char ***tag_array);
 
 void db_delete_file(const char *path);
 
-int db_get_file_id(const char *file_path);
-
 #endif
