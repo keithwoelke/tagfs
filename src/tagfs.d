@@ -58,7 +58,6 @@ static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 	int num_files = db_files_from_query(path, &file_array);
 	int num_tags = db_tags_from_query(path, &tag_array);
 
-	//TODO: using Dup.ptr could be a cause of issues
 	filler(buf, ".", null, 0);
 	filler(buf, "..", null, 0);
 
@@ -101,6 +100,7 @@ extern(D):
 int main(string[] args)
 {
 	debug_init();
+<<<<<<< HEAD:src/tagfs.d
 	tagfs_oper.getattr = &tagfs_getattr;
 	tagfs_oper.readdir = &tagfs_readdir;
 	tagfs_oper.unlink = &tagfs_unlink;
@@ -109,7 +109,6 @@ int main(string[] args)
 	foreach(arg; args) {
 		argv ~= cast(char*) std.string.toStringz(arg);
 	}
-
 	//return fuse_main(argc, argv, &tagfs_oper, null);
 	return fuse_main(argv.length, argv.ptr, &tagfs_oper);
 }

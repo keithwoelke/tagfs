@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define foo __FUNCTION__
-
 static int db_enable_foreign_keys(sqlite3 *conn) {
 	char *error_msg = NULL;
 	char enable_foreign_keys[] = "PRAGMA foreign_keys = ON";
@@ -25,7 +23,7 @@ static int db_enable_foreign_keys(sqlite3 *conn) {
 		sqlite3_free(error_msg);
 	}
 	else {
-		DEBUG(D_FUNCTION_DB_ENABLE_FOREIGN_KEYS, D_LEVEL_DEBUG, "Foreign keys enabled successfully.");
+		DEBUG(D_FUNCTION_DB_ENABLE_FOREIGN_KEYS, D_LEVEL_DEBUG, "Foreign keys enabled successfully");
 	}
 
 	DEBUG(D_FUNCTION_DB_ENABLE_FOREIGN_KEYS, D_LEVEL_EXIT, "db_enable_foreign_keys");
@@ -42,14 +40,14 @@ static sqlite3* db_connect(char *dbName) {
 
 	DEBUG(D_FUNCTION_DB_CONNECT, D_LEVEL_DEBUG, "Connecting to database: %s", dbName);
 
-	error = sqlite3_open_v2(dbName, &conn, SQLITE_OPEN_READWRITE, NULL); /* TODO: set as 'SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE' and create the database if it does not exist already. */
+	error = sqlite3_open_v2(dbName, &conn, SQLITE_OPEN_READWRITE, NULL); /* TODO: set as 'SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE' and create the database if it does not exist already */
 	assert(conn != NULL);
 
 	if(error != SQLITE_OK) { /* if no space on drive or file does not exist */
 		DEBUG(D_FUNCTION_DB_CONNECT, D_LEVEL_ERROR, "An error occurred when connecting to the database: %s", sqlite3_errmsg(conn));
 	}
 
-	DEBUG(D_FUNCTION_DB_CONNECT, D_LEVEL_DEBUG, "Database connection successful.");
+	DEBUG(D_FUNCTION_DB_CONNECT, D_LEVEL_DEBUG, "Database connection successful");
 	(void)db_enable_foreign_keys(conn);
 
 	DEBUG(D_FUNCTION_DB_CONNECT, D_LEVEL_EXIT, "db_connect");
@@ -69,7 +67,7 @@ static int db_disconnect(sqlite3 *conn) {
 		DEBUG(D_FUNCTION_DB_DISCONNECT, D_LEVEL_WARNING, "An error occured while disconnecting from the database: %s", sqlite3_errmsg(conn));
 	}
 	else {
-		DEBUG(D_FUNCTION_DB_DISCONNECT, D_LEVEL_DEBUG, "Database disconnection successful.");
+		DEBUG(D_FUNCTION_DB_DISCONNECT, D_LEVEL_DEBUG, "Database disconnection successful");
 	}
 
 	DEBUG(D_FUNCTION_DB_DISCONNECT, D_LEVEL_EXIT, "db_disconnect");
@@ -142,7 +140,7 @@ static int db_array_from_query(char *desired_column_name, const char *result_que
 
 	if(num_results > 0) {
 		*result_array = malloc(num_results * sizeof(**result_array));
-		DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Allocating array of %d elements.", num_results);
+		DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Allocating array of %d elements", num_results);
 		assert(*result_array != NULL);
 
 		conn = db_connect(DB_LOCATION);
@@ -164,9 +162,7 @@ static int db_array_from_query(char *desired_column_name, const char *result_que
 		}
 		DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Query returns %d column(s)", column_count);
 		DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_FOLDER_CONTENTS, "Query results: ");
-		sem_wait(&debug_sem);
-		debug_indent_level++;
-		sem_post(&debug_sem);
+		debug_indent();
 		for(i = 0; sqlite3_step(res) == SQLITE_ROW; i++) {
 			result = sqlite3_column_text(res, desired_column_index); 
 			(*result_array)[i] = malloc(result == NULL ? sizeof(NULL) : strlen((const char *)result) * sizeof(*result) + 1);
@@ -180,18 +176,16 @@ static int db_array_from_query(char *desired_column_name, const char *result_que
 
 			DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_FOLDER_CONTENTS, "result_array[%d] = %s, at address %p", i, (*result_array)[i], (*result_array)[i]);
 		}
-		sem_wait(&debug_sem);
-		debug_indent_level--;
-		sem_post(&debug_sem);
+		debug_deindent();
 
 		(void)sqlite3_finalize(res);
 		(void)db_disconnect(conn);
 	}
 	else {
-		DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Null array being returned.");
+		DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Null array being returned");
 	}
 
-	DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Query returns %d result(s).", num_results);
+	DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Query returns %d result(s)", num_results);
 	DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_EXIT, "db_array_from_query");
 	return num_results;
 } /* db_array_from_query */
@@ -245,10 +239,12 @@ static const char* db_build_file_query(const char *path) {
 } /* db_build_file_query */
 
 static const char* db_build_restricted_file_query(const char *path) {
+	char *num_tags_str = NULL;
 	char *restricted_file_query = NULL;
 	char group_by_having[] = " GROUP BY file_name HAVING COUNT(file_name) == \"Total Tag Count\" AND \"Total Tag Count\" == ";
 	char where[] = " WHERE tag_id IS NULL";
 	const char *file_query = NULL;
+	int num_tags = 0;
 
 	DEBUG(D_FUNCTION_DB_BUILD_RESTRICTED_FILE_QUERY, D_LEVEL_ENTRY, "db_build_restricted_file_query");
 
@@ -266,9 +262,9 @@ static const char* db_build_restricted_file_query(const char *path) {
 		DEBUG(D_FUNCTION_DB_BUILD_RESTRICTED_FILE_QUERY, D_LEVEL_DEBUG, "Using default restriction (no tags)");
 	}
 	else {
-		int num_tags = num_tags_in_path(path);
+		num_tags = num_tags_in_path(path);
 		DEBUG(D_FUNCTION_DB_BUILD_RESTRICTED_FILE_QUERY, D_LEVEL_DEBUG, "Number of tags in path: %d", num_tags);
-		char *num_tags_str = malloc(num_digits(num_tags) * sizeof(*num_tags_str) + 1);
+		num_tags_str = malloc(num_digits(num_tags) * sizeof(*num_tags_str) + 1);
 		(void)snprintf(num_tags_str, num_digits(num_tags), "%d", num_tags);
 	
 		restricted_file_query = calloc(strlen(file_query) + strlen(group_by_having) + strlen(num_tags_str) + 1, sizeof(*restricted_file_query));
@@ -415,95 +411,118 @@ int db_tags_from_query(const char *path, /*@out@*/ char ***tag_array) {
 	return num_tags;
 } /* db_tags_from_query */
 
-void db_delete_file(const char *file_path) {
-	char **file_id = NULL;
-	char **file_name = NULL;
+static int db_get_file_id(const char *file_path) {
+	char **file_id_array = NULL;
+	char **file_name_array = NULL;
 	char **tag_array = NULL;
-	char *delete_query = NULL;
 	char *file = NULL;
-	char delete_from[] = "DELETE FROM files WHERE file_id = ";
 	const char *dir_path = NULL;
 	const char *file_query = NULL;
-	const char *tail = NULL;
-	int delete_query_length = 0;
-	int file_id_count = 0;
-	int file_name_count = 0;
+	int file_id = 0;
+	int file_id_array_count = 0;
+	int file_name_array_count = 0;
 	int i = 0;
 	int num_tokens = 0;
+
+	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_ENTRY, "db_get_file_id");
+
+	assert(file_path != NULL);
+
+	dir_path = get_file_directory(file_path);
+	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_DEBUG, "File to locate is in the directory: %s", dir_path);
+	file_query = db_build_restricted_file_query(dir_path);
+
+	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_DEBUG, "File query: %s", file_query);
+
+	num_tokens = path_to_array(file_path, &tag_array);
+	file = tag_array[num_tokens - 1];
+	free_char_ptr_array(&tag_array, num_tokens);
+	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_DEBUG, "File name is: %s", file);
+
+	file_name_array_count = db_array_from_query("file_name", file_query, &file_name_array);
+	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_DEBUG, "Files returned from query: %d", file_name_array_count);
+
+	file_id_array_count = db_array_from_query("file_id", file_query, &file_id_array);
+	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_DEBUG, "File IDs returned from query: %d", file_id_array_count);
+
+	if(file_name_array_count != file_id_array_count) {
+		DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_WARNING, "Number of file names do not match number of file IDs returned from same query. Aborting!");
+		return 0;
+	}
+
+	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_FOLDER_CONTENTS, "Query results:");
+	debug_indent();
+	for(i = 0; i < file_id_array_count; i++) {
+		DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_FOLDER_CONTENTS, "File ID: %s; File name: %s", file_id_array[i], file_name_array[i]);
+	}
+	debug_deindent();
+
+	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_FOLDER_CONTENTS, "Checking query results:");
+	debug_indent();
+	for(i = 0; i < file_id_array_count; i++) {
+		if(strcmp(file, file_name_array[i]) == 0) { 
+			DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_DEBUG, "File ID: %s; File name: %s == %s", file_id_array[i], file_name_array[i], file);
+			break;
+		}
+		else {
+			DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_FOLDER_CONTENTS, "File ID: %s; File name: %s != %s", file_id_array[i], file_name_array[i], file);
+		}
+	}
+	debug_deindent();
+
+	assert(strcmp(file_name_array[i], file) == 0);
+
+	free_char_ptr_array(&file_name_array, file_name_array_count);
+
+	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_DEBUG, "File located at file_id_array: %s", file_id_array[i]);
+	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_EXIT, "db_get_file_id");
+
+	file_id = atoi(file_id_array[i]);
+	
+	free_char_ptr_array(&file_id_array, file_id_array_count);
+
+	return file_id;
+} /* db_get_file_id_array */
+
+void db_delete_file(const char *path) {
+	char *delete_query = NULL;
+	char *file_id_str = NULL;
+	char delete_from[] = "DELETE FROM files WHERE file_id = ";
+	const char *tail = NULL;
+	int delete_query_length = 0;
+	int file_id = 0;
 	int rc = 0;
 	sqlite3 *conn = NULL;
 	sqlite3_stmt *res = NULL;
 
 	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_ENTRY, "db_delete_file");
 
-	assert(file_path != NULL);
+	assert(path != NULL);
 
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "Deleting file: %s", file_path);
+	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "Deleting file: %s", path);
 
-	dir_path = get_file_directory(file_path);
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "File to locate is in the directory: %s", dir_path);
-	file_query = db_build_restricted_file_query(dir_path);
-
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "File query: %s", file_query);
-
-	num_tokens = path_to_array(file_path, &tag_array);
-	file = tag_array[num_tokens - 1];
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "File name is: %s", file);
-
-	file_name_count = db_array_from_query("file_name", file_query, &file_name);
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "Files returned from query: %d", file_name_count);
-
-	file_id_count = db_array_from_query("file_id", file_query, &file_id);
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "File IDs returned from query: %d", file_id_count);
-
-	if(file_name_count != file_id_count) {
-		DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_WARNING, "Number of file names do not match number of file IDs returned from same query. Aborting!");
-		return;
-	}
-
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_FOLDER_CONTENTS, "Query results:");
-	sem_wait(&debug_sem);
-	debug_indent_level++;
-	sem_post(&debug_sem);
-	for(i = 0; i < file_id_count; i++) {
-		DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_FOLDER_CONTENTS, "File ID: %s; File name: %s", file_id[i], file_name[i]);
-	}
-	sem_wait(&debug_sem);
-	debug_indent_level--;
-	sem_post(&debug_sem);
-
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_FOLDER_CONTENTS, "Checking query results:");
-	sem_wait(&debug_sem);
-	debug_indent_level++;
-	sem_post(&debug_sem);
-	for(i = 0; i < file_id_count; i++) {
-		if(strcmp(file, file_name[i]) == 0) { 
-			DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "File ID: %s; File name: %s == %s", file_id[i], file_name[i], file);
-			break;
-		}
-		else {
-			DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_FOLDER_CONTENTS, "File ID: %s; File name: %s != %s", file_id[i], file_name[i], file);
-		}
-	}
-	sem_wait(&debug_sem);
-	debug_indent_level--;
-	sem_post(&debug_sem);
-
-	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "File located at file_id: %s", file_id[i]);
+	file_id = db_get_file_id(path);
+	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "File ID to delete: %d", file_id);
 
 	conn = db_connect(DB_LOCATION);
 	assert(conn != NULL);
 
-	delete_query_length = strlen(delete_from) + strlen(file_id[i]) + 1; /* 2 for end quote and null terminating character */
+	delete_query_length = strlen(delete_from) + num_digits(file_id) + 1;
 	delete_query = calloc(delete_query_length, sizeof(*delete_query));
 	assert(delete_query != NULL);
-	strcat(strcat(delete_query, delete_from), file_id[i]);
+
+	file_id_str = malloc(num_digits(file_id) * sizeof(*file_id_str) + 1);
+	(void)snprintf(file_id_str, num_digits(file_id), "%d", file_id);
+	strcat(strcat(delete_query, delete_from), file_id_str);
+	free(file_id_str);
 
 	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "Delete query: %s", delete_query);
 
 	(void)sqlite3_prepare_v2(conn, delete_query, strlen(delete_query), &res, &tail);
+	free(delete_query);
 
 	rc = sqlite3_step(res);
+	db_disconnect(conn);
 
 	if(rc == SQLITE_MISUSE) {
 		DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_WARNING, "SQLite library used incorrectly");
@@ -512,68 +531,6 @@ void db_delete_file(const char *file_path) {
 		DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_WARNING, "SQLite constraint violation");
 	}
 
+	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "%s deleted successfully", path);
 	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_EXIT, "db_delete_file");
 } /* db_delete_file */
-
-
-
-
-
-/*
-
-
-
-
-
-bool valid_path_to_file(const char *file_path) {
-	bool valid = false;
-	char **file_array = NULL;
-	char **tag_array = NULL;
-	char *file = NULL;
-	const char *dir_path = NULL;
-	int num_files_in_dir = 0;
-	int num_tokens = 0;
-
-	DEBUG(D_FUNCTION_VALID_PATH_TO_FILE, D_LEVEL_ENTRY, "valid_path_to_file");
-
-	assert(file_path != NULL);
-
-	DEBUG(D_FUNCTION_VALID_PATH_TO_FILE, D_LEVEL_DEBUG, "Checking that %s is a valid path to a file.", file_path);
-
-	dir_path = get_file_directory(file_path);
-	assert(dir_path != NULL);
-	num_files_in_dir = db_files_from_query(dir_path, &file_array);
-
-	assert(dir_path != NULL);
-	free((void *)dir_path);
-	dir_path = NULL;
-
-	num_tokens = path_to_array(file_path, &tag_array);
-	DEBUG(D_FUNCTION_VALID_PATH_TO_FILE, D_LEVEL_DEBUG, "Number of tokens: %d", num_tokens);
-
-	if(num_tokens > 0) {
-		assert(tag_array != NULL);
-		file = tag_array[num_tokens - 1];
-		assert(file != NULL);
-		DEBUG(D_FUNCTION_VALID_PATH_TO_FILE, D_LEVEL_DEBUG, "File: %s", file);
-
-		if(num_files_in_dir != 0 && array_contains_string(file_array, file, num_files_in_dir)) { valid = true; }
-	}
-
-	free_char_ptr_array(&file_array, num_files_in_dir);
-
-	DEBUG(D_FUNCTION_VALID_PATH_TO_FILE, D_LEVEL_DEBUG, "%s is %svalid path to a file", file_path, valid ? "a " : "not a ");
-	DEBUG(D_FUNCTION_VALID_PATH_TO_FILE, D_LEVEL_EXIT, "valid_path_to_file");
-
-	free_char_ptr_array(&tag_array, num_tokens);
-
-	return valid;
-}  valid_path_to_file 
-
-
-
-
-
-
-
-*/
