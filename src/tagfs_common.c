@@ -107,9 +107,7 @@ int path_to_array(const char *path, char ***array) {
 
 		DEBUG(D_FUNCTION_PATH_TO_ARRAY, D_LEVEL_DEBUG, "Array contents:");
 
-		sem_wait(&debug_sem);
-		debug_indent_level++;
-		sem_post(&debug_sem);
+		debug_indent();
 		for(i = 0; token != NULL; i++) {
 			(*array)[i] = malloc(strlen(token) * sizeof(*(*array)[i]) + 1);
 			assert((*array)[i] != NULL);
@@ -118,9 +116,7 @@ int path_to_array(const char *path, char ***array) {
 			DEBUG(D_FUNCTION_PATH_TO_ARRAY, D_LEVEL_DEBUG, "array[%d] = %s, at address %p.", i, (*array)[i], (*array)[i]);
 			token = strtok_r(NULL, "/", &tok_ptr);
 		}
-		sem_wait(&debug_sem);
-		debug_indent_level--;
-		sem_post(&debug_sem);
+		debug_deindent();
 
 		assert(tmp_path);
 		free(tmp_path);
@@ -178,21 +174,15 @@ bool array_contains_string(/*@out@*/ char **array, char *string, int count) {
 
 	DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_FOLDER_CONTENTS, "Array contents:");
 	
-	sem_wait(&debug_sem);
-	debug_indent_level++;
-	sem_post(&debug_sem);
+	debug_indent();
 	for(i = 0; i < count; i++) {
 		DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_FOLDER_CONTENTS, "array[%d] = %s", i, array[i]);
 	}
-	sem_wait(&debug_sem);
-	debug_indent_level--;
-	sem_post(&debug_sem);
+	debug_deindent();
 
 	DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_FOLDER_CONTENTS, "Array comparison:");
 
-	sem_wait(&debug_sem);
-	debug_indent_level++;
-	sem_post(&debug_sem);
+	debug_indent();
 	if(array != NULL) {
 		for(i = 0; i < count; i++) {
 			if(array[i] != NULL && strcmp(array[i], string) == 0) { 
@@ -205,9 +195,7 @@ bool array_contains_string(/*@out@*/ char **array, char *string, int count) {
 			}
 		}
 	}
-	sem_wait(&debug_sem);
-	debug_indent_level--;
-	sem_post(&debug_sem);
+	debug_deindent();
 
 	DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_DEBUG, "%s \"%s\"", contains ? "Array contains" : "Array does not contain", string, contains ? "true" : "false");
 	DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_EXIT, "array_contains_string");

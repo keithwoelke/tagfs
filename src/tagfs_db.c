@@ -162,9 +162,7 @@ static int db_array_from_query(char *desired_column_name, const char *result_que
 		}
 		DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Query returns %d column(s)", column_count);
 		DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_FOLDER_CONTENTS, "Query results: ");
-		sem_wait(&debug_sem);
-		debug_indent_level++;
-		sem_post(&debug_sem);
+		debug_indent();
 		for(i = 0; sqlite3_step(res) == SQLITE_ROW; i++) {
 			result = sqlite3_column_text(res, desired_column_index); 
 			(*result_array)[i] = malloc(result == NULL ? sizeof(NULL) : strlen((const char *)result) * sizeof(*result) + 1);
@@ -178,9 +176,7 @@ static int db_array_from_query(char *desired_column_name, const char *result_que
 
 			DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_FOLDER_CONTENTS, "result_array[%d] = %s, at address %p", i, (*result_array)[i], (*result_array)[i]);
 		}
-		sem_wait(&debug_sem);
-		debug_indent_level--;
-		sem_post(&debug_sem);
+		debug_deindent();
 
 		(void)sqlite3_finalize(res);
 		(void)db_disconnect(conn);
@@ -506,20 +502,14 @@ int db_get_file_id(const char *file_path) {
 	}
 
 	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_FOLDER_CONTENTS, "Query results:");
-	sem_wait(&debug_sem);
-	debug_indent_level++;
-	sem_post(&debug_sem);
+	debug_indent();
 	for(i = 0; i < file_id_array_count; i++) {
 		DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_FOLDER_CONTENTS, "File ID: %s; File name: %s", file_id_array[i], file_name_array[i]);
 	}
-	sem_wait(&debug_sem);
-	debug_indent_level--;
-	sem_post(&debug_sem);
+	debug_deindent();
 
 	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_FOLDER_CONTENTS, "Checking query results:");
-	sem_wait(&debug_sem);
-	debug_indent_level++;
-	sem_post(&debug_sem);
+	debug_indent();
 	for(i = 0; i < file_id_array_count; i++) {
 		if(strcmp(file, file_name_array[i]) == 0) { 
 			DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_DEBUG, "File ID: %s; File name: %s == %s", file_id_array[i], file_name_array[i], file);
@@ -529,9 +519,7 @@ int db_get_file_id(const char *file_path) {
 			DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_FOLDER_CONTENTS, "File ID: %s; File name: %s != %s", file_id_array[i], file_name_array[i], file);
 		}
 	}
-	sem_wait(&debug_sem);
-	debug_indent_level--;
-	sem_post(&debug_sem);
+	debug_deindent();
 
 	assert(strcmp(file_name_array[i], file) == 0);
 
