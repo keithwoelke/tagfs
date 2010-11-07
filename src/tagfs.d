@@ -100,7 +100,6 @@ extern(D):
 int main(string[] args)
 {
 	debug_init();
-<<<<<<< HEAD:src/tagfs.d
 	tagfs_oper.getattr = &tagfs_getattr;
 	tagfs_oper.readdir = &tagfs_readdir;
 	tagfs_oper.unlink = &tagfs_unlink;
