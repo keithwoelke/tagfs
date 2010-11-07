@@ -7,6 +7,8 @@
 #include <errno.h>
 #include <fuse.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 static int tagfs_getattr(const char *path, struct stat *buf)
 {
@@ -77,6 +79,14 @@ int tagfs_unlink(const char *path) {
 	return 0;
 }
 
+int tagfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+    int retstat = 0;
+    
+    retstat = pread(fi->fh, buf, size, offset);
+    
+    return retstat;
+}
+
 //int tagfs_opendir(const char *path, struct fuse_file_info *fi) {
 //	return 0;
 //}
@@ -85,6 +95,7 @@ static struct fuse_operations tagfs_oper = {
 	.getattr = tagfs_getattr,
 	.readdir = tagfs_readdir,
 	.unlink = tagfs_unlink,
+	.read = tagfs_read,
 //	.opendir = tagfs_opendir,
 };
 
