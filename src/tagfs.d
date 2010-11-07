@@ -1,14 +1,20 @@
-#define FUSE_USE_VERSION 26
+module tagfs;
+// TODO: Investigate this fused is set to 21
+// #define FUSE_USE_VERSION 26
 
-#include "tagfs_common.h"
-#include "tagfs_db.h"
-#include "tagfs_debug.h"
+import tagfs_db;
+import tagfs_common;
+import tagfs_debug;
 
-#include <errno.h>
-#include <fuse.h>
-#include <stdio.h>
+import fuse;
+import std.c.stdio;
+import std.c.string;
+static import std.string;
+import core.stdc.errno;
+import std.c.stdlib;
 
-static int tagfs_getattr(const char *path, struct stat *buf)
+extern(C) {
+static int tagfs_getattr(const char *path, stat_t *buf)
 {
 	int retstat = 0;
 
@@ -18,8 +24,8 @@ static int tagfs_getattr(const char *path, struct stat *buf)
 	}
 	else if(valid_path_to_tag(path)) {
 //		printf("2");
-		buf->st_mode = S_IFDIR | 0755;
-		buf->st_nlink = 2;
+		buf.st_mode = S_IFDIR | 0755;
+		buf.st_nlink = 2;
 	}
 	else {
 //		printf("3");
@@ -43,25 +49,26 @@ static int tagfs_getattr(const char *path, struct stat *buf)
 //	return res;
 }
 
-static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
+static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, fuse_file_info *fi)
 {
 //	printf("readdir");
-	char **file_array = NULL;
-	char **tag_array = NULL;
+	char **file_array = null;
+	char **tag_array = null;
 	int i = 0;
 	int num_files = db_files_from_query(path, &file_array);
 	int num_tags = db_tags_from_query(path, &tag_array);
 
-	filler(buf, ".", NULL, 0);
-	filler(buf, "..", NULL, 0);
+	//TODO: using Dup.ptr could be a cause of issues
+	filler(buf, ".", null, 0);
+	filler(buf, "..", null, 0);
 
 	for(i = 0; i < num_files; i++) {
 //		DEBUG(DL_NORMAL, "Adding file: %s", file_array[i]);
-		filler(buf, file_array[i], NULL, 0);
+		filler(buf, file_array[i], null, 0);
 	}
 
 	for(i = 0; i < num_tags; i++) {
-		filler(buf, tag_array[i], NULL, 0);
+		filler(buf, tag_array[i], null, 0);
 	}
 
 	free_char_ptr_array(&file_array, num_files);
@@ -81,20 +88,28 @@ int tagfs_unlink(const char *path) {
 //	return 0;
 //}
 
-static struct fuse_operations tagfs_oper = {
+static fuse_operations tagfs_oper; /* = {
 	.getattr = tagfs_getattr,
 	.readdir = tagfs_readdir,
 	.unlink = tagfs_unlink,
 //	.opendir = tagfs_opendir,
 };
+*/
+}
 
-int main(int argc, char *argv[])
+extern(D):
+int main(string[] args)
 {
-	sem_init(&debug_sem, 0, 1);
+	debug_init();
+	tagfs_oper.getattr = &tagfs_getattr;
+	tagfs_oper.readdir = &tagfs_readdir;
+	tagfs_oper.unlink = &tagfs_unlink;
 
-//	db_delete_file("/zouch");
-//	return 0;
-//	printf("%s\n", valid_path_to_tag("/") == true ? "true" : "false");
-//	return 0;
-	return fuse_main(argc, argv, &tagfs_oper, NULL);
+	char*[] argv;
+	foreach(arg; args) {
+		argv ~= cast(char*) std.string.toStringz(arg);
+	}
+
+	//return fuse_main(argc, argv, &tagfs_oper, null);
+	return fuse_main(argv.length, argv.ptr, &tagfs_oper);
 }

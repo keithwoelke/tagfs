@@ -57,3 +57,18 @@ void DEBUG(int function, int msg_level, char *format, ...) {
 		va_end(ap);
 	#endif
 } /* DEBUG */
+
+void debug_init() {
+	sem_init(&debug_sem, 0, 1);
+}
+
+void debug_indent() {
+	sem_wait(&debug_sem);
+	debug_indent_level++;
+	sem_post(&debug_sem);
+}
+void debug_deindent() {
+	sem_wait(&debug_sem);
+	debug_indent_level++;
+	sem_post(&debug_sem);
+}
