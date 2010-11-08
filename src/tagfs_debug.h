@@ -88,9 +88,12 @@
  * @param additional Depending on the format string, the function may expect a sequence of additional arguments, each containing one value to be inserted instead of each %-tag specified in the format parameter, if any. There should be the same number of these arguments as the number of %-tags that expect a value.
  * @return On success, the total number of characters written. On failure, a negative number is returned.
  */
-void DEBUG(int function, int msg_level, char *format, ...);
+void DEBUG(int function, int msg_level, const char *format, ...);
+
 void debug_init();
+
 void debug_indent();
+
 void debug_deindent();
 
 #endif
