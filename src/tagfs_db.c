@@ -534,3 +534,11 @@ void db_delete_file(const char *path) {
 	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "%s deleted successfully", path);
 	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_EXIT, "db_delete_file");
 } /* db_delete_file */
+
+const char* get_file_location(const char *path) {
+	int file_id = 0;
+
+	file_id = db_get_file_id(path);
+
+	db_connect(DB_LOCATION);
+}

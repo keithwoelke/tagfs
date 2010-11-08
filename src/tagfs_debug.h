@@ -89,8 +89,11 @@
  * @return On success, the total number of characters written. On failure, a negative number is returned.
  */
 void DEBUG(int function, int msg_level, char *format, ...);
+
 void debug_init();
+
 void debug_indent();
+
 void debug_deindent();
 
 #endif
