@@ -14,17 +14,19 @@ static int tagfs_getattr(const char *path, struct stat *buf)
 {
 	int retstat = 0;
 
+	printf("path: %s\n", path);
+
 	if (valid_path_to_file(path)) {
-//		printf("1");
-		retstat = stat("/home/keith/Desktop/test", buf);
+		printf("1\n");
+		retstat = stat(get_file_location(path), buf);
 	}
 	else if(valid_path_to_tag(path)) {
-//		printf("2");
+		printf("2\n");
 		buf->st_mode = S_IFDIR | 0755;
 		buf->st_nlink = 2;
 	}
 	else {
-//		printf("3");
+		printf("3\n");
 		return -ENOENT;
 	}
 
@@ -80,11 +82,12 @@ int tagfs_unlink(const char *path) {
 }
 
 int tagfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
-    int retstat = 0;
-    
-    retstat = pread(fi->fh, buf, size, offset);
-    
-    return retstat;
+	int retstat = 0;
+
+	int fd = open(get_file_location(path), O_RDONLY);
+	retstat = pread(fd, buf, size, offset);
+
+	return retstat;
 }
 
 //int tagfs_opendir(const char *path, struct fuse_file_info *fi) {
@@ -96,7 +99,6 @@ static struct fuse_operations tagfs_oper = {
 	.readdir = tagfs_readdir,
 	.unlink = tagfs_unlink,
 	.read = tagfs_read,
-//	.opendir = tagfs_opendir,
 };
 
 int main(int argc, char *argv[])
