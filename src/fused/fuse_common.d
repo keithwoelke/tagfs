@@ -98,27 +98,22 @@ struct fuse_file_info
     uint fh_old;
     int writepage;
     uint __bitfield1;
-    uint direct_io() { return (__bitfield1 >> 0) & 0x1; }
-    uint direct_io(uint value) { __bitfield1 = (__bitfield1 & 0xfffffffffffffffe) | (value << 0); return value; }
-    uint keep_cache() { return (__bitfield1 >> 1) & 0x1; }
-    uint keep_cache(uint value) { __bitfield1 = (__bitfield1 & 0xfffffffffffffffd) | (value << 1); return value; }
-    uint flush() { return (__bitfield1 >> 2) & 0x1; }
-    uint flush(uint value) { __bitfield1 = (__bitfield1 & 0xfffffffffffffffb) | (value << 2); return value; }
-    uint nonseekable() { return (__bitfield1 >> 3) & 0x1; }
-    uint nonseekable(uint value) { __bitfield1 = (__bitfield1 & 0xfffffffffffffff7) | (value << 3); return value; }
-    uint padding() { return (__bitfield1 >> 4) & 0xfffffff; }
-    uint padding(uint value) { __bitfield1 = (__bitfield1 & 0xffffffff0000000f) | (value << 4); return value; }
-
-	 // FIXME: htoD would not convert this struct with the last two fields.
-	 //  WHY? I believe the padding of the original struct makes this
-	 //  reasonable to add.
 	/** File handle.  May be filled in by filesystem in open().
 	    Available in all other file operations */
 	uint64_t fh;
 
 	/** Lock owner id.  Available in locking operations and flush */
 	uint64_t lock_owner;
-
+   @property uint direct_io() { return (__bitfield1 >> 0) & 0x1; }
+   @property uint direct_io(uint value) { __bitfield1 = (__bitfield1 & 0xfffffffffffffffe) | (value << 0); return value; }
+   @property uint keep_cache() { return (__bitfield1 >> 1) & 0x1; }
+   @property uint keep_cache(uint value) { __bitfield1 = (__bitfield1 & 0xfffffffffffffffd) | (value << 1); return value; }
+   @property uint flush() { return (__bitfield1 >> 2) & 0x1; }
+   @property uint flush(uint value) { __bitfield1 = (__bitfield1 & 0xfffffffffffffffb) | (value << 2); return value; }
+   @property uint nonseekable() { return (__bitfield1 >> 3) & 0x1; }
+   @property uint nonseekable(uint value) { __bitfield1 = (__bitfield1 & 0xfffffffffffffff7) | (value << 3); return value; }
+   @property uint padding() { return (__bitfield1 >> 4) & 0xfffffff; }
+   @property uint padding(uint value) { __bitfield1 = (__bitfield1 & 0xffffffff0000000f) | (value << 4); return value; }
 }
 
 /**

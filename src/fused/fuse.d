@@ -33,7 +33,7 @@ public import fuse_helper;
 //C     #ifndef FUSE_USE_VERSION
 //C     #define FUSE_USE_VERSION 21
 //C     #endif
-const FUSE_USE_VERSION = 21;
+const FUSE_USE_VERSION = 26;
 
 // C #include "fuse_common.h"
 // C 
@@ -63,23 +63,7 @@ const FUSE_USE_VERSION = 21;
 extern (C):
 
 /** Handle for a FUSE filesystem */
-struct fuse_t {
-	fuse_session *se;
-	node **name_table;
-	size_t name_table_size;
-	node **id_table;
-	size_t id_table_size;
-	fuse_ino_t ctr;
-	uint generation;
-	uint hidectr;
-	pthread_mutex_t lock;
-	fuse_config conf;
-	int intr_installed;
-	fuse_fs *fs;
-	int nullpath_ok;
-	int curr_ticket;
-	lock_queue_element *lockq;
-};
+struct fuse_t;
 
 /** Structure containing a raw command */
 struct fuse_cmd;
@@ -661,13 +645,9 @@ struct fuse_context
 //C     #define fuse_main(argc, argv, op, user_data)					fuse_main_real(argc, argv, op, sizeof(*(op)), user_data)
 
 int fuse_main(uint argc, char **argv, fuse_operations *op) {
-	if(argc > int.max)
-		return 352;
-	// FIXME: I'm creating a void pointer to satify compilation
-	// I do not know what I am doing
-	
-	auto user_data = new ubyte[78];
-	return fuse_main_real(cast(int) argc, argv, op, (*(op)).sizeof, user_data.ptr);
+	assert(argc < int.max && argc > 0);
+
+	return fuse_main_real(cast(int) argc, argv, op, (*(op)).sizeof, null);
 }
 
 /* ----------------------------------------------------------- *
