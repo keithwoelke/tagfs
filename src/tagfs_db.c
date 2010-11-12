@@ -355,6 +355,34 @@ static const char* db_build_restricted_tag_query(const char *path) {
 	return restricted_tag_query;
 } /* db_build_restricted_tag_query */
 
+int db_files_from_restricted_query(const char *path, /*@out@*/ char ***file_array) {
+	const char *file_query = NULL;
+	int num_files = 0;
+
+	DEBUG(D_FUNCTION_DB_FILES_FROM_QUERY, D_LEVEL_ENTRY, "db_files_from_restricted_query");
+
+	assert(path != NULL);
+	assert(file_array != NULL);
+	assert(*file_array == NULL);
+	
+	DEBUG(D_FUNCTION_DB_FILES_FROM_QUERY, D_LEVEL_DEBUG, "Creating array containing files at path: %s", path);
+
+	file_query = db_build_restricted_file_query(path);
+	assert(file_query != NULL);
+
+	DEBUG(D_FUNCTION_DB_FILES_FROM_QUERY, D_LEVEL_DEBUG, "File query: %s", file_query);
+
+	num_files = db_array_from_query("file_name", file_query, file_array);
+
+	assert(file_query != NULL);
+	free((void *)file_query);
+	file_query = NULL;
+
+	DEBUG(D_FUNCTION_DB_FILES_FROM_QUERY, D_LEVEL_DEBUG, "Number of files returned from query: %d", num_files);
+	DEBUG(D_FUNCTION_DB_FILES_FROM_QUERY, D_LEVEL_EXIT, "db_files_from_restricted_query");
+	return num_files;
+} /* db_files_from_restricted_query */
+
 int db_files_from_query(const char *path, /*@out@*/ char ***file_array) {
 	const char *file_query = NULL;
 	int num_files = 0;
@@ -367,7 +395,7 @@ int db_files_from_query(const char *path, /*@out@*/ char ***file_array) {
 	
 	DEBUG(D_FUNCTION_DB_FILES_FROM_QUERY, D_LEVEL_DEBUG, "Creating array containing files at path: %s", path);
 
-	file_query = db_build_restricted_file_query(path);
+	file_query = db_build_file_query(path);
 	assert(file_query != NULL);
 
 	DEBUG(D_FUNCTION_DB_FILES_FROM_QUERY, D_LEVEL_DEBUG, "File query: %s", file_query);
@@ -543,7 +571,6 @@ const char* get_file_location(const char *path) {
 	char *file_path = NULL;
 	char *query = NULL;
 	char select_from[] = "SELECT file_location, file_name FROM files WHERE file_id = ";
-	const char *tail = NULL;
 	int file_id = 0;
 	int num_digits_id = 0;
 	sqlite3 *conn = NULL;
@@ -571,13 +598,13 @@ const char* get_file_location(const char *path) {
 
 	conn = db_connect(DB_LOCATION);
 
-	(void)sqlite3_prepare_v2(conn, query, strlen(query), &res, &tail);
+	(void)sqlite3_prepare_v2(conn, query, strlen(query), &res, NULL);
 	free(query);
 	(void)sqlite3_step(res);
 
 	file_location = (char*)sqlite3_column_text(res, 0);
 	file_name = (char*)sqlite3_column_text(res, 1);
-	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_DEBUG, "File path: %s", file_location);
+	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_DEBUG, "File location: %s", file_location);
 	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_DEBUG, "File name: %s", file_name);
 
 	file_path = calloc(strlen(file_location) + strlen(file_name) + 1, sizeof(*file_path));

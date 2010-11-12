@@ -14,19 +14,19 @@ static int tagfs_getattr(const char *path, struct stat *buf)
 {
 	int retstat = 0;
 
-	printf("path: %s\n", path);
+	printf("%s is a... ", path);
 
 	if (valid_path_to_file(path)) {
-		printf("1\n");
+		printf("File!\n");
 		retstat = stat(get_file_location(path), buf);
 	}
 	else if(valid_path_to_tag(path)) {
-		printf("2\n");
+		printf("Directory!\n");
 		buf->st_mode = S_IFDIR | 0755;
 		buf->st_nlink = 2;
 	}
 	else {
-		printf("3\n");
+		printf("No idea!\n");
 		return -ENOENT;
 	}
 
@@ -49,11 +49,11 @@ static int tagfs_getattr(const char *path, struct stat *buf)
 
 static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
 {
-//	printf("readdir");
+//	printf("readdir: %s\n", path);
 	char **file_array = NULL;
 	char **tag_array = NULL;
 	int i = 0;
-	int num_files = db_files_from_query(path, &file_array);
+	int num_files = db_files_from_restricted_query(path, &file_array);
 	int num_tags = db_tags_from_query(path, &tag_array);
 
 	filler(buf, ".", NULL, 0);
