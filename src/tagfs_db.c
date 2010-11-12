@@ -355,6 +355,34 @@ static const char* db_build_restricted_tag_query(const char *path) {
 	return restricted_tag_query;
 } /* db_build_restricted_tag_query */
 
+int db_files_from_restricted_query(const char *path, /*@out@*/ char ***file_array) {
+	const char *file_query = NULL;
+	int num_files = 0;
+
+	DEBUG(D_FUNCTION_DB_FILES_FROM_QUERY, D_LEVEL_ENTRY, "db_files_from_restricted_query");
+
+	assert(path != NULL);
+	assert(file_array != NULL);
+	assert(*file_array == NULL);
+	
+	DEBUG(D_FUNCTION_DB_FILES_FROM_QUERY, D_LEVEL_DEBUG, "Creating array containing files at path: %s", path);
+
+	file_query = db_build_restricted_file_query(path);
+	assert(file_query != NULL);
+
+	DEBUG(D_FUNCTION_DB_FILES_FROM_QUERY, D_LEVEL_DEBUG, "File query: %s", file_query);
+
+	num_files = db_array_from_query("file_name", file_query, file_array);
+
+	assert(file_query != NULL);
+	free((void *)file_query);
+	file_query = NULL;
+
+	DEBUG(D_FUNCTION_DB_FILES_FROM_QUERY, D_LEVEL_DEBUG, "Number of files returned from query: %d", num_files);
+	DEBUG(D_FUNCTION_DB_FILES_FROM_QUERY, D_LEVEL_EXIT, "db_files_from_restricted_query");
+	return num_files;
+} /* db_files_from_restricted_query */
+
 int db_files_from_query(const char *path, /*@out@*/ char ***file_array) {
 	const char *file_query = NULL;
 	int num_files = 0;
@@ -367,7 +395,7 @@ int db_files_from_query(const char *path, /*@out@*/ char ***file_array) {
 	
 	DEBUG(D_FUNCTION_DB_FILES_FROM_QUERY, D_LEVEL_DEBUG, "Creating array containing files at path: %s", path);
 
-	file_query = db_build_restricted_file_query(path);
+	file_query = db_build_file_query(path);
 	assert(file_query != NULL);
 
 	DEBUG(D_FUNCTION_DB_FILES_FROM_QUERY, D_LEVEL_DEBUG, "File query: %s", file_query);
@@ -436,7 +464,6 @@ static int db_get_file_id(const char *file_path) {
 
 	num_tokens = path_to_array(file_path, &tag_array);
 	file = tag_array[num_tokens - 1];
-	free_char_ptr_array(&tag_array, num_tokens);
 	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_DEBUG, "File name is: %s", file);
 
 	file_name_array_count = db_array_from_query("file_name", file_query, &file_name_array);
@@ -472,17 +499,19 @@ static int db_get_file_id(const char *file_path) {
 
 	assert(strcmp(file_name_array[i], file) == 0);
 
+	free_char_ptr_array(&tag_array, num_tokens);
 	free_char_ptr_array(&file_name_array, file_name_array_count);
 
 	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_DEBUG, "File located at file_id_array: %s", file_id_array[i]);
-	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_EXIT, "db_get_file_id");
 
 	file_id = atoi(file_id_array[i]);
 	
 	free_char_ptr_array(&file_id_array, file_id_array_count);
 
+	DEBUG(D_FUNCTION_DB_GET_FILE_ID, D_LEVEL_EXIT, "db_get_file_id");
+
 	return file_id;
-} /* db_get_file_id_array */
+} /* db_get_file_id */
 
 void db_delete_file(const char *path) {
 	char *delete_query = NULL;
@@ -534,3 +563,57 @@ void db_delete_file(const char *path) {
 	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "%s deleted successfully", path);
 	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_EXIT, "db_delete_file");
 } /* db_delete_file */
+
+const char* get_file_location(const char *path) {
+	char *file_id_str = NULL;
+	char *file_location = NULL;
+	char *file_name = NULL;
+	char *file_path = NULL;
+	char *query = NULL;
+	char select_from[] = "SELECT file_location, file_name FROM files WHERE file_id = ";
+	int file_id = 0;
+	int num_digits_id = 0;
+	sqlite3 *conn = NULL;
+	sqlite3_stmt *res = NULL;
+
+	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_ENTRY, "db_get_file_location");
+
+	assert(path != NULL);
+
+	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_DEBUG, "Retrieving real file location for %s", path);
+
+	file_id = db_get_file_id(path);
+
+	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_DEBUG, "File ID: %d", file_id);
+
+	query = calloc(strlen(select_from) + num_digits(file_id) + 1, sizeof(*query));
+	assert(query != NULL);
+	num_digits_id = num_digits(file_id);
+	file_id_str = malloc((num_digits_id + 1) * sizeof(*file_id_str));
+	assert(file_id_str != NULL);
+	snprintf(file_id_str, num_digits_id, "%d", file_id);
+	strcat(strcat(query, select_from), file_id_str);
+	free(file_id_str);
+	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_DEBUG, "File location query: %s", query);
+
+	conn = db_connect(DB_LOCATION);
+
+	(void)sqlite3_prepare_v2(conn, query, strlen(query), &res, NULL);
+	free(query);
+	(void)sqlite3_step(res);
+
+	file_location = (char*)sqlite3_column_text(res, 0);
+	file_name = (char*)sqlite3_column_text(res, 1);
+	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_DEBUG, "File location: %s", file_location);
+	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_DEBUG, "File name: %s", file_name);
+
+	file_path = calloc(strlen(file_location) + strlen(file_name) + 1, sizeof(*file_path));
+	strcat(file_path, file_location);
+	if(strcmp(file_path, "/") != 0) { strcat(file_path, "/"); }
+	strcat(file_path, file_name);
+	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_DEBUG, "File location: %s", file_path);
+
+	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_EXIT, "db_get_file_location");
+
+	return file_path;
+}

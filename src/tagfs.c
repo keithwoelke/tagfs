@@ -7,13 +7,15 @@
 #include <errno.h>
 #include <fuse.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 static int tagfs_getattr(const char *path, struct stat *buf)
 {
 	int retstat = 0;
 
 	if (valid_path_to_file(path)) {
-		retstat = stat("/home/keith/Desktop/test", buf);
+		retstat = stat(get_file_location(path), buf);
 	}
 	else if(valid_path_to_tag(path)) {
 		buf->st_mode = S_IFDIR | 0755;
@@ -57,10 +59,20 @@ int tagfs_unlink(const char *path) {
 	return 0;
 }
 
+int tagfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+	int retstat = 0;
+
+	int fd = open(get_file_location(path), O_RDONLY);
+	retstat = pread(fd, buf, size, offset);
+
+	return retstat;
+}
+
 static struct fuse_operations tagfs_oper = {
 	.getattr = tagfs_getattr,
 	.readdir = tagfs_readdir,
 	.unlink = tagfs_unlink,
+	.read = tagfs_read,
 };
 
 int main(int argc, char *argv[])
