@@ -4,13 +4,14 @@ import tagfs_db;
 import tagfs_common;
 import tagfs_debug;
 import std.stdio;
+static import std.string;
 
 import fuse;
-import std.c.stdio;
-import std.c.string;
-static import std.string;
+import core.stdc.stdio;
+import core.stdc.string;
+import core.sys.posix.unistd;
 import core.stdc.errno;
-import std.c.stdlib;
+import core.stdc.stdlib;
 
 extern(C) {
 int set_filePath(stat_t *buf);
@@ -68,7 +69,7 @@ int tagfs_unlink(const char *path) {
 	return 0;
 }
 
-int tagfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+int tagfs_read(const char *path, char *buf, size_t size, off_t offset, fuse_file_info *fi) {
 	int retstat = 0;
 
 	int fd = open(get_file_location(path), O_RDONLY);

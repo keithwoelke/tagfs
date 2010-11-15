@@ -6,9 +6,6 @@ module tagfs_db;
  * @date 25/07/2010
  */
 
-//#ifndef TAGFS_DB_H
-//#define TAGFS_DB_H
-//
 //#include <sqlite3.h>
 //#include <stdbool.h>
 //
@@ -22,6 +19,9 @@ extern(C) :
  * @param file_array an array of the files that reside at the specified path.
  * @return the number of files in the array
  */
+int db_files_from_restricted_query(const char *path, /*@out@*/ char ***file_array);
+
+/// ditto
 int db_files_from_query(const char *path, const(char *)**file_array);
 
 /**
@@ -34,4 +34,4 @@ int db_tags_from_query(const char *path, const(char *)**tag_array);
 
 void db_delete_file(const char *path);
 
-//#endif
+char* get_file_location(const char *path);

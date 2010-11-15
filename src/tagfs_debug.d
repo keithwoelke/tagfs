@@ -64,6 +64,8 @@ enum D_FUNCTION_DB_BUILD_RESTRICTED_TAG_QUERY = (0x0020000 | D_FILE_TAGFS_DB);
 enum D_FUNCTION_DB_FILES_FROM_QUERY          =(0x0040000 | D_FILE_TAGFS_DB);
 enum D_FUNCTION_DB_TAGS_FROM_QUERY           =(0x0080000 | D_FILE_TAGFS_DB);
 enum D_FUNCTION_DB_DELETE_FILE               =(0x0100000 | D_FILE_TAGFS_DB);
+enum D_FUNCTION_DB_GET_FILE_ID               =(0x0200000 | D_FILE_TAGFS_DB);
+enum D_FUNCTION_DB_GET_FILE_LOCATION         =(0x0400000 | D_FILE_TAGFS_DB);
 
 /* Debug meta-function */
 /* tagfs_common */
@@ -79,10 +81,6 @@ enum DEBUG_FUNCTION          = (/*DEBUG_FUNCTION_TAGFS_COMMON_SANE | */DEBUG_FUN
 
 /* Debug final */
 enum DEBUG_PATH              = (DEBUG_FILE | (D_FILE_NONE & DEBUG_FUNCTION));
-
-//TODO:
-//extern int debug_indent_level;
-//extern sem_t debug_sem;
 
 /*
  * Identical to the standand printf.
