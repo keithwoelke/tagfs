@@ -19,6 +19,8 @@
  * @param file_array an array of the files that reside at the specified path.
  * @return the number of files in the array
  */
+int db_files_from_restricted_query(const char *path, /*@out@*/ char ***file_array);
+
 int db_files_from_query(const char *path, /*@out@*/ char ***file_array);
 
 /**
@@ -30,5 +32,7 @@ int db_files_from_query(const char *path, /*@out@*/ char ***file_array);
 int db_tags_from_query(const char *path, /*@out@*/ char ***tag_array);
 
 void db_delete_file(const char *path);
+
+const char* get_file_location(const char *path);
 
 #endif

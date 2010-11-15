@@ -8,7 +8,7 @@
 int debug_indent_level = 0;
 sem_t debug_sem;
 
-void DEBUG(int function, int msg_level, char *format, ...) {
+void DEBUG(int function, int msg_level, const char *format, ...) {
 	#if defined(NDEBUG)
 	#else
 		int i = 0;
@@ -27,10 +27,6 @@ void DEBUG(int function, int msg_level, char *format, ...) {
 			for(i = 0; i < debug_indent_level; i++) { (void)printf("  "); }
 			if(msg_level == D_LEVEL_ENTRY) { printf("--> "); }
 			else if(msg_level == D_LEVEL_EXIT) { printf("<-- "); }
-//			printf("\nDEBUG_PATH: %d\n", DEBUG_PATH);
-//			printf("D_FILE_TAGFS_COMMON: %d\n", D_FILE_TAGFS_COMMON);
-//			printf("D_FILE_TAGFS_DB: %d\n", D_FILE_TAGFS_DB);
-//			printf("function: %d\n", function);
 			if((DEBUG_PATH & D_FILE_TAGFS_COMMON & function) == D_FILE_TAGFS_COMMON) { printf("[common] "); }
 			if((DEBUG_PATH & D_FILE_TAGFS_DB & function) == D_FILE_TAGFS_DB) { printf("[db] "); }
 
