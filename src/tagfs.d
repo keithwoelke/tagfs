@@ -1,10 +1,9 @@
 module tagfs;
-// TODO: Investigate this fused is set to 21
-// #define FUSE_USE_VERSION 26
 
 import tagfs_db;
 import tagfs_common;
 import tagfs_debug;
+import std.stdio;
 
 import fuse;
 import std.c.stdio;
@@ -14,20 +13,24 @@ import core.stdc.errno;
 import std.c.stdlib;
 
 extern(C) {
-static int tagfs_getattr(const char *path, stat_t *buf)
+int set_filePath(stat_t *buf);
+void set_tagPath(stat_t *buf);
+	
+int tagfs_getattr(const char *path, stat_t *buf)
 {
 	int retstat = 0;
 
 	if (valid_path_to_file(path)) {
-//		printf("1");
-		retstat = stat("/home/keith/Desktop/test", buf);
+		writeln("Setting file");
+		retstat = set_filePath(buf);
 	}
 	else if(valid_path_to_tag(path)) {
 //		printf("2");
-		buf.st_mode = S_IFDIR | 0755;
-		buf.st_nlink = 2;
+		writeln("tag");
+		set_tagPath(buf);
 	}
 	else {
+		writeln("Bad me");
 //		printf("3");
 		return -ENOENT;
 	}
@@ -106,7 +109,7 @@ int main(string[] args)
 
 	char*[] argv;
 	foreach(arg; args) {
-		argv ~= cast(char*) std.string.toStringz(arg);
+		argv ~= (arg ~ "\0").dup.ptr;
 	}
 	//return fuse_main(argc, argv, &tagfs_oper, null);
 	return fuse_main(argv.length, argv.ptr, &tagfs_oper);

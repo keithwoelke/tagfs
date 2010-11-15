@@ -92,15 +92,15 @@ int num_tags_in_path(const char *path) {
 	return result.length;
 }
 
-bool array_contains_string(/*@out@*/ char **array, char *string, int count) {
+bool array_contains_string(/*@out@*/ char **array, char *strData, int count) {
 	bool contains = false;
 	int i = 0;
 
-	DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_ENTRY, "array_contains_string");
+	DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_ENTRY, "array_contains_strData");
 
-	assert(string !is null);
+	assert(strData !is null);
 
-	DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_DEBUG, "Checking if array contains \"%s\"", string);
+	DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_DEBUG, "Checking if array contains \"%s\"", strData);
 
 	assert(array !is null);
 	assert(count >= 0);
@@ -118,22 +118,22 @@ bool array_contains_string(/*@out@*/ char **array, char *string, int count) {
 	debug_indent();
 	if(array !is null) {
 		for(i = 0; i < count; i++) {
-			if(array[i] !is null && strcmp(array[i], string) == 0) { 
-				DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_FOLDER_CONTENTS, "array[%d] = %s = %s", i, array[i], string);
+			if(array[i] !is null && strcmp(array[i], strData) == 0) { 
+				DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_FOLDER_CONTENTS, "array[%d] = %s = %s", i, array[i], strData);
 				contains = true;
 				break;
 			}
 			else {
-				DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_FOLDER_CONTENTS, "array[%d] = %s != %s", i, array[i], string);
+				DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_FOLDER_CONTENTS, "array[%d] = %s != %s", i, array[i], strData);
 			}
 		}
 	}
 	debug_deindent();
 
-	DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_DEBUG, "%s \"%s\"", contains ? "Array contains" : "Array does not contain", string, contains ? "true" : "false");
+	DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_DEBUG, "%s \"%s\", %s", toStringz(contains ? "Array contains" : "Array does not contain"), strData, toStringz(contains ? "true" : "false"));
 	DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_EXIT, "array_contains_string");
 	return contains;
-} /* array_contains_string */
+} /* array_contains_strData */
 
 bool valid_path_to_file(const char *file_path) {
 	bool valid = false;
@@ -172,7 +172,10 @@ bool valid_path_to_file(const char *file_path) {
 
 	free_char_ptr_array(&file_array, num_files_in_dir);
 
-	DEBUG(D_FUNCTION_VALID_PATH_TO_FILE, D_LEVEL_DEBUG, "%s is %svalid path to a file", file_path, valid ? "a " : "not a ");
+	std.stdio.writeln("Path ", to!string(file_path));
+	std.stdio.writeln("valid ", valid);
+
+	DEBUG(D_FUNCTION_VALID_PATH_TO_FILE, D_LEVEL_DEBUG, "%s is %svalid path to a file", file_path, toStringz(valid ? "a " : "not a "));
 	DEBUG(D_FUNCTION_VALID_PATH_TO_FILE, D_LEVEL_EXIT, "valid_path_to_file");
 
 	free_char_ptr_array(&tag_array, num_tokens);
@@ -209,7 +212,8 @@ bool valid_path_to_tag(const char *path) {
 		free_char_ptr_array(&file_array, num_files);
 	}
 
-	DEBUG(D_FUNCTION_VALID_PATH_TO_TAG, D_LEVEL_DEBUG, "%s is %sa valid path to a tag", path, valid ? "" : "not a ");
+
+	DEBUG(D_FUNCTION_VALID_PATH_TO_TAG, D_LEVEL_DEBUG, "%s is %sa valid path to a tag", path, toStringz(valid ? "" : "not a "));
 	DEBUG(D_FUNCTION_VALID_PATH_TO_TAG, D_LEVEL_EXIT, "valid_path_to_tag");
 	return valid;
 } /* valid_path_to_tag */
