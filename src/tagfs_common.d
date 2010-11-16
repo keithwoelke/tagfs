@@ -77,6 +77,8 @@ void free_char_ptr_array(/*@null@*/ const(char *)**array, int count) {
 int path_to_array(const char *path, char ***array) {
 	auto dpath = to!string(path);
 	auto result = dpath.split(sep);
+	if(result.front == "")
+		result.popFront();
 
 	*array = cast(char**) malloc(result.length * (**array).sizeof);
 	assert(*array !is null);
@@ -89,6 +91,8 @@ int path_to_array(const char *path, char ***array) {
 int num_tags_in_path(const char *path) {
 	auto dpath = to!string(path);
 	auto result = dpath.split(sep);
+	if(result.front == "")
+		result.popFront();
 
 	return result.length;
 }
@@ -153,7 +157,7 @@ bool valid_path_to_file(const char *file_path) {
 
 	dir_path = get_file_directory(file_path);
 	assert(dir_path !is null);
-	num_files_in_dir = db_files_from_query(dir_path, &file_array);
+	num_files_in_dir = db_files_from_restricted_query(dir_path, &file_array);
 
 	assert(dir_path !is null);
 	free(cast(void *)dir_path);

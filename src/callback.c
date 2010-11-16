@@ -1,7 +1,7 @@
 #include <sys/stat.h>
 
-int set_filePath(struct stat *buf) {
-	return stat("/home/keith/Desktop/test", buf);
+int set_filePath(const char *path, struct stat *buf) {
+	return stat(path, buf);
 }
 
 void set_tagPath(struct stat *buf) {
