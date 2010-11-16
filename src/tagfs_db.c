@@ -265,7 +265,7 @@ static const char* db_build_restricted_file_query(const char *path) {
 		num_tags = num_tags_in_path(path);
 		DEBUG(D_FUNCTION_DB_BUILD_RESTRICTED_FILE_QUERY, D_LEVEL_DEBUG, "Number of tags in path: %d", num_tags);
 		num_tags_str = malloc(num_digits(num_tags) * sizeof(*num_tags_str) + 1);
-		(void)snprintf(num_tags_str, num_digits(num_tags), "%d", num_tags);
+		(void)snprintf(num_tags_str, num_digits(num_tags) + 1, "%d", num_tags);
 	
 		restricted_file_query = calloc(strlen(file_query) + strlen(group_by_having) + strlen(num_tags_str) + 1, sizeof(*restricted_file_query));
 		assert(restricted_file_query != NULL);
@@ -541,7 +541,7 @@ void db_delete_file(const char *path) {
 	assert(delete_query != NULL);
 
 	file_id_str = malloc(num_digits(file_id) * sizeof(*file_id_str) + 1);
-	(void)snprintf(file_id_str, num_digits(file_id), "%d", file_id);
+	(void)snprintf(file_id_str, num_digits(file_id) + 1, "%d", file_id);
 	strcat(strcat(delete_query, delete_from), file_id_str);
 	free(file_id_str);
 
@@ -591,7 +591,7 @@ const char* get_file_location(const char *path) {
 	num_digits_id = num_digits(file_id);
 	file_id_str = malloc((num_digits_id + 1) * sizeof(*file_id_str));
 	assert(file_id_str != NULL);
-	snprintf(file_id_str, num_digits_id, "%d", file_id);
+	snprintf(file_id_str, num_digits_id + 1, "%d", file_id);
 	strcat(strcat(query, select_from), file_id_str);
 	free(file_id_str);
 	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_DEBUG, "File location query: %s", query);
