@@ -76,7 +76,7 @@ void free_char_ptr_array(/*@null@*/ const(char *)**array, int count) {
 
 int path_to_array(const char *path, char ***array) {
 	auto dpath = to!string(path);
-	auto result = dpath.split("/");
+	auto result = dpath.split(sep);
 
 	*array = cast(char**) malloc(result.length * (**array).sizeof);
 	assert(*array !is null);
@@ -88,7 +88,7 @@ int path_to_array(const char *path, char ***array) {
 
 int num_tags_in_path(const char *path) {
 	auto dpath = to!string(path);
-	auto result = dpath.split(pathsep);
+	auto result = dpath.split(sep);
 
 	return result.length;
 }
@@ -183,7 +183,7 @@ bool valid_path_to_file(const char *file_path) {
 
 static bool unique_tags_in_path(const char *path) {
 	auto dpath = to!string(path);
-	auto result = dpath.split(pathsep);
+	auto result = dpath.split(sep);
 	if(findAdjacent(sort(result)).empty)
 		return true;
 	return false;
