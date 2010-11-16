@@ -91,11 +91,11 @@ int main(string[] args)
 	tagfs_oper.getattr = &tagfs_getattr;
 	tagfs_oper.readdir = &tagfs_readdir;
 	tagfs_oper.unlink = &tagfs_unlink;
+	tagfs_oper.read = &tagfs_read;
 
 	char*[] argv;
 	foreach(arg; args) {
 		argv ~= (arg ~ "\0").dup.ptr;
 	}
-	//return fuse_main(argc, argv, &tagfs_oper, null);
 	return fuse_main(argv.length, argv.ptr, &tagfs_oper);
 }
