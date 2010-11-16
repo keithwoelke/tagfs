@@ -616,4 +616,4 @@ const char* get_file_location(const char *path) {
 	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_EXIT, "db_get_file_location");
 
 	return file_path;
-}
+} /* get_file_location */

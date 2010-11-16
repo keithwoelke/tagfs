@@ -197,7 +197,7 @@ bool array_contains_string(/*@out@*/ char **array, char *string, int count) {
 	}
 	debug_deindent();
 
-	DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_DEBUG, "%s \"%s\"", contains ? "Array contains" : "Array does not contain", string, contains ? "true" : "false");
+	DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_DEBUG, "%s \"%s\"", contains ? "Array contains" : "Array does not contain", string);
 	DEBUG(D_FUNCTION_ARRAY_CONTAINS_STRING, D_LEVEL_EXIT, "array_contains_string");
 	return contains;
 } /* array_contains_string */
