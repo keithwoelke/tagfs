@@ -11,7 +11,7 @@
 #include <sqlite3.h>
 #include <stdbool.h>
 
-#define DB_LOCATION "/home/keith/Programming/FUSE/tagfs/src/tagfs.sl3"
+extern char *db_location;
 
 /**
  * Retrieves an array of files that reside at a location in the file system. The array that is passed in must be free'd to avoid memory leaks. This can be easily done using the free_char_ptr_array function.

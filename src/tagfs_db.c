@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static int db_enable_foreign_keys(sqlite3 *conn) {
 	char *error_msg = NULL;
@@ -30,17 +31,22 @@ static int db_enable_foreign_keys(sqlite3 *conn) {
 	return error;
 } /* db_enable_foreign_keys */
 
-static sqlite3* db_connect(char *dbName) {
+sqlite3* db_connect() {
+	char *db_location = NULL;
+	char db_name[] = "tagfs.sl3";
+	char *db_wd = getcwd(NULL, 0);
 	int error = 0;
 	sqlite3 *conn = NULL;
 
 	DEBUG(D_FUNCTION_DB_CONNECT, D_LEVEL_ENTRY, "db_connect");
 
-	assert(dbName != NULL);
+	db_location = calloc(strlen(db_wd) + strlen("/") + strlen(db_name), sizeof(*db_location));
+	assert(db_location != NULL);
+	strcat(strcat(strcat(db_location, db_wd), "/"), db_name);
 
-	DEBUG(D_FUNCTION_DB_CONNECT, D_LEVEL_DEBUG, "Connecting to database: %s", dbName);
+	DEBUG(D_FUNCTION_DB_CONNECT, D_LEVEL_DEBUG, "Connecting to database: %s", db_location);
 
-	error = sqlite3_open_v2(dbName, &conn, SQLITE_OPEN_READWRITE, NULL); /* TODO: set as 'SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE' and create the database if it does not exist already */
+	error = sqlite3_open_v2(db_location, &conn, SQLITE_OPEN_READWRITE, NULL); /* TODO: set as 'SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE' and create the database if it does not exist already */
 	assert(conn != NULL);
 
 	if(error != SQLITE_OK) { /* if no space on drive or file does not exist */
@@ -96,7 +102,7 @@ static int db_count_from_query(const char *query) {
 
 	strcat(strcat(strcat(count_query, "SELECT COUNT(*) FROM ("), query), ")");
 
-	conn = db_connect(DB_LOCATION);
+	conn = db_connect();
 	assert(conn != NULL);
 
 	(void)sqlite3_prepare_v2(conn, count_query, strlen(count_query), &res, &tail);
@@ -143,7 +149,7 @@ static int db_array_from_query(char *desired_column_name, const char *result_que
 		DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Allocating array of %d elements", num_results);
 		assert(*result_array != NULL);
 
-		conn = db_connect(DB_LOCATION);
+		conn = db_connect();
 		assert(conn != NULL);
 
 		(void)sqlite3_prepare_v2(conn, result_query, strlen(result_query), &res, &tail);
@@ -533,7 +539,7 @@ void db_delete_file(const char *path) {
 	file_id = db_get_file_id(path);
 	DEBUG(D_FUNCTION_DB_DELETE_FILE, D_LEVEL_DEBUG, "File ID to delete: %d", file_id);
 
-	conn = db_connect(DB_LOCATION);
+	conn = db_connect();
 	assert(conn != NULL);
 
 	delete_query_length = strlen(delete_from) + num_digits(file_id) + 1;
@@ -596,7 +602,7 @@ const char* get_file_location(const char *path) {
 	free(file_id_str);
 	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_DEBUG, "File location query: %s", query);
 
-	conn = db_connect(DB_LOCATION);
+	conn = db_connect();
 
 	(void)sqlite3_prepare_v2(conn, query, strlen(query), &res, NULL);
 	free(query);
