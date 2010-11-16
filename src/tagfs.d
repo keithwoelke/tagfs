@@ -22,15 +22,12 @@ int tagfs_getattr(const char *path, stat_t *buf)
 	int retstat = 0;
 
 	if (valid_path_to_file(path)) {
-		writeln("Setting file");
 		retstat = set_filePath(buf);
 	}
 	else if(valid_path_to_tag(path)) {
-		writeln("tag");
 		set_tagPath(buf);
 	}
 	else {
-		writeln("Bad me");
 		return -ENOENT;
 	}
 

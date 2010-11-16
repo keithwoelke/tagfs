@@ -5,6 +5,7 @@ import tagfs_debug;
 import std.c.stdlib;
 import std.c.string;
 import std.string;
+import std.array;
 import std.conv;
 import std.path;
 import std.algorithm;
@@ -75,7 +76,7 @@ void free_char_ptr_array(/*@null@*/ const(char *)**array, int count) {
 
 int path_to_array(const char *path, char ***array) {
 	auto dpath = to!string(path);
-	auto result = dpath.split(pathsep);
+	auto result = dpath.split("/");
 
 	*array = cast(char**) malloc(result.length * (**array).sizeof);
 	assert(*array !is null);
@@ -171,9 +172,6 @@ bool valid_path_to_file(const char *file_path) {
 	}
 
 	free_char_ptr_array(&file_array, num_files_in_dir);
-
-	std.stdio.writeln("Path ", to!string(file_path));
-	std.stdio.writeln("valid ", valid);
 
 	DEBUG(D_FUNCTION_VALID_PATH_TO_FILE, D_LEVEL_DEBUG, "%s is %svalid path to a file", file_path, toStringz(valid ? "a " : "not a "));
 	DEBUG(D_FUNCTION_VALID_PATH_TO_FILE, D_LEVEL_EXIT, "valid_path_to_file");
