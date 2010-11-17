@@ -221,15 +221,15 @@ bool valid_path_to_tag(const char *path) {
 } /* valid_path_to_tag */
 
 int num_digits(int num) {
-	int count = 1;
+	int count = 0;
 
 	DEBUG(D_FUNCTION_NUM_DIGITS, D_LEVEL_ENTRY, "num_digits");
 	DEBUG(D_FUNCTION_NUM_DIGITS, D_LEVEL_DEBUG, "Counting number of digits in %d", num);
 
-	while(num != 0) {
+	do {
 		num /= 10;
 		count++;
-	}
+	} while(num != 0);
 
 	DEBUG(D_FUNCTION_NUM_DIGITS, D_LEVEL_DEBUG, "Number of digits: %d", count);
 	DEBUG(D_FUNCTION_NUM_DIGITS, D_LEVEL_EXIT, "num_digits");

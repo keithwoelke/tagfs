@@ -24,7 +24,7 @@ int tagfs_getattr(const char *path, stat_t *buf)
 	int retstat = 0;
 
 	if (valid_path_to_file(path)) {
-		retstat = set_filePath(pseudoConvPath(get_file_location(path)), buf);
+		retstat = set_filePath(get_file_location(path), buf);
 	}
 	else if(valid_path_to_tag(path)) {
 		set_tagPath(buf);
@@ -34,14 +34,6 @@ int tagfs_getattr(const char *path, stat_t *buf)
 	}
 
 	return retstat;
-}
-
-immutable(char*) pseudoConvPath(const char* path) {
-	auto pwd = to!string(getcwd(null, 0));
-	auto strPath = to!string(path);
-	
-	strPath.skipOver("/home/keith/Programming/FUSE/tagfs/src");
-	return toStringz(pwd ~ strPath);
 }
 
 static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, fuse_file_info *fi)
@@ -79,7 +71,7 @@ int tagfs_unlink(const char *path) {
 int tagfs_read(const char *path, char *buf, size_t size, off_t offset, fuse_file_info *fi) {
 	int retstat = 0;
 
-	int fd = open(pseudoConvPath(get_file_location(path)), O_RDONLY);
+	int fd = open(get_file_location(path), O_RDONLY);
 	retstat = pread(fd, buf, size, offset);
 
 	return retstat;
