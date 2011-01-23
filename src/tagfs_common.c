@@ -1,10 +1,7 @@
 #include "tagfs_common.h"
 #include "tagfs_debug.h"
-//#include "tagfs_db.h"
 
 #include <string.h>
-//#include <assert.h>
-//#include <stdlib.h>
 
 char *get_file_directory(char *file_path) {
 	int i = 0;

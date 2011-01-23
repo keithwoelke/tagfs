@@ -9,17 +9,7 @@
 #include "tagfs_db.h"
 #include "tagfs_debug.h"
 
-//#include <fuse.h>
-//#include <stdio.h>
-//#include <stdlib.h>
 #include <string.h>
-//#include <errno.h>
-//#include <sys/types.h>
-//#include <time.h>
-//#include <unistd.h>
-//#include <signal.h>
-
-
 
 static int tagfs_getattr(const char *path, struct stat *buf) {
 	int retstat = 0;
@@ -99,13 +89,13 @@ static struct fuse_operations tagfs_oper = {
 int main(int argc, char *argv[])
 {
 	char *full_db_path = NULL;
-	char *full_log_path = NULL;
 	int path_length = 0;
 	int retstat = 0;
 	struct tagfs_state tagfs_data;
 	tagfs_data.dbpath = NULL;
 	tagfs_data.execdir = NULL;
 	tagfs_data.logfile = NULL;
+	tagfs_data.logpath = NULL;
 
 	debug_init(); /* initialize debug semaphore */
 
@@ -118,12 +108,11 @@ int main(int argc, char *argv[])
 	/* log path */
 	path_length = strlen(tagfs_data.execdir) + strlen("log.txt"); 
 	assert(path_length > 0);
-	full_log_path = malloc(path_length * sizeof(*full_log_path) + 1);
-	assert(full_log_path != NULL);
-	(void)snprintf(full_log_path, path_length + 1, "%slog.txt", tagfs_data.execdir);
-	tagfs_data.logfile = debug_open_log(full_log_path); /* full path to log file */
+	tagfs_data.logpath = malloc(path_length * sizeof(*tagfs_data.logpath) + 1);
+	assert(tagfs_data.logpath != NULL);
+	(void)snprintf(tagfs_data.logpath, path_length + 1, "%slog.txt", tagfs_data.execdir);
+	tagfs_data.logfile = debug_open_log(tagfs_data.logpath); /* full path to log file */
 	assert(tagfs_data.logfile != NULL);
-	free(full_log_path);
 
 	/* db path */
 	path_length = strlen(tagfs_data.execdir) + strlen("tagfs.sl3"); 
@@ -135,7 +124,18 @@ int main(int argc, char *argv[])
 	retstat = fuse_main(argc, argv, &tagfs_oper, &tagfs_data);
 
 	debug_close_log(tagfs_data.logfile);
+
+	assert(tagfs_data.execdir != NULL);
 	free(tagfs_data.execdir);
+	tagfs_data.execdir = NULL;
+
+	assert(tagfs_data.dbpath != NULL);
 	free(tagfs_data.dbpath);
+	tagfs_data.dbpath = NULL;
+
+	assert(tagfs_data.logpath != NULL);
+	free(tagfs_data.logpath);
+	tagfs_data.logpath = NULL;
+
 	return retstat;
 } /* main */

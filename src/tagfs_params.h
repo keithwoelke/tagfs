@@ -18,6 +18,7 @@
  */
 struct tagfs_state {
 	FILE *logfile;
+	char *logpath;
 	char *dbpath;
 	char *execdir;
 };

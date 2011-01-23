@@ -1,6 +1,6 @@
-#include "tagfs_debug.h"
 #include "tagfs_common.h"
 #include "tagfs_db.h"
+#include "tagfs_debug.h"
 
 #include <string.h>
 #include <sqlite3.h>
@@ -52,6 +52,26 @@ static int db_disconnect(sqlite3 *conn) {
 	return error;
 } /* db_disconnect */
 
+static char* db_query_files_from_tag(const char *tag) {
+	char *query = NULL;
+	const char select_from[] = "SELECT file_id FROM all_tables where tag_name == \"";
+	int query_length = 0;
+
+	assert(tag != NULL);
+
+	query_length = strlen(select_from) + strlen(tag) + 1; /* 1 for closing " */
+	assert(query_length > 0);
+	DEBUG("Query to select files based on tag is %d characters long.", query_length);
+	query = malloc(query_length + 1);
+	assert(query != NULL);
+
+	(void)snprintf(query, query_length + 1, "%s%s\"", select_from, tag);
+
+	DEBUG("Query to select files based on tag \"%s\": %s", tag, query);
+
+	return query;
+} /* db_query_files_from_tag */
+
 void db_create_table() {
 	char *create_query = NULL;
 	char query[] = "CREATE TABLE \"thread_\" (\"file_id\" INTEGER PRIMARY KEY NOT NULL)";
@@ -61,7 +81,7 @@ void db_create_table() {
 	sqlite3_stmt *res = NULL;
 	unsigned int tid = pthread_self();
 
-	DEBUG("Creating table: thread_%u", tid);
+	DEBUG("Creating table thread_%u", tid);
 
 	create_query_length = strlen(query) + num_digits(tid);
 	assert(create_query_length > 0);
@@ -130,9 +150,63 @@ void db_delete_table() {
 	}
 } /* db_delete_table */
 
+static void db_load_table_from_tag(const char *tag) {
+	unsigned int tid = pthread_self();
+//	int file_id = 0;
+	char *file_query = NULL;
+//	char *insert_query = NULL;
+//	const char query[] = "INSERT INTO \"thread_\"(file_name) VALUES()";
+//	int i = 0;
+	sqlite3 *conn = NULL;
+	sqlite3_stmt *file_res = NULL;
+//	sqlite3_stmt *insert_res = NULL;
+//	int insert_query_length = 0;
+//	int rc = 0;
 
+	assert(tag != NULL);
 
+	DEBUG("Loading files into table \"thread_%u\".", tid);
 
+	file_query = db_query_files_from_tag(tag);
+	assert(file_query != NULL);
+	DEBUG("Query to select files with tag \"%s\": %s", tag, file_query);
+
+	conn = db_connect();
+	assert(conn != NULL);
+
+	(void)sqlite3_prepare_v2(conn, file_query, strlen(file_query), &file_res, NULL);
+	assert(file_query != NULL);
+	free(file_query);
+	file_query = NULL;
+
+//	for(i = 0; sqlite3_step(file_res) == SQLITE_ROW; i++) {
+//		file_id	= sqlite3_column_int(file_res, 0);
+//		DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_FOLDER_CONTENTS, "Retrieving file id: %d", file_id);
+//		insert_query_length = strlen(query) + num_digits(tid) + num_digits(file_id) + 1, sizeof(*query);
+//		insert_query = calloc(insert_query_length, sizeof(*insert_query));
+//		assert(insert_query != NULL);
+//		snprintf(insert_query, insert_query_length, "INSERT INTO \"thread_%u\"(file_id) VALUES(%d)", tid,  file_id);
+
+//		(void)sqlite3_prepare_v2(conn, insert_query, strlen(insert_query), &insert_res, NULL);
+//		DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_FOLDER_CONTENTS, "Insert query: %s", insert_query);
+//		assert(insert_query != NULL);
+//		free(insert_query);
+//		insert_query = NULL;
+//
+//		rc = sqlite3_step(insert_res);
+//		sqlite3_finalize(insert_res);
+//
+//		if(rc == SQLITE_DONE) {
+//			DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_DEBUG, "Insertion was a SUCCESS");
+//		}
+//		else {
+//			DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_WARNING, "Insertion FAILED with result code %d", rc);
+//		}
+//	}
+//
+//	sqlite3_finalize(file_res);
+//	db_disconnect(conn);
+} /* db_load_tag_table */
 
 
 

@@ -29,14 +29,14 @@
  * @param full_log_path Location of the log file.
  * @return A handle for the log file.
  */
-FILE *debug_open_log(char *full_log_path);
+FILE *debug_open_log();
 
 /**
  * Closes the log file.
  *
  * @param logfile File handle of the log file.
  */
-void debug_close_log(FILE *logfile);
+void debug_close_log();
 
 /**
  * Initializes the debug semaphore.

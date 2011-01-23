@@ -2,10 +2,10 @@
 
 sem_t debug_sem;
 
-FILE *debug_open_log(char *full_log_path) {
+FILE *debug_open_log(char *logpath) {
 	FILE *logfile = NULL;
 
-	logfile = fopen(full_log_path, "w");
+	logfile = fopen(logpath, "w");
 
 	if(logfile == NULL) {
 		fprintf(stderr, "WARNING: Could not open log file.\n");
@@ -17,7 +17,9 @@ FILE *debug_open_log(char *full_log_path) {
 void debug_close_log(FILE *logfile) {
 	int retstat = 0;
 
+	assert(logfile != NULL);
 	retstat = fclose(logfile);
+	logfile = NULL;
 
 	if(retstat != 0) {
 		fprintf(stderr, "WARNING: Could not close log file.\n");
