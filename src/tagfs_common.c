@@ -30,123 +30,128 @@ int num_digits(unsigned int num) {
 	return count;
 } /* num_digits */
 
+void free_char_ptr_array(/*@null@*/ char ***array, int count) {
+	int i = 0;
+
+	assert(array != NULL);
+	assert(count >= 0);
+
+	if(*array != NULL) {
+		for(; i < count; i++) {
+			assert((*array)[i] != NULL);
+			free((*array)[i]);
+			(*array)[i] = NULL;
+		}
+
+		assert(*array != NULL);
+		free(*array);
+		*array = NULL;
+	}
+} /* free_char_ptr_array */
+
+int path_to_array(const char *path, char ***array) {
+	char *tmp_path = NULL;
+	char *tok_ptr = NULL;
+	char *token = NULL;
+	int i = 0;
+	int num_tokens = 0;
+
+	assert(path != NULL);
+	assert(array != NULL);
+	assert(*array == NULL);
+
+	if(strcmp(path, "/") != 0) {
+		DEBUG("Converting %s to an array.", path);
+
+		num_tokens = num_tags_in_path(path);
+		assert(num_tokens > 0);
+		DEBUG("Number of tokens in %s: %d", path, num_tokens);
+
+		tmp_path = malloc(strlen(path) * sizeof(*tmp_path) + 1);
+		assert(tmp_path != NULL);
+
+		*array = malloc(num_tokens * sizeof(**array));
+		assert(*array != NULL);
+
+		strcpy(tmp_path, path);
+		assert(strcmp(path, tmp_path) == 0);
+		token = strtok_r(tmp_path, "/", &tok_ptr);
+
+		DEBUG("Array contents:");
+
+		for(i = 0; token != NULL; i++) {
+			(*array)[i] = malloc(strlen(token) * sizeof(*(*array)[i]) + 1);
+			assert((*array)[i] != NULL);
+			strcpy((*array)[i], token);
+			assert(strcmp((*array)[i], token) == 0);
+			DEBUG("  array[%d] = %s, at address %p.", i, (*array)[i], (*array)[i]);
+			token = strtok_r(NULL, "/", &tok_ptr);
+		}
+
+		assert(tmp_path);
+		free(tmp_path);
+		tmp_path = NULL;
+
+	}
+
+	return num_tokens;
+} /* path_to_array */
+
+int num_tags_in_path(const char *path) {
+	char *tmp_path = NULL;
+	char *tok_ptr = NULL;
+	char *token = NULL;
+	int i = 0;
+
+	assert(path != NULL);
+
+	DEBUG("Calculating number of tags in %s.", path);
+
+	tmp_path = malloc(strlen(path) * sizeof(*tmp_path) + 1);
+	assert(tmp_path != NULL);
+
+	strcpy(tmp_path, path);
+	assert(strcmp(path, tmp_path) == 0);
+	token = strtok_r(tmp_path, "/", &tok_ptr);
+
+	for(i = 0; token != NULL; i++) { token = strtok_r(NULL, "/", &tok_ptr); }
+	
+	assert(tmp_path != NULL);
+	free(tmp_path);
+	tmp_path = NULL;
+
+	DEBUG("Number of tags in %s: %d", path, i);
+	return i;
+} /* num_tags_in_path */
 
 
 
 
-//void free_char_ptr_array(/*@null@*/ char ***array, int count) {
-//	int i = 0;
-//
-//	DEBUG(D_FUNCTION_FREE_CHAR_PTR_ARRAY, D_LEVEL_ENTRY, "free_char_ptr_array");
-//	DEBUG(D_FUNCTION_FREE_CHAR_PTR_ARRAY, D_LEVEL_DEBUG, "Attempting to free array of %d pointer(s) plus the main pointer.", count);
-//
-//	assert(array != NULL);
-//	assert(count >= 0);
-//
-//	if(*array == NULL) {
-//		DEBUG(D_FUNCTION_FREE_CHAR_PTR_ARRAY, D_LEVEL_DEBUG, "Array is NULL. Nothing to free.");
-//	}
-//	else {
-//		assert(*array != NULL);
-//		for(i = 0; i < count; i++) {
-//			DEBUG(D_FUNCTION_FREE_CHAR_PTR_ARRAY, D_LEVEL_FOLDER_CONTENTS, "Freeing array[%d] = %s", i, (*array)[i]);
-//			free((*array)[i]);
-//			(*array)[i] = NULL;
-//		}
-//		DEBUG(D_FUNCTION_FREE_CHAR_PTR_ARRAY, D_LEVEL_DEBUG, "Free'd %d element(s).", i);
-//
-//		assert(*array != NULL);
-//		free(*array);
-//		*array = NULL;
-//
-//		DEBUG(D_FUNCTION_FREE_CHAR_PTR_ARRAY, D_LEVEL_DEBUG, "Free'd main array pointer.");
-//	}
-//
-//	DEBUG(D_FUNCTION_FREE_CHAR_PTR_ARRAY, D_LEVEL_EXIT, "free_char_ptr_array");
-//} /* free_char_ptr_array */
-//
-//int path_to_array(const char *path, char ***array) {
-//	char *tmp_path = NULL;
-//	char *tok_ptr = NULL;
-//	char *token = NULL;
-//	int i = 0;
-//	int num_tokens = 0;
-//
-//	assert(path != NULL);
-//	assert(array != NULL);
-//	assert(*array == NULL);
-//
-//	if(strcmp(path, "/") != 0) {
-//		DEBUG(D_FUNCTION_PATH_TO_ARRAY, D_LEVEL_ENTRY, "path_to_array");
-//		DEBUG(D_FUNCTION_PATH_TO_ARRAY, D_LEVEL_DEBUG, "Converting %s to an array", path);
-//
-//		num_tokens = num_tags_in_path(path);
-//		DEBUG(D_FUNCTION_PATH_TO_ARRAY, D_LEVEL_DEBUG, "Number of tokens: %d", num_tokens);
-//
-//		tmp_path = malloc(strlen(path) * sizeof(*tmp_path) + 1);
-//		assert(tmp_path);
-//
-//		*array = malloc(num_tokens * sizeof(**array));
-//		assert(*array != NULL);
-//
-//		strcpy(tmp_path, path);
-//		assert(strcmp(path, tmp_path) == 0);
-//		token = strtok_r(tmp_path, "/", &tok_ptr);
-//
-//		DEBUG(D_FUNCTION_PATH_TO_ARRAY, D_LEVEL_DEBUG, "Array contents:");
-//
-//		debug_indent();
-//		for(i = 0; token != NULL; i++) {
-//			(*array)[i] = malloc(strlen(token) * sizeof(*(*array)[i]) + 1);
-//			assert((*array)[i] != NULL);
-//			strcpy((*array)[i], token);
-//			assert(strcmp((*array)[i], token) == 0);
-//			DEBUG(D_FUNCTION_PATH_TO_ARRAY, D_LEVEL_DEBUG, "array[%d] = %s, at address %p.", i, (*array)[i], (*array)[i]);
-//			token = strtok_r(NULL, "/", &tok_ptr);
-//		}
-//		debug_deindent();
-//
-//		assert(tmp_path);
-//		free(tmp_path);
-//		tmp_path = NULL;
-//
-//		DEBUG(D_FUNCTION_PATH_TO_ARRAY, D_LEVEL_DEBUG, "Returning array from path with %d element(s).", num_tokens);
-//		DEBUG(D_FUNCTION_PATH_TO_ARRAY, D_LEVEL_EXIT, "path_to_array");
-//	}
-//
-//	return num_tokens;
-//} /* path_to_array */
-//
-//int num_tags_in_path(const char *path) {
-//	char *tmp_path = NULL;
-//	char *tok_ptr = NULL;
-//	char *token = NULL;
-//	int i = 0;
-//
-//	DEBUG(D_FUNCTION_NUM_TAGS_IN_PATH, D_LEVEL_ENTRY, "num_tags_in_path");
-//
-//	assert(path != NULL);
-//
-//	DEBUG(D_FUNCTION_NUM_TAGS_IN_PATH, D_LEVEL_DEBUG, "Calculating number of tags in %s", path);
-//
-//	tmp_path = malloc(strlen(path) * sizeof(*tmp_path) + 1);
-//	assert(tmp_path != NULL);
-//
-//	strcpy(tmp_path, path);
-//	assert(strcmp(path, tmp_path) == 0);
-//	token = strtok_r(tmp_path, "/", &tok_ptr);
-//
-//	for(i = 0; token != NULL; i++) { token = strtok_r(NULL, "/", &tok_ptr); }
-//	
-//	assert(tmp_path != NULL);
-//	free(tmp_path);
-//	tmp_path = NULL;
-//
-//	DEBUG(D_FUNCTION_NUM_TAGS_IN_PATH, D_LEVEL_DEBUG, "Number of tags in %s: %d", path, i);
-//	DEBUG(D_FUNCTION_NUM_TAGS_IN_PATH, D_LEVEL_EXIT, "num_tags_in_path");
-//	return i;
-//} /* num_tags_in_path */
-//
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //bool array_contains_string(/*@out@*/ char **array, char *string, int count) {
 //	bool contains = false;
 //	int i = 0;

@@ -22,7 +22,9 @@ void db_create_table();
  */
 void db_delete_table();
 
+void db_load_table_by_path(const char *path);
 
+void db_truncate_table();
 
 
 

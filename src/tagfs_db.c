@@ -2,8 +2,23 @@
 #include "tagfs_db.h"
 #include "tagfs_debug.h"
 
-#include <string.h>
 #include <sqlite3.h>
+#include <stdbool.h>
+#include <string.h>
+
+static int db_disconnect(sqlite3 *conn) {
+	int error = 0;
+
+	assert(conn != NULL);
+
+	error = sqlite3_close(conn);
+
+	if(error != SQLITE_OK) /* has pending operations or prepared statements to be free'd */ {
+		ERROR("A problem occured while disconnecting from the database: %s", sqlite3_errmsg(conn));
+	}
+
+	return error;
+} /* db_disconnect */
 
 static int db_enable_foreign_keys(sqlite3 *conn) {
 	char *error_msg = NULL;
@@ -38,19 +53,121 @@ static sqlite3 *db_connect() {
 	return conn;
 } /* db_connect */
 
-static int db_disconnect(sqlite3 *conn) {
-	int error = 0;
+static int db_count_from_query(const char *query) {
+	char *count_query = NULL;
+	char select_count[] = "SELECT COUNT(*) FROM (";
+	const char *tail = NULL;
+	int count = 0;
+	int count_query_length = 0;
+	sqlite3 *conn = NULL;
+	sqlite3_stmt *res = NULL;
 
+	assert(query != NULL);
+
+	DEBUG("Calculating results returned from query: %s", query);
+
+	count_query_length = strlen(query) + strlen(select_count) + 1; /* 2 for closing parenthesis and null terminating character */
+	assert(count_query_length > 0);
+	DEBUG("Query is %d character(s) in length.", count_query_length);
+	count_query = calloc(count_query_length, sizeof(*count_query));
+	assert(count_query != NULL);
+
+	(void)snprintf(count_query, count_query_length + 1, "SELECT COUNT(*) FROM (%s)", count_query);
+
+	conn = db_connect();
 	assert(conn != NULL);
 
-	error = sqlite3_close(conn);
+	(void)sqlite3_prepare_v2(conn, count_query, strlen(count_query), &res, &tail);
 
-	if(error != SQLITE_OK) /* has pending operations or prepared statements to be free'd */ {
-		ERROR("A problem occured while disconnecting from the database: %s", sqlite3_errmsg(conn));
+	assert(count_query != NULL);
+	free(count_query);
+	count_query = NULL;
+
+	(void)sqlite3_step(res);
+	count = sqlite3_column_int(res, 0);
+	assert(count > 0);
+
+	(void)sqlite3_finalize(res);
+	(void)db_disconnect(conn);
+
+	DEBUG("%d results returned from query.", count);
+
+	return count;
+} /* db_count_from_query */
+
+static int db_array_from_query(char *desired_column_name, const char *result_query, char ***result_array) {
+	bool column_match = false;
+	const char *tail = NULL;
+	const unsigned char *result = NULL;
+	int column_count = 0;
+	int desired_column_index = 0;
+	int i = 0;
+	int num_results = 0;
+	sqlite3 *conn = NULL;
+	sqlite3_stmt *res = NULL;
+
+	assert(result_query != NULL);
+	assert(result_array != NULL);
+	assert(*result_array == NULL);
+
+	DEBUG("Generating array from query: %s", result_query);
+	DEBUG("Requested column: %s", desired_column_name);
+
+	num_results = db_count_from_query(result_query);
+
+	if(num_results > 0) {
+		*result_array = malloc(num_results * sizeof(**result_array));
+		assert(*result_array != NULL);
+
+		DEBUG("Allocating array of %d elements", num_results);
+
+		conn = db_connect();
+		assert(conn != NULL);
+
+		(void)sqlite3_prepare_v2(conn, result_query, strlen(result_query), &res, &tail);
+		column_count = sqlite3_column_count(res);
+		assert(column_count > 0);
+		DEBUG("Query returns %d column(s)", column_count);
+
+		for(desired_column_index = 0; desired_column_index < column_count; desired_column_index++) { /* find the requested column */
+			if(strcmp(desired_column_name, sqlite3_column_name(res, desired_column_index)) == 0) { 
+				DEBUG("Located matching column for %s at index %d", desired_column_name, desired_column_index);
+				column_match = true;
+				break; 
+			}
+		}
+
+		if(column_match == false) {
+			DEBUG("Database column was NOT matched successfully");
+		}
+		DEBUG("Query results: ");
+
+		for(i = 0; sqlite3_step(res) == SQLITE_ROW; i++) {
+			result = sqlite3_column_text(res, desired_column_index); 
+			(*result_array)[i] = malloc(result == NULL ? sizeof(NULL) : strlen((const char *)result) * sizeof(*result) + 1);
+			assert((*result_array)[i] != NULL);
+
+			if(result != NULL) {
+				(void)strcpy((*result_array)[i], (char*)result);
+			}
+			else {
+				(*result_array)[i] = NULL;
+			}
+
+			DEBUG("  result_array[%d] = %s, at address %p", i, (*result_array)[i], (*result_array)[i]);
+		}
+
+		(void)sqlite3_finalize(res);
+		(void)db_disconnect(conn);
+	}
+	else {
+		DEBUG("Null array being returned");
 	}
 
-	return error;
-} /* db_disconnect */
+	DEBUG("Query returns %d result(s)", num_results);
+
+	return num_results;
+} /* db_array_from_query */
 
 static char* db_query_files_from_tag(const char *tag) {
 	char *query = NULL;
@@ -104,7 +221,7 @@ void db_create_table() {
 	(void)db_disconnect(conn);
 
 	if(rc == SQLITE_DONE) {
-		DEBUG("Table \"thread_%u\"created successfully.", tid);
+		DEBUG("Table \"thread_%u\" created successfully.", tid);
 	}
 	else {
 		ERROR("Table creation FAILED for \"thread_%u\" with result code %d", tid, rc);
@@ -150,18 +267,20 @@ void db_delete_table() {
 	}
 } /* db_delete_table */
 
-static void db_load_table_from_tag(const char *tag) {
-	unsigned int tid = pthread_self();
-//	int file_id = 0;
+static void db_load_table_by_tag(const char *tag) {
+DEBUG("foo");
+printf("test");
 	char *file_query = NULL;
-//	char *insert_query = NULL;
-//	const char query[] = "INSERT INTO \"thread_\"(file_name) VALUES()";
-//	int i = 0;
+	char *insert_query = NULL;
+	const char query[] = "INSERT INTO \"thread_\"(file_name) VALUES()";
+	int file_id = 0;
+	int i = 0;
+	int insert_query_length = 0;
+	int rc = 0;
 	sqlite3 *conn = NULL;
 	sqlite3_stmt *file_res = NULL;
-//	sqlite3_stmt *insert_res = NULL;
-//	int insert_query_length = 0;
-//	int rc = 0;
+	sqlite3_stmt *insert_res = NULL;
+	unsigned int tid = pthread_self();
 
 	assert(tag != NULL);
 
@@ -179,34 +298,144 @@ static void db_load_table_from_tag(const char *tag) {
 	free(file_query);
 	file_query = NULL;
 
-//	for(i = 0; sqlite3_step(file_res) == SQLITE_ROW; i++) {
-//		file_id	= sqlite3_column_int(file_res, 0);
-//		DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_FOLDER_CONTENTS, "Retrieving file id: %d", file_id);
-//		insert_query_length = strlen(query) + num_digits(tid) + num_digits(file_id) + 1, sizeof(*query);
-//		insert_query = calloc(insert_query_length, sizeof(*insert_query));
-//		assert(insert_query != NULL);
-//		snprintf(insert_query, insert_query_length, "INSERT INTO \"thread_%u\"(file_id) VALUES(%d)", tid,  file_id);
+	for(i = 0; sqlite3_step(file_res) == SQLITE_ROW; i++) {
+		file_id	= sqlite3_column_int(file_res, 0);
+		DEBUG("Retrieving file matching tag \"%s\" with id %d.", tag, file_id);
+		insert_query_length = strlen(query) + num_digits(tid) + num_digits(file_id), sizeof(*query);
+		insert_query = malloc(sizeof(*insert_query) * insert_query_length + 1);
+		assert(insert_query != NULL);
 
-//		(void)sqlite3_prepare_v2(conn, insert_query, strlen(insert_query), &insert_res, NULL);
-//		DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_FOLDER_CONTENTS, "Insert query: %s", insert_query);
-//		assert(insert_query != NULL);
-//		free(insert_query);
-//		insert_query = NULL;
-//
-//		rc = sqlite3_step(insert_res);
-//		sqlite3_finalize(insert_res);
-//
-//		if(rc == SQLITE_DONE) {
-//			DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_DEBUG, "Insertion was a SUCCESS");
-//		}
-//		else {
-//			DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_WARNING, "Insertion FAILED with result code %d", rc);
-//		}
-//	}
-//
-//	sqlite3_finalize(file_res);
-//	db_disconnect(conn);
-} /* db_load_tag_table */
+		(void)snprintf(insert_query, insert_query_length + 1, "INSERT INTO \"thread_%u\"(file_id) VALUES(%d)", tid,  file_id);
+		DEBUG("Query to load file ID \"%d\" into table \"thread_%u\": %s", file_id, tid, insert_query);
+		(void)sqlite3_prepare_v2(conn, insert_query, strlen(insert_query), &insert_res, NULL);
+
+		assert(insert_query != NULL);
+		free(insert_query);
+		insert_query = NULL;
+
+		rc = sqlite3_step(insert_res);
+		sqlite3_finalize(insert_res);
+
+		if(rc == SQLITE_DONE) {
+			DEBUG("Insertion of file ID \"%d\" was a success.", file_id);
+		}
+		else {
+			WARN("Insertion of file ID \"%d\" failed with result code %d", file_id, rc);
+		}
+	}
+
+	sqlite3_finalize(file_res);
+	db_disconnect(conn);
+} /* db_load_table_by_tag */
+
+static void db_filter_table(const char *tag) {
+	char **file_array = NULL;
+	char *file_query = NULL;
+	char *filter_query = NULL;
+	char *insert_query = NULL;
+	char filter_query_outline[] = "SELECT file_id FROM thread_ WHERE file_id IN ()";
+	char insert_query_outline[] = "INSERT INTO thread_(file_id) VALUES(\"\")";
+	int file_query_length = 0;
+	int i = 0;
+	int insert_query_length = 0;
+	int num_files = 0;
+	sqlite3 *conn = NULL;
+	sqlite3_stmt *res = NULL;
+	unsigned int tid = pthread_self();
+
+	assert(tag != NULL);
+
+	DEBUG("Filtering rows in \"thread_%u\" that do not contain the tag \"%s\"", tid, tag);
+
+	filter_query = db_query_files_from_tag(tag);
+	assert(filter_query != NULL);
+	DEBUG("Query to select files with tag \"%s\" from table \"thread_%u\": %s", tag, tid, filter_query);
+
+	file_query_length = strlen(filter_query_outline) + strlen(filter_query) + num_digits(tid);
+	assert(file_query_length > 0);
+	file_query = malloc(file_query_length * sizeof(*file_query) + 1);
+	assert(file_query != NULL);
+	(void)snprintf(file_query, file_query_length + 1, "SELECT file_id FROM thread_%u WHERE file_id IN (%s)", tid, filter_query);
+	DEBUG("Query to select files from table \"thread_%u\" after those with tag \"%s\" are filtered out: %s", tid, tag, file_query);
+	num_files = db_array_from_query("file_id", file_query, &file_array);
+	assert(num_files > 0);
+
+	db_truncate_table();
+
+	conn = db_connect();
+
+	for(i = 0; i < num_files; i++) {
+		insert_query_length = strlen(insert_query_outline) + num_digits(tid) + strlen(file_array[i]);
+		assert(insert_query_length > 0);
+		insert_query = malloc(insert_query_length * sizeof(*insert_query) + 1);
+		assert(insert_query != NULL);
+		(void)snprintf(insert_query, insert_query_length + 1, "INSERT INTO thread_%u(file_id) VALUES(\"%s\")", tid, file_array[i]);
+		DEBUG("Query to insert file \"%s\" into table \"thread_%u\" after filtering files with tag \"%s\": %s", file_array[i], tid, tag, insert_query);
+
+		(void)sqlite3_prepare_v2(conn, insert_query, strlen(insert_query), &res, NULL);
+		sqlite3_step(res);
+
+		free(insert_query);
+		sqlite3_finalize(res);
+	}
+
+	assert(filter_query != NULL);
+	free(filter_query);
+	filter_query = NULL;
+
+	assert(file_query != NULL);
+	free(file_query);
+	file_query = NULL;
+
+	free_char_ptr_array(&file_array, num_files);
+	db_disconnect(conn);
+} /* db_filter_table */
+
+void db_load_table_by_path(const char *path) {
+	int num_tags = 0;
+	char **tag_array = NULL;
+	int i = 0;
+
+	num_tags = path_to_array(path, &tag_array);
+
+DEBUG("bar");
+	db_load_table_by_tag(tag_array[0]);
+
+	for(i = 1; i < num_tags; i++) {
+		db_filter_table(tag_array[i]);
+	}
+
+	free_char_ptr_array(&tag_array, num_tags);
+} /* db_load_table_by_path */
+
+void db_truncate_table() {
+	char *delete_query = NULL;
+	char query[] = "DELETE FROM thread_";
+	int delete_query_length = 0;
+	sqlite3 *conn = NULL;
+	sqlite3_stmt *res = NULL;
+	unsigned int tid = pthread_self();
+
+	delete_query_length = strlen(query) + num_digits(tid);
+	assert(delete_query_length > 0);
+
+	delete_query = malloc(delete_query_length * sizeof(*delete_query) + 1);
+	snprintf(delete_query, delete_query_length + 1, "DELETE FROM thread_%u", tid);
+
+	conn = db_connect();
+	assert(conn != NULL);
+
+	(void)sqlite3_prepare_v2(conn, delete_query, strlen(delete_query), &res, NULL);
+	sqlite3_step(res);
+
+	sqlite3_finalize(res);
+
+	assert(delete_query != NULL);
+	free(delete_query);
+	delete_query = NULL;
+
+	db_disconnect(conn);
+} /* truncate_table */
 
 
 
@@ -217,125 +446,6 @@ static void db_load_table_from_tag(const char *tag) {
 
 
 
-
-
-
-//static int db_count_from_query(const char *query) {
-//	char *count_query = NULL;
-//	char select_count[] = "SELECT COUNT(*) FROM (";
-//	const char *tail = NULL;
-//	int count = 0;
-//	int count_query_length = 0;
-//	sqlite3 *conn = NULL;
-//	sqlite3_stmt *res = NULL;
-//
-//	DEBUG(D_FUNCTION_DB_COUNT_FROM_QUERY, D_LEVEL_ENTRY, "db_count_from_query");
-//
-//	assert(query != NULL);
-//
-//	DEBUG(D_FUNCTION_DB_COUNT_FROM_QUERY, D_LEVEL_DEBUG, "Calculating count from query: %s", query);
-//
-//	count_query_length = strlen(query) + strlen(select_count) + 2; /* 2 for closing parenthesis and null terminating character */
-//	DEBUG(D_FUNCTION_DB_COUNT_FROM_QUERY, D_LEVEL_DEBUG, "Query length: %d characters", count_query_length);
-//	count_query = calloc(count_query_length, sizeof(*count_query));
-//	assert(count_query != NULL);
-//
-//	strcat(strcat(strcat(count_query, "SELECT COUNT(*) FROM ("), query), ")");
-//
-//	conn = db_connect();
-//	assert(conn != NULL);
-//
-//	(void)sqlite3_prepare_v2(conn, count_query, strlen(count_query), &res, &tail);
-//
-//	assert(count_query != NULL);
-//	free(count_query);
-//	count_query = NULL;
-//
-//	(void)sqlite3_step(res);
-//	count = sqlite3_column_int(res, 0);
-//
-//	(void)sqlite3_finalize(res);
-//	(void)db_disconnect(conn);
-//
-//	DEBUG(D_FUNCTION_DB_COUNT_FROM_QUERY, D_LEVEL_DEBUG, "Results returned from query: %d", count);
-//	DEBUG(D_FUNCTION_DB_COUNT_FROM_QUERY, D_LEVEL_EXIT, "Exiting db_count_from_query");
-//	return count;
-//} /* db_count_from_query */
-//
-//static int db_array_from_query(char *desired_column_name, const char *result_query, /*@out@*/ char ***result_array) {
-//	bool column_match = false;
-//	const char *tail = NULL;
-//	const unsigned char *result = NULL;
-//	int column_count = 0;
-//	int desired_column_index = 0;
-//	int i = 0;
-//	int num_results = 0;
-//	sqlite3 *conn = NULL;
-//	sqlite3_stmt *res = NULL;
-//
-//	DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_ENTRY, "db_array_from_query");
-//
-//	assert(result_query != NULL);
-//	assert(result_array != NULL);
-//	assert(*result_array == NULL);
-//
-//	DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Generating array from query: %s", result_query);
-//	DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Desired column: %s", desired_column_name);
-//
-//	num_results = db_count_from_query(result_query);
-//
-//	if(num_results > 0) {
-//		*result_array = malloc(num_results * sizeof(**result_array));
-//		DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Allocating array of %d elements", num_results);
-//		assert(*result_array != NULL);
-//
-//		conn = db_connect();
-//		assert(conn != NULL);
-//
-//		(void)sqlite3_prepare_v2(conn, result_query, strlen(result_query), &res, &tail);
-//		column_count = sqlite3_column_count(res);
-//
-//		for(desired_column_index = 0; desired_column_index < column_count; desired_column_index++) { /* find the requested column */
-//			if(strcmp(desired_column_name, sqlite3_column_name(res, desired_column_index)) == 0) { 
-//				DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Located matching column for %s at index %d", desired_column_name, desired_column_index);
-//				column_match = true;
-//				break; 
-//			}
-//		}
-//
-//		if(column_match == false) {
-//			DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_ERROR, "Database column was NOT matched successfully", desired_column_index, column_count);
-//		}
-//		DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Query returns %d column(s)", column_count);
-//		DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_FOLDER_CONTENTS, "Query results: ");
-//		debug_indent();
-//		for(i = 0; sqlite3_step(res) == SQLITE_ROW; i++) {
-//			result = sqlite3_column_text(res, desired_column_index); 
-//			(*result_array)[i] = malloc(result == NULL ? sizeof(NULL) : strlen((const char *)result) * sizeof(*result) + 1);
-//			assert((*result_array)[i] != NULL);
-//			if(result != NULL) {
-//				strcpy((*result_array)[i], (char*)result);
-//			}
-//			else {
-//				(*result_array)[i] = NULL;
-//			}
-//
-//			DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_FOLDER_CONTENTS, "result_array[%d] = %s, at address %p", i, (*result_array)[i], (*result_array)[i]);
-//		}
-//		debug_deindent();
-//
-//		(void)sqlite3_finalize(res);
-//		(void)db_disconnect(conn);
-//	}
-//	else {
-//		DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Null array being returned");
-//	}
-//
-//	DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_DEBUG, "Query returns %d result(s)", num_results);
-//	DEBUG(D_FUNCTION_DB_ARRAY_FROM_QUERY, D_LEVEL_EXIT, "db_array_from_query");
-//	return num_results;
-//} /* db_array_from_query */
-//
 //static const char* db_build_file_query(const char *path) {
 //	char **tag_array = NULL;
 //	char *file_query = NULL;

@@ -38,6 +38,7 @@ static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 	INFO("Reading directory: %s", path);
 
 	db_create_table();
+	db_load_table_by_path(path);
 
 //	char **file_array = NULL;
 //	char **tag_array = NULL;
