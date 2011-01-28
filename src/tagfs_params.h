@@ -11,6 +11,7 @@
 #define FUSE_USE_VERSION 26
 
 #include <fuse.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 /**
@@ -18,9 +19,10 @@
  */
 struct tagfs_state {
 	FILE *logfile;
-	char *logpath;
+	bool debug;
 	char *dbpath;
 	char *execdir;
+	char *logpath;
 };
 #define TAGFS_DATA ((struct tagfs_state *) fuse_get_context()->private_data)
 

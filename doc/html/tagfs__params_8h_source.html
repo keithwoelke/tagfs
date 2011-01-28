@@ -34,19 +34,22 @@
 <a name="l00011"></a>00011 <span class="preprocessor">#define FUSE_USE_VERSION 26</span>
 <a name="l00012"></a>00012 <span class="preprocessor"></span>
 <a name="l00013"></a>00013 <span class="preprocessor">#include &lt;fuse.h&gt;</span>
-<a name="l00014"></a>00014 <span class="preprocessor">#include &lt;stdio.h&gt;</span>
-<a name="l00015"></a>00015 
-<a name="l00019"></a><a class="code" href="structtagfs__state.html">00019</a> <span class="keyword">struct </span><a class="code" href="structtagfs__state.html" title="Maintain tagfs state.">tagfs_state</a> {
-<a name="l00020"></a>00020         FILE *logfile;
-<a name="l00021"></a>00021         <span class="keywordtype">char</span> *dbpath;
-<a name="l00022"></a>00022         <span class="keywordtype">char</span> *execdir;
-<a name="l00023"></a>00023 };
-<a name="l00024"></a>00024 <span class="preprocessor">#define TAGFS_DATA ((struct tagfs_state *) fuse_get_context()-&gt;private_data)</span>
-<a name="l00025"></a>00025 <span class="preprocessor"></span>
-<a name="l00026"></a>00026 <span class="preprocessor">#endif</span>
+<a name="l00014"></a>00014 <span class="preprocessor">#include &lt;stdbool.h&gt;</span>
+<a name="l00015"></a>00015 <span class="preprocessor">#include &lt;stdio.h&gt;</span>
+<a name="l00016"></a>00016 
+<a name="l00020"></a><a class="code" href="structtagfs__state.html">00020</a> <span class="keyword">struct </span><a class="code" href="structtagfs__state.html" title="Maintain tagfs state.">tagfs_state</a> {
+<a name="l00021"></a>00021         FILE *logfile;
+<a name="l00022"></a>00022         <span class="keywordtype">bool</span> debug;
+<a name="l00023"></a>00023         <span class="keywordtype">char</span> *dbpath;
+<a name="l00024"></a>00024         <span class="keywordtype">char</span> *execdir;
+<a name="l00025"></a>00025         <span class="keywordtype">char</span> *logpath;
+<a name="l00026"></a>00026 };
+<a name="l00027"></a>00027 <span class="preprocessor">#define TAGFS_DATA ((struct tagfs_state *) fuse_get_context()-&gt;private_data)</span>
+<a name="l00028"></a>00028 <span class="preprocessor"></span>
+<a name="l00029"></a>00029 <span class="preprocessor">#endif</span>
 </pre></div></div>
 </div>
-<hr class="footer"/><address class="footer"><small>Generated on Sat Jan 22 2011 14:40:00 for TagFS by&nbsp;
+<hr class="footer"/><address class="footer"><small>Generated on Thu Jan 27 2011 03:06:16 for TagFS by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.7.1 </small></address>
 </body>
