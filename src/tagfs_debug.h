@@ -14,13 +14,54 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-#define INFO(...) debug_wait(); fprintf(TAGFS_DATA->logfile, "%s: %u: ", get_timestamp(), (unsigned int)pthread_self()); fprintf(TAGFS_DATA->logfile, __VA_ARGS__); fprintf(TAGFS_DATA->logfile, "\n"); fflush(TAGFS_DATA->logfile); debug_post()
+#define INFO(...) \
+debug_wait(); \
+fprintf(TAGFS_DATA->logfile, "%u: ", (unsigned int)pthread_self()); \
+log_timestamp(); \
+fprintf(TAGFS_DATA->logfile, ": "); \
+fprintf(TAGFS_DATA->logfile, __VA_ARGS__); \
+fprintf(TAGFS_DATA->logfile, "\n"); \
+fflush(TAGFS_DATA->logfile); \
+debug_post()
 
-#define DEBUG(...) debug_wait(); fprintf(TAGFS_DATA->logfile, "%u: DEBUG: ", (unsigned int)pthread_self()); fprintf(TAGFS_DATA->logfile, __VA_ARGS__); fprintf(TAGFS_DATA->logfile, "\n"); fflush(TAGFS_DATA->logfile); debug_post()
 
-#define WARN(...) debug_wait(); fprintf(TAGFS_DATA->logfile, "%u: WARNING: ", (unsigned int)pthread_self()); fprintf(TAGFS_DATA->logfile, __VA_ARGS__); fprintf(TAGFS_DATA->logfile, "\n"); fflush(TAGFS_DATA->logfile); debug_post()
+#define DEBUG(...) \
+debug_wait(); \
+fprintf(TAGFS_DATA->logfile, "%u: ", (unsigned int)pthread_self()); \
+log_timestamp(); \
+fprintf(TAGFS_DATA->logfile, ": "); \
+fprintf(TAGFS_DATA->logfile, "DEBUG: "); \
+fprintf(TAGFS_DATA->logfile, __VA_ARGS__); \
+fprintf(TAGFS_DATA->logfile, "\n"); \
+fflush(TAGFS_DATA->logfile); \
+debug_post()
 
-#define ERROR(...) debug_wait(); fprintf(TAGFS_DATA->logfile, "%u: %s(%d): ERROR: ", (unsigned int)pthread_self(), __FILE__, __LINE__); fprintf(TAGFS_DATA->logfile, __VA_ARGS__); fprintf(TAGFS_DATA->logfile, "\n"); fflush(TAGFS_DATA->logfile); debug_post(); exit(EXIT_FAILURE)
+#define WARN(...) \
+debug_wait(); \
+fprintf(TAGFS_DATA->logfile, "%u: ", (unsigned int)pthread_self()); \
+log_timestamp(); \
+fprintf(TAGFS_DATA->logfile, ": "); \
+fprintf(TAGFS_DATA->logfile, "WARNING: "); \
+fprintf(TAGFS_DATA->logfile, __VA_ARGS__); \
+fprintf(TAGFS_DATA->logfile, "\n"); \
+fflush(TAGFS_DATA->logfile); \
+debug_post()
+
+#define ERROR(...) \
+debug_wait(); \
+fprintf(TAGFS_DATA->logfile, "%u: ", (unsigned int)pthread_self()); \
+log_timestamp(); \
+fprintf(TAGFS_DATA->logfile, ": "); \
+fprintf(TAGFS_DATA->logfile, "%s(%d): ERROR: ", __FILE__, __LINE__); \
+fprintf(TAGFS_DATA->logfile, __VA_ARGS__); \
+fprintf(TAGFS_DATA->logfile, "\n"); \
+fflush(TAGFS_DATA->logfile); \
+debug_post(); \
+exit(EXIT_FAILURE)
+
+#define ENTRY "---> %s", __FUNCTION__
+
+#define EXIT "<--- %s", __FUNCTION__
 
 /**
  * Initializes the debug semaphore.
@@ -42,6 +83,6 @@ void debug_post();
  *
  * @return The current date and time and a string.
  */
-char *get_timestamp();
+void log_timestamp();
 
 #endif

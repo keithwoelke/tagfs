@@ -5,6 +5,7 @@
  * @date 07/25/2010
  */
 
+#include "tagfs_db.h"
 #include "tagfs_debug.h"
 #include "tagfs_params.h"
 
@@ -13,17 +14,17 @@
 int tagfs_getattr(const char *path, struct stat *statbuf) {
 	int retstat = 0;
 
-	INFO("Retrieving attributes for %s", path);
+	INFO("Get attributes for %s", path);
 
-	if (valid_path_to_file(path)) {
+/*	if (valid_path_to_file(path)) {
 		retstat = stat(get_file_location(path), statbuf);
 	}
-	else if(valid_path_to_tag(path)) {
+	else if(valid_path_to_tag(path)) {*/
 		statbuf->st_mode = S_IFDIR | 0755;
-	}
+/*	}
 	else {
 		retstat = -ENOENT;
-	}
+	} */
 
 	return retstat;
 } /* tagfs_getattr */
@@ -47,7 +48,14 @@ int tagfs_mknod(const char *path, mode_t mode, dev_t dev) {
 static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
 	int retstat = 0;
 
-	INFO("TODO: %s", __FUNCTION__);
+	INFO("Reading directory %s", path);
+
+	filler(buf, ".", NULL, 0);
+	filler(buf, "..", NULL, 0);
+
+	db_create_table();
+
+	db_delete_table();
 
 	return retstat;
 } /* tagfs_readdir */
@@ -91,6 +99,7 @@ struct fuse_operations tagfs_oper = {
 }; /* tagfs_oper */
 
 int main(int argc, char *argv[]) {
+	int fuse_stat = 0;
 	struct tagfs_state tagfs_data;
 
 	printf("Initializing TagFS Filesystem...\n");
@@ -98,6 +107,11 @@ int main(int argc, char *argv[]) {
 	debug_init();
 
 	tagfs_data.logfile = fopen("logfile.txt", "w");
+	tagfs_data.dbpath = "tagfs.sl3";
 
-	return fuse_main(argc, argv, &tagfs_oper, &tagfs_data);
+	fuse_stat = fuse_main(argc, argv, &tagfs_oper, &tagfs_data);
+
+	fclose(tagfs_data.logfile);
+
+	return fuse_stat;
 } /* main */

@@ -1,5 +1,6 @@
 #include "tagfs_debug.h"
 
+#include <assert.h>
 #include <semaphore.h>
 #include <string.h>
 
@@ -24,10 +25,23 @@ void debug_post() {
 	sem_post(&debug_sem);
 } /* debug_post */
 
-char *get_timestamp() {
-	time_t seconds = time(NULL);
-	char *time = ctime(&seconds);
-	time[strlen(time) - 1] = '\0';
+void log_timestamp() {
+	char *buffer = NULL;
+	char *format = "mm/dd/yy hh/mm/ss";
+	int length = 0;
+	struct tm *timeinfo;
+	time_t rawtime;
 
-	return time;
+	length = strlen(format);
+	buffer = malloc(length * sizeof(*buffer) + 1);
+	assert(buffer != NULL);
+
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+
+	strftime(buffer, length + 1, "%x %X", timeinfo);
+
+	fprintf(TAGFS_DATA->logfile, "%s", buffer);
+
+	free(buffer);
 }
