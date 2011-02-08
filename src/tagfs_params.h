@@ -11,6 +11,7 @@
 #define FUSE_USE_VERSION 26
 
 #include <fuse.h>
+#include <sqlite3.h>
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -18,11 +19,11 @@
  * Maintain tagfs state.
  */
 struct tagfs_state {
-	FILE *logfile;
+	FILE *log_file;
 	bool debug;
-	char *dbpath;
-	char *execdir;
-	char *logpath;
+	char *db_path;
+	char *log_path;
+	sqlite3 *db_conn;
 };
 #define TAGFS_DATA ((struct tagfs_state *) fuse_get_context()->private_data)
 

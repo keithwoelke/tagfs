@@ -104,14 +104,12 @@ int main(int argc, char *argv[]) {
 
 	printf("Initializing TagFS Filesystem...\n");
 
-	debug_init();
-
-	tagfs_data.logfile = fopen("logfile.txt", "w");
-	tagfs_data.dbpath = "tagfs.sl3";
+	tagfs_data.log_file = fopen("log_file.txt", "w");
+	tagfs_data.db_path = "tagfs.sl3";
 
 	fuse_stat = fuse_main(argc, argv, &tagfs_oper, &tagfs_data);
 
-	fclose(tagfs_data.logfile);
+	fclose(tagfs_data.log_file);
 
 	return fuse_stat;
 } /* main */
