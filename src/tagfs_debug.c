@@ -19,7 +19,7 @@ void log_timestamp() {
 
 	strftime(buf, length + 1, "%x %X", timeinfo);
 
-	fprintf(TAGFS_DATA->logfile, "%s", buf);
+	fprintf(TAGFS_DATA->log_file, "%s", buf);
 
 	free(buf);
 }

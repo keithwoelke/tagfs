@@ -10,6 +10,7 @@
 #include "tagfs_params.h"
 
 #include <errno.h>
+#include <string.h>
 
 int tagfs_getattr(const char *path, struct stat *statbuf) {
 	int retstat = 0;
@@ -53,12 +54,30 @@ static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
 
-	db_create_table();
-
-	db_delete_table();
-
 	return retstat;
 } /* tagfs_readdir */
+
+void *tagfs_init(struct fuse_conn_info *conn) {
+	char *db_name = "tagfs.sl3";
+
+	printf("Initializing TagFS Filesystem...\n");
+	printf("Opening database: %s\n", db_name);
+	TAGFS_DATA->log_file = fopen("log_file.txt", "w");
+	TAGFS_DATA->db_path = malloc(strlen(db_name) * sizeof(*TAGFS_DATA->db_path) + 1);
+	snprintf(TAGFS_DATA->db_path, strlen(db_name) + 1, "%s", db_name);
+
+	db_connect();
+
+	return TAGFS_DATA;
+} /* tagfs_init */
+
+void tagfs_destroy(void *userdata) {
+	DEBUG("Finalizing data...");
+
+	db_disconnect();
+	fclose(((struct tagfs_state *)userdata)->log_file);
+	free(((struct tagfs_state *)userdata)->db_path);
+} /* tagfs_destroy */
 
 struct fuse_operations tagfs_oper = {
 	.getattr = tagfs_getattr,
@@ -90,26 +109,16 @@ struct fuse_operations tagfs_oper = {
 	.readdir = tagfs_readdir,
 //	.releasedir = bb_releasedir,
 //	.fsyncdir = bb_fsyncdir,
-//	.init = bb_init,
-//	.destroy = bb_destroy,
+	.init = tagfs_init,
+	.destroy = tagfs_destroy,
 //	.access = bb_access,
-//	.create = bb_create,
+//	.create = tagfs_create,
 //	.ftruncate = bb_ftruncate,
 //	.fgetattr = bb_fgetattr
 }; /* tagfs_oper */
 
 int main(int argc, char *argv[]) {
-	int fuse_stat = 0;
 	struct tagfs_state tagfs_data;
 
-	printf("Initializing TagFS Filesystem...\n");
-
-	tagfs_data.log_file = fopen("log_file.txt", "w");
-	tagfs_data.db_path = "tagfs.sl3";
-
-	fuse_stat = fuse_main(argc, argv, &tagfs_oper, &tagfs_data);
-
-	fclose(tagfs_data.log_file);
-
-	return fuse_stat;
+	return fuse_main(argc, argv, &tagfs_oper, &tagfs_data);
 } /* main */

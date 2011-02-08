@@ -9,13 +9,13 @@
 #define TAGFS_DB_H
 
 /**
- * Creates a table with the name "thread_<thread id>".
+ * Connect to the database.
  */
-void db_create_table();
+void db_connect();
 
 /**
- * Deletes a table with the name "thread_<thread id>".
+ * Disconnect from the database.
  */
-void db_delete_table();
+void db_disconnect();
 
 #endif

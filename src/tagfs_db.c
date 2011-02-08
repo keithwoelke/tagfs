@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * Enable foreign key constraints on the database.
+ */
 static void db_enable_foreign_keys() {
 	char *error_msg = NULL;
 	char enable_foreign_keys[] = "PRAGMA foreign_keys = ON";
