@@ -31,13 +31,13 @@ bool valid_path_to_tag(const char *path) {
 	DEBUG("Checking that %s is a valid path to a tag", path);
 
 	if(strcmp(path, "/") == 0) { valid = true; }
-//	else {
+	else {
 //		num_files = db_files_from_query(path, &file_array);
 //		free_char_ptr_array(&file_array, num_files);
 //
 //		if(!unique_tags_in_path(path) || num_files == 0) { valid = false; }
 //		else {valid = true; }
-//	}
+	}
 //
 //	DEBUG(D_FUNCTION_VALID_PATH_TO_TAG, D_LEVEL_DEBUG, "%s is %sa valid path to a tag", path, valid ? "" : "not a ");
 	DEBUG(EXIT);
