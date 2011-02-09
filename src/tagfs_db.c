@@ -68,3 +68,20 @@ void db_disconnect() {
 
 	DEBUG(EXIT);
 } /* db_disconnect */
+
+void db_get_files_from_path(const char *path) {
+	int num_tags = 0;
+	char **tag_array = NULL;
+	int i = 0;
+
+	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_ENTRY, __FUNCTION__);
+	num_tags = path_to_array(path, &tag_array);
+	db_load_table(tag_array[0]);
+
+	for(i = 1; i < num_tags; i++) {
+		db_filter_table(tag_array[i]);
+	}
+
+	free_char_ptr_array(&tag_array, num_tags);
+	DEBUG(D_FUNCTION_DB_GET_FILE_LOCATION, D_LEVEL_EXIT, __FUNCTION__);
+} /* db_get_files_from_path */

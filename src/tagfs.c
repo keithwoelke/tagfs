@@ -5,6 +5,7 @@
  * @date 07/25/2010
  */
 
+#include "tagfs_common.h"
 #include "tagfs_db.h"
 #include "tagfs_debug.h"
 #include "tagfs_params.h"
@@ -18,14 +19,14 @@ int tagfs_getattr(const char *path, struct stat *statbuf) {
 	INFO("Get attributes for %s", path);
 
 /*	if (valid_path_to_file(path)) {
-		retstat = stat(get_file_location(path), statbuf);
+		retstat = stat(db_get_file_location(path), statbuf);
 	}
-	else if(valid_path_to_tag(path)) {*/
+	else */if(valid_path_to_tag(path)) { /* TODO: Set proper folder info */
 		statbuf->st_mode = S_IFDIR | 0755;
-/*	}
+	}
 	else {
 		retstat = -ENOENT;
-	} */
+	}
 
 	return retstat;
 } /* tagfs_getattr */
