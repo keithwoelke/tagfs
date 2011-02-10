@@ -18,15 +18,17 @@ int tagfs_getattr(const char *path, struct stat *statbuf) {
 
 	INFO("Get attributes for %s", path);
 
+	db_load_table("Video");
+
 /*	if (valid_path_to_file(path)) {
 		retstat = stat(db_get_file_location(path), statbuf);
 	}
-	else */if(valid_path_to_tag(path)) { /* TODO: Set proper folder info */
+	else if(valid_path_to_tag(path)) {*/ /* TODO: Set proper folder info */
 		statbuf->st_mode = S_IFDIR | 0755;
-	}
-	else {
-		retstat = -ENOENT;
-	}
+//	}
+//	else {
+//		retstat = -ENOENT;
+//	}
 
 	return retstat;
 } /* tagfs_getattr */

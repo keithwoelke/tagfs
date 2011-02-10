@@ -19,3 +19,8 @@ void db_connect();
 void db_disconnect();
 
 #endif
+
+
+
+
+void db_load_table(const char *tag);
