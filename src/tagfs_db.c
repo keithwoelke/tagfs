@@ -72,7 +72,7 @@ static void db_copy_result_set(sqlite3_stmt *src, const char *dest) {
 		sqlite3_finalize(res);
 
 		/* handle return code */
-		if(rc == SQLITE_DONE) {	DEBUG("Inserting file ID \"%d\" into table \"%s\" was a success", file_id, dest); }
+		if(rc == SQLITE_DONE) {	DEBUG("WARNING: Inserting file ID \"%d\" into table \"%s\" was a success", file_id, dest); }
 		else {
 			DEBUG("Inserting file ID \"%d\" into table \"%s\" FAILED with result code %d: %s", file_id, dest, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
 			WARN("An error occured when communicating with the database");
@@ -115,18 +115,18 @@ static int db_count_from_query(const char *query) {
 	char *count_query = NULL;
 	const char select_count[] = "SELECT COUNT(*) FROM (";
 	int count = 0;
-	int count_query_length = 0;
+	int length = 0;
 	sqlite3_stmt *res = NULL;
 
 	DEBUG(ENTRY);
 
 	assert(query != NULL);
 
-	DEBUG("Calculating count from query: %s", query);
+	DEBUG("Calculating number of results returned from query: %s", query);
 
-	count_query_length = strlen(query) + strlen(select_count) + 2; /* 2 for closing parenthesis and null terminating character */
-	DEBUG("Query length: %d characters", count_query_length);
-	count_query = calloc(count_query_length, sizeof(*count_query));
+	length = strlen(query) + strlen(select_count) + 1; /* + 1 for closing parenthesis */
+	DEBUG("Length of query to count the results: %d", length);
+	count_query = calloc(length, sizeof(*count_query));
 	assert(count_query != NULL);
 
 	strcat(strcat(strcat(count_query, "SELECT COUNT(*) FROM ("), query), ")");
