@@ -1,5 +1,6 @@
 /**
  * Handles interaction with the sqlite3 database.
+ *
  * @file tagfs_db.h
  * @author Keith Woelke
  * @date 07/25/2010

@@ -1,12 +1,9 @@
 #include "tagfs_debug.h"
 
-#include <assert.h>
-#include <string.h>
-
 int num_digits(unsigned int num) {
+	DEBUG(ENTRY);
 	int count = 0;
 
-	DEBUG(ENTRY);
 	DEBUG("Counting number of digits in %u", num);
 
 	do {
@@ -14,7 +11,7 @@ int num_digits(unsigned int num) {
 		count++;
 	} while(num != 0);
 
-	DEBUG("Number of digits: %d", count);
+	DEBUG("Number of digits in %u: %d", num, count);
 	DEBUG(EXIT);
 	return count;
 } /* num_digits */

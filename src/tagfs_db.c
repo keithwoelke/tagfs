@@ -3,45 +3,44 @@
 
 #include <assert.h>
 #include <sqlite3.h>
-#include <stdio.h>
 #include <string.h>
 
 /**
  * Enable foreign key constraints on the database.
  */
 static void db_enable_foreign_keys() {
-	char *error_msg = NULL;
-	char enable_foreign_keys[] = "PRAGMA foreign_keys = ON";
-	int error = 0;
-
 	DEBUG(ENTRY);
+	char *err_msg = NULL;
+	const char enable_foreign_keys[] = "PRAGMA foreign_keys = ON";
+	int rc = 0;
 
 	assert(TAGFS_DATA->db_conn != NULL);
+	rc = sqlite3_exec(TAGFS_DATA->db_conn, enable_foreign_keys, NULL, NULL, &err_msg);
 
-	error = sqlite3_exec(TAGFS_DATA->db_conn, enable_foreign_keys, NULL, NULL, &error_msg);
-
-	if(error != SQLITE_OK) {
-		ERROR("There was an error when enabling foreign keys: %s", error_msg);
-		sqlite3_free(error_msg);
+	if(rc != SQLITE_OK) {
+		DEBUG("ERROR: %s", err_msg);
+		ERROR("There was an error when enabling foreign keys.");
+		sqlite3_free(err_msg);
 	}
-	else {
-		DEBUG("Foreign keys enabled successfully");
-	}
+	else { DEBUG("Foreign keys enabled successfully"); }
 
 	DEBUG(EXIT);
 } /* db_enable_foreign_keys */
 
 void db_connect() {
-	int error = 0;
-
 	DEBUG(ENTRY);
+	int rc = 0;
+
+	assert(TAGFS_DATA->db_path != NULL);
 	DEBUG("Connecting to database: %s", TAGFS_DATA->db_path);
 
-	error = sqlite3_open_v2(TAGFS_DATA->db_path, &TAGFS_DATA->db_conn, SQLITE_OPEN_READWRITE, NULL); /* TODO: set as 'SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE' and create the database if it does not exist already */
+	assert(TAGFS_DATA->db_path != NULL);
+	rc = sqlite3_open_v2(TAGFS_DATA->db_path, &TAGFS_DATA->db_conn, SQLITE_OPEN_READWRITE, NULL); /* TODO: set as 'SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE' and create the database if it does not exist already */
 	assert(TAGFS_DATA->db_conn != NULL);
 
-	if(error != SQLITE_OK) { /* if no space on drive or file does not exist */
-		ERROR("An error occurred when connecting to the database: %s", sqlite3_errmsg(TAGFS_DATA->db_conn));
+	if(rc != SQLITE_OK) { /* if no space on drive or file does not exist */
+		DEBUG("ERROR: %s", sqlite3_errmsg(TAGFS_DATA->db_conn));
+		ERROR("An error occurred when connecting to the database");
 	}
 
 	DEBUG("Database connection successful");
@@ -51,24 +50,20 @@ void db_connect() {
 } /* db_connect */
 
 void db_disconnect() {
-	int error = 0;
-
 	DEBUG(ENTRY);
+	int rc = 0;
 
 	assert(TAGFS_DATA->db_conn != NULL);
+	rc = sqlite3_close(TAGFS_DATA->db_conn);
 
-	error = sqlite3_close(TAGFS_DATA->db_conn);
-
-	if(error != SQLITE_OK) /* has pending operations or prepared statements to be free'd */ {
-		WARN("An error occured while disconnecting from the database: %s", sqlite3_errmsg(TAGFS_DATA->db_conn));
+	if(rc != SQLITE_OK) { /* has pending operations or prepared statements to be free'd */
+		DEBUG("ERROR: %s", sqlite3_errmsg(TAGFS_DATA->db_conn));
+		WARN("An error occured while disconnecting from the database");
 	}
-	else {
-		DEBUG("Database disconnection successful");
-	}
+	else { DEBUG("Database disconnection successful"); }
 
 	DEBUG(EXIT);
 } /* db_disconnect */
-
 
 
 
@@ -135,68 +130,85 @@ static char *db_query_files_with_tag(const char *tag) {
 	return query;
 } /* db_query_files_with_tag */
 
-void db_load_table(const char *tag) {
-	char *file_query = NULL;
+static void db_copy_result_set(sqlite3_stmt *src, const char *dest) {
+	DEBUG(ENTRY);
 	char *insert_query = NULL;
 	const char query[] = "INSERT INTO \"directory_contents\"(file_id) VALUES(";
-	int file_count;
 	int file_id = 0;
 	int i = 0;
 	int insert_query_length = 0;
 	int rc = 0;
-	sqlite3_stmt *file_res = NULL;
-	sqlite3_stmt *insert_res = NULL;
+	sqlite3_stmt *res = NULL;
 
+	assert(src != NULL);
+	assert(dest != NULL);
+	assert(strcmp(dest, "") != 0);
+
+	for(i = 0; sqlite3_step(src) == SQLITE_ROW; i++) {
+		/* get file_id from database */
+		file_id	= sqlite3_column_int(src, 0);
+		DEBUG("Retrieving file id: %d", file_id);
+
+		/* create query to insert file_id into database */
+		insert_query_length = strlen(query) + num_digits(file_id) + 1; /* + 1 for closing parenthesis */
+		assert(insert_query_length > 0);
+		insert_query = malloc(insert_query_length * sizeof(*insert_query) + 1);
+		assert(insert_query != NULL);
+		snprintf(insert_query, insert_query_length + 1, "%s%d)", query,  file_id);
+		DEBUG("Query to insert file ID \"%d\" into table \"%s\": %s", file_id, dest, insert_query);
+
+		/* compile prepared statement */
+		(void)sqlite3_prepare_v2(TAGFS_DATA->db_conn, insert_query, strlen(insert_query), &res, NULL);
+
+		assert(insert_query != NULL);
+		free(insert_query);
+		insert_query = NULL;
+
+		/* execute statement */
+		rc = sqlite3_step(res);
+		sqlite3_finalize(res);
+
+		/* handle return code */
+		if(rc == SQLITE_DONE) {	DEBUG("Inserting file ID \"%d\" into table \"%s\" was a success", file_id, dest); }
+		else {
+			DEBUG("Inserting file ID \"%d\" into table \"%s\" FAILED with result code %d: %s", file_id, dest, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+			WARN("An error occured when communicating with the database");
+		}
+	}
+} /* db_copy_result_set */
+
+void db_load_table(const char *tag) {
 	DEBUG(ENTRY);
+	char *file_query = NULL;
+	int file_count = 0;
+	sqlite3_stmt *res = NULL;
 
 	assert(tag != NULL);
 
+	/* get number of files in directory */
 	file_query = db_query_files_with_tag(tag);
 	assert(file_query != NULL);
 	DEBUG("Query to select files with tag \"%s\": %s", tag, file_query);
 
 	file_count = db_count_from_query(file_query);
 	assert(file_count >= 0);
-	DEBUG("Loading %d files into table \"directory_contents\"", file_count);
+	DEBUG("Query returns %d files", file_count);
 
+	/* compile prepared statement */
 	assert(TAGFS_DATA->db_conn != NULL);
-	(void)sqlite3_prepare_v2(TAGFS_DATA->db_conn, file_query, strlen(file_query), &file_res, NULL);
+	(void)sqlite3_prepare_v2(TAGFS_DATA->db_conn, file_query, strlen(file_query), &res, NULL);
 
 	assert(file_query != NULL);
 	free(file_query);
 	file_query = NULL;
 
-	assert(strcmp(sqlite3_column_name(file_res, 0), "file_id") == 0);
+	/* check that we have the column we need in the result set */
+	assert(strcmp(sqlite3_column_name(res, 0), "file_id") == 0);
 
-	for(i = 0; sqlite3_step(file_res) == SQLITE_ROW; i++) {
-		file_id	= sqlite3_column_int(file_res, 0);
-		assert(file_id > 0);
-		DEBUG("Retrieving file id: %d", file_id);
+	/* insert results of query into table "directory_contents" */
+	db_copy_result_set(res, "directory_contents");
 
-		insert_query_length = strlen(query) + num_digits(file_id) + 1; /* + 1 for closing parenthesis */
-		insert_query = malloc(insert_query_length * sizeof(*insert_query) + 1);
-		assert(insert_query != NULL);
-		snprintf(insert_query, insert_query_length + 1, "%s%d)", query,  file_id);
-		DEBUG("Query to insert file ID \"%d\" into table \"directory_contents\": %s", file_id, insert_query);
-
-		(void)sqlite3_prepare_v2(TAGFS_DATA->db_conn, insert_query, strlen(insert_query), &insert_res, NULL);
-
-		assert(insert_query != NULL);
-		free(insert_query);
-		insert_query = NULL;
-
-		rc = sqlite3_step(insert_res);
-		sqlite3_finalize(insert_res);
-
-		if(rc == SQLITE_DONE) {
-			DEBUG("Inserting file ID \"%d\" into table \"directory_contents\" was a success", file_id);
-		}
-		else {
-			WARN("Inserting file ID \"%d\" into table \"directory_contents\" FAILED with result code %d: %s", file_id, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
-		}
-	}
-
-	sqlite3_finalize(file_res);
+	sqlite3_finalize(res);
 
 	DEBUG(EXIT);
 } /* db_load_table */
