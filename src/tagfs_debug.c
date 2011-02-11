@@ -5,7 +5,7 @@
 
 void log_timestamp() {
 	char *buf = NULL;
-	char *format = "mm/dd/yy hh/mm/ss";
+	const char *format = "mm/dd/yy hh/mm/ss";
 	int length = 0;
 	struct tm *timeinfo;
 	time_t rawtime;
@@ -22,4 +22,4 @@ void log_timestamp() {
 	fprintf(TAGFS_DATA->log_file, "%s", buf);
 
 	free(buf);
-}
+} /* log_timestamp */

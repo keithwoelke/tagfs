@@ -79,7 +79,7 @@ void *tagfs_init(struct fuse_conn_info *conn) {
 
 	printf("Initializing TagFS Filesystem...\n");
 	printf("Opening log file: %s\n", log_name);
-	TAGFS_DATA->log_file = fopen("log_file.txt", "w"); /* TODO: Does this always place in current directory? */
+	TAGFS_DATA->log_file = fopen("log_file.txt", "w"); /* TODO: Fix so this does not place in working directory */
 
 	DEBUG(ENTRY);
 

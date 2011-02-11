@@ -19,9 +19,11 @@ void db_connect();
  */
 void db_disconnect();
 
-#endif
-
-
-
-
+/**
+ * Loads into the "directory_contents" table, all file IDs which have the specificed tag.
+ *
+ * @param tag The tag to use when selecting files to insert.
+ */
 void db_load_table(const char *tag);
+
+#endif

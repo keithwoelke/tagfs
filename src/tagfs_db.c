@@ -7,7 +7,7 @@
 
 /**
  * Enable foreign key constraints on the database.
- */
+ **/
 static void db_enable_foreign_keys() {
 	DEBUG(ENTRY);
 	char *err_msg = NULL;
@@ -27,109 +27,12 @@ static void db_enable_foreign_keys() {
 	DEBUG(EXIT);
 } /* db_enable_foreign_keys */
 
-void db_connect() {
-	DEBUG(ENTRY);
-	int rc = 0;
-
-	assert(TAGFS_DATA->db_path != NULL);
-	DEBUG("Connecting to database: %s", TAGFS_DATA->db_path);
-
-	assert(TAGFS_DATA->db_path != NULL);
-	rc = sqlite3_open_v2(TAGFS_DATA->db_path, &TAGFS_DATA->db_conn, SQLITE_OPEN_READWRITE, NULL); /* TODO: set as 'SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE' and create the database if it does not exist already */
-	assert(TAGFS_DATA->db_conn != NULL);
-
-	if(rc != SQLITE_OK) { /* if no space on drive or file does not exist */
-		DEBUG("ERROR: %s", sqlite3_errmsg(TAGFS_DATA->db_conn));
-		ERROR("An error occurred when connecting to the database");
-	}
-
-	DEBUG("Database connection successful");
-	db_enable_foreign_keys();
-
-	DEBUG(EXIT);
-} /* db_connect */
-
-void db_disconnect() {
-	DEBUG(ENTRY);
-	int rc = 0;
-
-	assert(TAGFS_DATA->db_conn != NULL);
-	rc = sqlite3_close(TAGFS_DATA->db_conn);
-
-	if(rc != SQLITE_OK) { /* has pending operations or prepared statements to be free'd */
-		DEBUG("ERROR: %s", sqlite3_errmsg(TAGFS_DATA->db_conn));
-		WARN("An error occured while disconnecting from the database");
-	}
-	else { DEBUG("Database disconnection successful"); }
-
-	DEBUG(EXIT);
-} /* db_disconnect */
-
-
-
-
-
-
-
-
-
-
-static int db_count_from_query(const char *query) {
-	char *count_query = NULL;
-	char select_count[] = "SELECT COUNT(*) FROM (";
-	const char *tail = NULL;
-	int count = 0;
-	int count_query_length = 0;
-	sqlite3_stmt *res = NULL;
-
-	DEBUG(ENTRY);
-
-	assert(query != NULL);
-
-	DEBUG("Calculating count from query: %s", query);
-
-	count_query_length = strlen(query) + strlen(select_count) + 2; /* 2 for closing parenthesis and null terminating character */
-	DEBUG("Query length: %d characters", count_query_length);
-	count_query = calloc(count_query_length, sizeof(*count_query));
-	assert(count_query != NULL);
-
-	strcat(strcat(strcat(count_query, "SELECT COUNT(*) FROM ("), query), ")");
-
-	(void)sqlite3_prepare_v2(TAGFS_DATA->db_conn, count_query, strlen(count_query), &res, &tail);
-
-	assert(count_query != NULL);
-	free(count_query);
-	count_query = NULL;
-
-	(void)sqlite3_step(res);
-	count = sqlite3_column_int(res, 0);
-
-	(void)sqlite3_finalize(res);
-
-	DEBUG("Results returned from query: %d", count);
-	DEBUG(EXIT);
-	return count;
-} /* db_count_from_query */
-
-static char *db_query_files_with_tag(const char *tag) {
-	char *query = NULL;
-	const char select_from[] = "SELECT file_id FROM all_tables where tag_name == \"";
-
-	assert(tag != NULL);
-
-	DEBUG(ENTRY);
-
-	query = calloc(strlen(select_from) + strlen(tag) + 2, sizeof(*query));
-	assert(query != NULL);
-
-	strcat(strcat(strcat(query, select_from), tag), "\"");
-
-	DEBUG("Files from tag query: %s", query);
-	DEBUG(EXIT);
-
-	return query;
-} /* db_query_files_with_tag */
-
+/*
+ * Copies the results of a database query into a pre-existing table. This function assumes that the result set has only one column, or more specifically, it only copies the first column.
+ *
+ * @param src The statement handle for the compiled query.
+ * @param dest The name of the table to copy the results to.
+ **/
 static void db_copy_result_set(sqlite3_stmt *src, const char *dest) {
 	DEBUG(ENTRY);
 	char *insert_query = NULL;
@@ -177,6 +80,111 @@ static void db_copy_result_set(sqlite3_stmt *src, const char *dest) {
 	}
 } /* db_copy_result_set */
 
+/**
+ * Return a query which will select all files which contain the specified tag. The returned query must be free'd by the caller.
+ *
+ * @param tag The tag which will be used to construct the select query.
+ * @return The query which can be used to select all files containing the specified tag.
+ **/
+static char *db_query_files_with_tag(const char *tag) {
+	DEBUG(ENTRY);
+	char *query = NULL;
+	const char select_from[] = "SELECT file_id FROM all_tables where tag_name == \"";
+	int length = 0;
+
+	assert(tag != NULL);
+
+	DEBUG("Building query to select all files with the tag \"%s\"", tag);
+
+	length = strlen(select_from) + strlen(tag) + 1; /* + 1 for the closing quotation mark */
+	DEBUG("Length of query to select files with tag \"%s\" is %d", tag, length);
+	query = malloc(length * sizeof(*query) + 1);
+	assert(query != NULL);
+
+	snprintf(query, length + 1, "%s%s\"", select_from, tag);
+
+	DEBUG("Query to select files from tag \"%s\": %s", tag, query);
+	DEBUG(EXIT);
+	return query;
+} /* db_query_files_with_tag */
+
+/**
+ *
+ */
+static int db_count_from_query(const char *query) {
+	char *count_query = NULL;
+	const char select_count[] = "SELECT COUNT(*) FROM (";
+	int count = 0;
+	int count_query_length = 0;
+	sqlite3_stmt *res = NULL;
+
+	DEBUG(ENTRY);
+
+	assert(query != NULL);
+
+	DEBUG("Calculating count from query: %s", query);
+
+	count_query_length = strlen(query) + strlen(select_count) + 2; /* 2 for closing parenthesis and null terminating character */
+	DEBUG("Query length: %d characters", count_query_length);
+	count_query = calloc(count_query_length, sizeof(*count_query));
+	assert(count_query != NULL);
+
+	strcat(strcat(strcat(count_query, "SELECT COUNT(*) FROM ("), query), ")");
+
+	(void)sqlite3_prepare_v2(TAGFS_DATA->db_conn, count_query, strlen(count_query), &res, NULL);
+
+	assert(count_query != NULL);
+	free(count_query);
+	count_query = NULL;
+
+	(void)sqlite3_step(res);
+	count = sqlite3_column_int(res, 0);
+
+	(void)sqlite3_finalize(res);
+
+	DEBUG("Results returned from query: %d", count);
+	DEBUG(EXIT);
+	return count;
+} /* db_count_from_query */
+
+void db_connect() {
+	DEBUG(ENTRY);
+	int rc = 0;
+
+	assert(TAGFS_DATA->db_path != NULL);
+	DEBUG("Connecting to database: %s", TAGFS_DATA->db_path);
+
+	assert(TAGFS_DATA->db_path != NULL);
+	rc = sqlite3_open_v2(TAGFS_DATA->db_path, &TAGFS_DATA->db_conn, SQLITE_OPEN_READWRITE, NULL); /* TODO: set as 'SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE' and create the database if it does not exist already */
+	assert(TAGFS_DATA->db_conn != NULL);
+
+	if(rc != SQLITE_OK) { /* if no space on drive or file does not exist */
+		DEBUG("ERROR: %s", sqlite3_errmsg(TAGFS_DATA->db_conn));
+		ERROR("An error occurred when connecting to the database");
+	}
+
+	DEBUG("Database connection successful");
+	db_enable_foreign_keys();
+
+	DEBUG(EXIT);
+} /* db_connect */
+
+void db_disconnect() {
+	DEBUG(ENTRY);
+	int rc = 0;
+
+	assert(TAGFS_DATA->db_conn != NULL);
+	rc = sqlite3_close(TAGFS_DATA->db_conn);
+
+	if(rc != SQLITE_OK) { /* has pending operations or prepared statements to be free'd */
+		DEBUG("ERROR: %s", sqlite3_errmsg(TAGFS_DATA->db_conn));
+		WARN("An error occured while disconnecting from the database");
+	}
+	else { DEBUG("Database disconnection successful"); }
+
+	DEBUG(EXIT);
+} /* db_disconnect */
+
 void db_load_table(const char *tag) {
 	DEBUG(ENTRY);
 	char *file_query = NULL;
@@ -212,3 +220,13 @@ void db_load_table(const char *tag) {
 
 	DEBUG(EXIT);
 } /* db_load_table */
+
+
+
+
+
+
+
+
+
+

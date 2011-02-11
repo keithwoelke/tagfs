@@ -1,5 +1,6 @@
 /**
  * TagFS parameters and global settings.
+ *
  * @file tagfs_params.h
  * @author Keith Woelke
  * @date 1/22/2011
@@ -25,6 +26,6 @@ struct tagfs_state {
 	char *log_path;
 	sqlite3 *db_conn;
 };
-#define TAGFS_DATA ((struct tagfs_state *) fuse_get_context()->private_data)
+#define TAGFS_DATA ((struct tagfs_state *)fuse_get_context()->private_data)
 
 #endif

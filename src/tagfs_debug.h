@@ -1,5 +1,6 @@
 /**
  * Debug related functions and macros.
+ *
  * @file tagfs_debug.h
  * @author Keith Woelke
  * @date 10/14/2010
@@ -11,6 +12,7 @@
 #include "tagfs_debug.h"
 #include "tagfs_params.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #define INFO(...) \
@@ -19,7 +21,6 @@ fprintf(TAGFS_DATA->log_file, ": "); \
 fprintf(TAGFS_DATA->log_file, __VA_ARGS__); \
 fprintf(TAGFS_DATA->log_file, "\n"); \
 fflush(TAGFS_DATA->log_file);
-
 
 #define DEBUG(...) \
 log_timestamp(); \
@@ -32,7 +33,7 @@ fflush(TAGFS_DATA->log_file);
 #define WARN(...) \
 log_timestamp(); \
 fprintf(TAGFS_DATA->log_file, ": "); \
-fprintf(TAGFS_DATA->log_file, "[WARNING] "); \
+fprintf(TAGFS_DATA->log_file, "%s(%d): [WARNING] ", __FILE__, __LINE__); \
 fprintf(TAGFS_DATA->log_file, __VA_ARGS__); \
 fprintf(TAGFS_DATA->log_file, "\n"); \
 fflush(TAGFS_DATA->log_file);
