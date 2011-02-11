@@ -1,0 +1,1 @@
+The program must be run in single-thread mode, otherwise the behavior is undefined. This is accomplished with the -s flag. Example: ./tagfs -s TagFS/
