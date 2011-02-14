@@ -17,15 +17,14 @@
 
 #define INFO(...) \
 log_timestamp(); \
-fprintf(TAGFS_DATA->log_file, ": "); \
+fprintf(TAGFS_DATA->log_file, ": [INFO] "); \
 fprintf(TAGFS_DATA->log_file, __VA_ARGS__); \
 fprintf(TAGFS_DATA->log_file, "\n"); \
 fflush(TAGFS_DATA->log_file);
 
 #define DEBUG(...) \
 log_timestamp(); \
-fprintf(TAGFS_DATA->log_file, ": "); \
-fprintf(TAGFS_DATA->log_file, "[DEBUG] "); \
+fprintf(TAGFS_DATA->log_file, ": [DEBUG] "); \
 fprintf(TAGFS_DATA->log_file, __VA_ARGS__); \
 fprintf(TAGFS_DATA->log_file, "\n"); \
 fflush(TAGFS_DATA->log_file);

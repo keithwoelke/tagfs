@@ -20,10 +20,22 @@ void db_connect();
 void db_disconnect();
 
 /**
- * Loads into the "directory_contents" table, all file IDs which have the specificed tag.
+ * Sets the table contents to all files which are in the given path (have the tags specified by the path) including all files which may have a stricter collection of tags.
  *
- * @param tag The tag to use when selecting files to insert.
+ * @param path The path to use when looking for matching files.
+ * @param table The table to insert the results into.
  */
-void db_load_table(const char *tag);
+void db_set_directory_contents(const char *path, const char *table);
+
+
+
+
+
+
+
+
+
+void db_filter_table(const char *tag, const char *table);
+
 
 #endif

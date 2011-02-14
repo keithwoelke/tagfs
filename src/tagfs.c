@@ -21,7 +21,8 @@ int tagfs_getattr(const char *path, struct stat *statbuf) {
 
 	INFO("Retrieving attributes for %s", path);
 
-	db_load_table("Video"); /* TODO: This is just for testing purposes */
+	db_set_directory_contents("/Video/ogg", "directory_contents"); /* TODO: This is just for testing purposes */
+	exit(EXIT_SUCCESS);
 
 	/* TODO: This all needs to be uncommented/implemented at some point */
 /*	if (valid_path_to_file(path)) {
