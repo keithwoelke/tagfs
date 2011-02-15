@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <sqlite3.h>
+#include <stdbool.h>
 #include <string.h>
 
 /**
@@ -11,9 +12,11 @@
  **/
 static void db_enable_foreign_keys() {
 	DEBUG(ENTRY);
-	char *err_msg = NULL;
+	char *err_msg = NULL; /* sqlite3 error message */
 	const char enable_foreign_keys[] = "PRAGMA foreign_keys = ON";
-	int rc = 0;
+	int rc = 0; /* return code of sqlite3 operations */
+
+	DEBUG("Enabling foreign keys");
 
 	/* execute statement */
 	assert(TAGFS_DATA->db_conn != NULL);
@@ -21,7 +24,7 @@ static void db_enable_foreign_keys() {
 
 	/* handle return code */
 	if(rc != SQLITE_OK) {
-		DEBUG("ERROR: %s", err_msg);
+		DEBUG("Error when enabling foreign keys: %s", err_msg);
 		ERROR("There was an error when enabling foreign keys.");
 		sqlite3_free(err_msg);
 	}
@@ -36,14 +39,17 @@ static void db_enable_foreign_keys() {
  * @param src The statement handle for the compiled query.
  * @param dest The name of the table to copy the results to.
  **/
-static void db_copy_result_set(sqlite3_stmt *src, const char *dest) {
+static int db_copy_result_set(sqlite3_stmt *src, const char *dest) {
 	DEBUG(ENTRY);
+	bool warn = false; /* whether or not a user visible warning should print */
 	char *query = NULL;
-	const char insert_into[] = "INSERT INTO \"directory_contents\"(file_id) VALUES(";
+	const char query_outline[] = "INSERT INTO (file_id) VALUES()";
 	int file_id = 0;
 	int i = 0;
-	int length = 0;
-	int rc = 0;
+	int length = 0; /* length of sqlite3 query */
+	int rc = 0; /* return code of sqlite3 operations */
+	int return_rc = 0; /* the result code to return from the function */
+	int written = 0; /* characters written by snprintf */
 	sqlite3_stmt *res = NULL;
 
 	assert(src != NULL);
@@ -58,31 +64,49 @@ static void db_copy_result_set(sqlite3_stmt *src, const char *dest) {
 		DEBUG("Retrieving file id: %d", file_id);
 
 		/* create query to insert file_id into database */
-		length = strlen(insert_into) + num_digits(file_id) + 1; /* + 1 for closing parenthesis */
+		length = strlen(query_outline) + strlen(dest) + num_digits(file_id); /* + 1 for closing parenthesis */
 		assert(length > 0);
 		query = malloc(length * sizeof(*query) + 1);
 		assert(query != NULL);
-		snprintf(query, length + 1, "%s%d)", insert_into,  file_id);
+		written = snprintf(query, length + 1, "INSERT INTO %s(file_id) VALUES(%d)", dest,  file_id);
+		assert(written == length);
 		DEBUG("Query to insert file ID \"%d\" into table \"%s\": %s", file_id, dest, query);
 
 		/* compile prepared statement */
-		(void)sqlite3_prepare_v2(TAGFS_DATA->db_conn, query, strlen(query), &res, NULL);
+		assert(TAGFS_DATA->db_conn != NULL);
+		rc = sqlite3_prepare_v2(TAGFS_DATA->db_conn, query, length, &res, NULL);
+
+		if(rc != SQLITE_OK) {
+			DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+			warn = true;
+		}
+
+		/* execute statement */
+		return_rc = sqlite3_step(res);
+
+		if(return_rc != SQLITE_DONE) {
+			DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", query, length, return_rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+			warn = true;
+		}
+
+		rc = sqlite3_finalize(res);		
+
+		if(rc != SQLITE_OK) {
+			DEBUG("WARNING: Finalizing statement \"%s\" of length %d FAILED with result code %d: %s", query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+			warn = true;
+		}
 
 		assert(query != NULL);
 		free(query);
 		query = NULL;
 
-		/* execute statement */
-		rc = sqlite3_step(res);
-		(void)sqlite3_finalize(res);
-
 		/* handle return code */
-		if(rc == SQLITE_DONE) {	DEBUG("Inserting file ID \"%d\" into table \"%s\" was a success", file_id, dest); }
-		else {
-			DEBUG("WARNING: Inserting file ID \"%d\" into table \"%s\" FAILED with result code %d: %s", file_id, dest, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
-			WARN("An error occured when communicating with the database");
-		}
+		if(warn == true) { WARN("An error occured when communicating with the database"); }
+		else { DEBUG("Inserting file ID \"%d\" into table \"%s\" was a success", file_id, dest); }
 	}
+
+	DEBUG(EXIT);
+	return return_rc;
 } /* db_copy_result_set */
 
 /**
@@ -94,21 +118,23 @@ static void db_copy_result_set(sqlite3_stmt *src, const char *dest) {
 static char *db_query_files_with_tag(const char *tag) {
 	DEBUG(ENTRY);
 	char *query = NULL;
-	const char select_from[] = "SELECT file_id FROM all_tables where tag_name == \"";
-	int length = 0;
+	const char select_from_outline[] = "SELECT file_id FROM all_tables where tag_name == \"\"";
+	int length = 0; /* length of sqlite3 query */
+	int written = 0; /* characters written by snprintf */
 
 	assert(tag != NULL);
 
 	DEBUG("Building query to select all files with tag \"%s\"", tag);
 
 	/* calculating length */
-	length = strlen(select_from) + strlen(tag) + 1; /* + 1 for the closing quotation mark */
+	length = strlen(select_from_outline) + strlen(tag);
 	DEBUG("Length of query to select files with tag \"%s\" is %d", tag, length);
 
 	/* building query */
 	query = malloc(length * sizeof(*query) + 1);
 	assert(query != NULL);
-	snprintf(query, length + 1, "%s%s\"", select_from, tag);
+	written = snprintf(query, length + 1, "SELECT file_id FROM all_tables where tag_name == \"%s\"", tag);
+	assert(written == length);
 
 	DEBUG("Query to select files with tag \"%s\": %s", tag, query);
 	DEBUG(EXIT);
@@ -122,43 +148,65 @@ static char *db_query_files_with_tag(const char *tag) {
  * @return The number of rows returned by the query.
  */
 static int db_count_from_query(const char *query) {
-	char *count_query = NULL;
-	const char select_count[] = "SELECT COUNT(*) FROM (";
-	int count = 0;
-	int length = 0;
-	sqlite3_stmt *res = NULL;
-
 	DEBUG(ENTRY);
+	bool warn = false; /* whether or not a user visible warning should print */
+	char *count_query = NULL;
+	const char select_count_outline[] = "SELECT COUNT(*) FROM ()";
+	int count = 0; /* number of rows returned from the count query */
+	int length = 0; /* length of the sqlite3 count query */
+	int rc = 0; /* return code of sqlite3 operations */
+	int written = 0; /* characters written by snprintf */
+	sqlite3_stmt *res = NULL;
 
 	assert(query != NULL);
 
 	DEBUG("Calculating number of results returned from query: %s", query);
 
 	/* calculate query length */
-	length = strlen(query) + strlen(select_count) + 1; /* + 1 for closing parenthesis */
+	length = strlen(query) + strlen(select_count_outline);
 	DEBUG("Length of query to count the results: %d", length);
 
 	/* build count query */
 	count_query = malloc(length * sizeof(*query) + 1);
 	assert(count_query != NULL);
-	snprintf(count_query, length + 1, "%s%s)", select_count, query);
+	written = snprintf(count_query, length + 1, "SELECT COUNT(*) FROM (%s)", query);
+	assert(written == length);
 
 	/* compile prepared statement */	
-	(void)sqlite3_prepare_v2(TAGFS_DATA->db_conn, count_query, strlen(count_query), &res, NULL);
+	assert(TAGFS_DATA->db_conn != NULL);
+	rc = sqlite3_prepare_v2(TAGFS_DATA->db_conn, count_query, length, &res, NULL);
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", count_query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	/* execute statement */
+	rc = sqlite3_step(res);
+
+	if(rc != SQLITE_ROW) {
+		DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", count_query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	/* get result of count */
+	count = sqlite3_column_int(res, 0);
+
+	rc = sqlite3_finalize(res);
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Finalizing statement \"%s\" of length %d FAILED with result code %d: %s", count_query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
 
 	assert(count_query != NULL);
 	free(count_query);
 	count_query = NULL;
 
-	/* execute statement */
-	(void)sqlite3_step(res);
+	/* handle return code */
+	if(warn == true) { WARN("An error occured when communicating with the database"); }
+	else { DEBUG("Results returned from query: %d", count); }
 
-	/* get result of count */
-	count = sqlite3_column_int(res, 0);
-
-	(void)sqlite3_finalize(res);
-
-	DEBUG("Results returned from query: %d", count);
 	DEBUG(EXIT);
 	return count;
 } /* db_count_from_query */
@@ -171,16 +219,23 @@ static int db_count_from_query(const char *query) {
  */
 static void db_load_table(const char *tag, const char *table) {
 	DEBUG(ENTRY);
+	bool warn = false; /* whether or not a user visible warning should print */
 	char *query = NULL;
-	int count = 0;
+	int count = 0; /* number of rows returned from the query */
+	int length = 0; /* length of the sqlite3 query */
+	int rc = 0; /* return code of sqlite3 operations */
 	sqlite3_stmt *res = NULL;
 
 	assert(tag != NULL);
 
-	/* get number of files in directory */
+	DEBUG("Loading results with tag \"%s\" into table \"%s\"", tag, table);
+
+	/* get query and number of files from query */
 	query = db_query_files_with_tag(tag);
 	assert(query != NULL);
 	DEBUG("Query to select files with tag \"%s\": %s", tag, query);
+	length = strlen(query);
+	DEBUG("Length of query to select files with tag \"%s\" is %d", tag, length);
 
 	count = db_count_from_query(query);
 	assert(count >= 0);
@@ -188,17 +243,35 @@ static void db_load_table(const char *tag, const char *table) {
 
 	/* compile prepared statement */
 	assert(TAGFS_DATA->db_conn != NULL);
-	(void)sqlite3_prepare_v2(TAGFS_DATA->db_conn, query, strlen(query), &res, NULL);
+	rc = sqlite3_prepare_v2(TAGFS_DATA->db_conn, query, length, &res, NULL);
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	/* insert results of query into table table */
+	assert(strcmp(sqlite3_column_name(res, 0), "file_id") == 0);
+	rc = db_copy_result_set(res, table);
+
+	if(rc != SQLITE_DONE) {
+		DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	rc = sqlite3_finalize(res);
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Finalizing statement \"%s\" of length %d FAILED with result code %d: %s", query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
 
 	assert(query != NULL);
 	free(query);
 	query = NULL;
 
-	/* insert results of query into table table */
-	assert(strcmp(sqlite3_column_name(res, 0), "file_id") == 0);
-	db_copy_result_set(res, table);
-
-	(void)sqlite3_finalize(res);
+		if(warn == true) { WARN("An error occured when communicating with the database"); }
+		else { DEBUG("Table \"%s\" succesfully loaded with files having tag \"%s\"", table, tag); }
 
 	DEBUG(EXIT);
 } /* db_load_table */
@@ -210,9 +283,12 @@ static void db_load_table(const char *tag, const char *table) {
  */
 static void db_truncate_table(const char *table) {
 	DEBUG(ENTRY);
+	bool warn = false; /* whether or not a user visible warning should print */
 	char *query = NULL;
-	const char delete_from[] = "DELETE FROM ";
-	int length = 0;
+	const char delete_from_outline[] = "DELETE FROM ";
+	int length = 0; /* length of the sqlite3 query */
+	int rc = 0; /* return code of sqlite3 operations */
+	int written = 0; /* characters written by snprintf */
 	sqlite3_stmt *res = NULL;
 
 	assert(table != NULL);
@@ -220,33 +296,54 @@ static void db_truncate_table(const char *table) {
 	DEBUG("Truncating table \"%s\"", table); 
 
 	/* calculate query length */
-	length = strlen(delete_from) + strlen(table);
+	length = strlen(delete_from_outline) + strlen(table);
 	query = malloc(length * sizeof(*query) + 1);
-	snprintf(query, length + 1, "DELETE FROM %s", table);
+	written = snprintf(query, length + 1, "DELETE FROM %s", table);
+	assert(written == length);
 
 	/* compile prepared statement */
-	(void)sqlite3_prepare_v2(TAGFS_DATA->db_conn, query, strlen(query), &res, NULL);
+	assert(TAGFS_DATA->db_conn != NULL);
+	rc = sqlite3_prepare_v2(TAGFS_DATA->db_conn, query, length, &res, NULL);
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
 	
+	/* execute statement */
+	rc = sqlite3_step(res);
+
+	if(rc != SQLITE_DONE) {
+		DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	rc = sqlite3_finalize(res);
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Finalizing statement \"%s\" of length %d FAILED with result code %d: %s", query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
 	assert(query != NULL);
 	free(query);
 	query = NULL;
 
-	/* execute statement */
-	sqlite3_step(res);
-
-	(void)sqlite3_finalize(res);
+		if(warn == true) { WARN("An error occured when communicating with the database"); }
+		else { DEBUG("Table \"%s\" succesfully truncated", table); }
 
 	DEBUG(EXIT);
 } /* db_truncate_table */
 
 void db_connect() {
 	DEBUG(ENTRY);
-	int rc = 0;
+	int rc = 0; /* return code of sqlite3 operations */
 
 	DEBUG("Connecting to database: %s", TAGFS_DATA->db_path);
 
 	/* connect to the database */
 	assert(TAGFS_DATA->db_path != NULL);
+	assert(TAGFS_DATA->db_conn == NULL);
 	rc = sqlite3_open_v2(TAGFS_DATA->db_path, &TAGFS_DATA->db_conn, SQLITE_OPEN_READWRITE, NULL); /* TODO: set as 'SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE' and create the database if it does not exist already */
 	assert(TAGFS_DATA->db_conn != NULL);
 
@@ -265,7 +362,9 @@ void db_connect() {
 
 void db_disconnect() {
 	DEBUG(ENTRY);
-	int rc = 0;
+	int rc = 0; /* return code of sqlite3 operations */
+
+	DEBUG("Disconnecting from the database");
 
 	/* close database connection */
 	assert(TAGFS_DATA->db_conn != NULL);
@@ -283,8 +382,8 @@ void db_disconnect() {
 
 void db_set_directory_contents(const char *path, const char *table) {
 	DEBUG(ENTRY);
-	int num_tags = 0;
-	char **tag_array = NULL;
+	int num_tags = 0; /* number of tags in the path */
+	char **tag_array = NULL; /* array of path elements */
 	int i = 0;
 
 	assert(path != NULL);
@@ -395,51 +494,99 @@ static int db_array_from_query(char *desired_column_name, const char *result_que
 
 
 void db_filter_table(const char *tag, const char *table) {
-	char **file_array = NULL;
-	char *file_query = NULL;
-	char *filter_query = NULL;
-	char filter_query_outline[] = "SELECT file_id FROM thread_ WHERE file_id IN ()";
-	char *insert_query = NULL;
-	char insert_query_outline[] = "INSERT INTO thread_(file_id) VALUES(\"\")";
-	int insert_query_length = 0;
+	DEBUG(ENTRY);
+	bool warn = false; /* whether or not a user visible warning should print */
+	char *file_query = NULL; /* sqlite3 query to select files with tag */
+	char *filter_query = NULL; /* sqlite3 query to select matching files in file_query and table */
+	const char filter_query_outline[] = "SELECT file_id FROM  WHERE file_id IN ()";
+	int filter_query_length = 0;
+	int rc = 0; /* return code of sqlite3 operations */
+	int written = 0; /* characters written by snprintf */
 	sqlite3_stmt *res = NULL;
-	int i = 0;
-	int file_query_length = 0;
-	int num_files = 0;
-	unsigned int tid = 1337;
 
 	assert(tag != NULL);
+	assert(table != NULL);
 
-	DEBUG(ENTRY);
-	DEBUG("Filtering rows in %u that do not contain the tag \"%s\"", tid, tag);
+	DEBUG("Filtering rows in table \"%s\" that do not contain the tag \"%s\"", table, tag);
 
-	filter_query = db_query_files_with_tag(tag);
-	DEBUG("Filter query: %s", filter_query);
+	/* build query to select potential files of interest (by tag) */
+	file_query = db_query_files_with_tag(tag);
+	DEBUG("Query to select files with tag \"%s\": %s", tag, file_query);
 
-	file_query_length = strlen(filter_query_outline) + strlen(filter_query) + num_digits(tid) + 1;
-	file_query = malloc(file_query_length * sizeof(*file_query));
-	snprintf(file_query, file_query_length, "SELECT file_id FROM thread_%u WHERE file_id IN (%s)", tid, filter_query);
-	DEBUG("File query: %s", file_query);
-	num_files = db_array_from_query("file_id", file_query, &file_array);
+	/* select files of interest that appear in table */
+	filter_query_length = strlen(filter_query_outline) + strlen(file_query) + strlen(table);
+	filter_query = malloc(filter_query_length * sizeof(*filter_query) + 1);
+	assert(filter_query != NULL);
 
-	db_truncate_table(table);
+	written = snprintf(filter_query, filter_query_length + 1, "SELECT file_id FROM %s WHERE file_id IN (%s)", table, file_query);
+	assert(written == filter_query_length);
+	DEBUG("Query to filter out files not containing tag \"%s\": %s", tag, filter_query);
 
-	for(i = 0; i < num_files; i++) {
-		insert_query_length = strlen(insert_query_outline) + num_digits(tid) + strlen(file_array[i]) + 1;
-		insert_query = malloc(insert_query_length * sizeof(*insert_query));
-		snprintf(insert_query, insert_query_length, "INSERT INTO thread_%u(file_id) VALUES(\"%s\")", tid, file_array[i]);
-		DEBUG("Insert query: %s", insert_query);
+	assert(file_query != NULL);
+	free(file_query);
+	file_query = NULL;
 
-		(void)sqlite3_prepare_v2(TAGFS_DATA->db_conn, insert_query, strlen(insert_query), &res, NULL);
-		sqlite3_step(res);
+	/* compile prepared statement */
+	assert(TAGFS_DATA->db_conn != NULL);
+	rc = sqlite3_prepare_v2(TAGFS_DATA->db_conn, filter_query, filter_query_length, &res, NULL);
 
-		free(insert_query);
-		sqlite3_finalize(res);
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", filter_query, filter_query_length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
 	}
 
+	/* truncate intermediate table */
+	db_truncate_table("intermediate_table");
+
+	/* insert results of query into intermediate table */
+	assert(strcmp(sqlite3_column_name(res, 0), "file_id") == 0);
+	rc = db_copy_result_set(res, "directory_intermediate");
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", filter_query, filter_query_length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	rc = sqlite3_finalize(res);
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Finalizing statement \"%s\" of length %d FAILED with result code %d: %s", filter_query, filter_query_length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	/* truncate result table */
+	db_truncate_table(table);
+
+	/* compile prepared statement */
+	rc = sqlite3_prepare_v2(TAGFS_DATA->db_conn, "SELECT * FROM directory_intermediate", strlen("SELECT * FROM directory_intermediate"), &res, NULL);
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", filter_query, filter_query_length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	/* insert results of query into result table */
+	assert(strcmp(sqlite3_column_name(res, 0), "file_id") == 0);
+	rc = db_copy_result_set(res, "directory_contents");
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", filter_query, filter_query_length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	rc = sqlite3_finalize(res);
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Finalizing statement \"%s\" of length %d FAILED with result code %d: %s", filter_query, filter_query_length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	assert(filter_query != NULL);
 	free(filter_query);
-	free(file_query);
-	free_char_ptr_array(&file_array, num_files);
+	filter_query = NULL;
+
+		if(warn == true) { WARN("An error occured when communicating with the database"); }
+		else { DEBUG("Table \"%s\" succesfully filtered with tag \"%s\"", table, tag); }
 
 	DEBUG(EXIT);
 } /* db_filter_table */

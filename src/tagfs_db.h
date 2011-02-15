@@ -27,15 +27,12 @@ void db_disconnect();
  */
 void db_set_directory_contents(const char *path, const char *table);
 
-
-
-
-
-
-
-
-
+/**
+ * Removes all files from a table which do not have the specified tag.
+ *
+ * @param tag The tag to use when filtering the specified table.
+ * @param table The table to filter.
+ */
 void db_filter_table(const char *tag, const char *table);
-
 
 #endif
