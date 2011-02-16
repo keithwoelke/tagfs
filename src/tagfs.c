@@ -22,7 +22,6 @@ int tagfs_getattr(const char *path, struct stat *statbuf) {
 	INFO("Retrieving attributes for %s", path);
 
 	db_set_directory_contents("/Video/ogg", "directory_contents"); /* TODO: This is just for testing purposes */
-	exit(EXIT_SUCCESS);
 
 	/* TODO: This all needs to be uncommented/implemented at some point */
 /*	if (valid_path_to_file(path)) {
@@ -43,7 +42,7 @@ int tagfs_readlink(const char *path, char *link, size_t size) {
 	DEBUG(ENTRY);
 	int retstat = 0;
 
-	INFO("TODO: %s", __FUNCTION__); /* TODO: This needs to be implemented */
+	ERROR("TODO: %s", __FUNCTION__); /* TODO: This needs to be implemented */
 
 	DEBUG(EXIT);
 	return retstat;
@@ -53,7 +52,7 @@ int tagfs_mknod(const char *path, mode_t mode, dev_t dev) {
 	DEBUG(ENTRY);
 	int retstat = 0;
 
-	INFO("TODO: %s", __FUNCTION__); /* TODO: This needs to be implemented */
+	ERROR("TODO: %s", __FUNCTION__); /* TODO: This needs to be implemented */
 
 	DEBUG(EXIT);
 	return retstat;
@@ -61,9 +60,15 @@ int tagfs_mknod(const char *path, mode_t mode, dev_t dev) {
 
 static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
 	DEBUG(ENTRY);
+	char **tag_array = NULL;
+	int num_tags = 0;
 	int retstat = 0;
-
+	
 	INFO("Reading directory %s", path);
+
+	db_set_directory_contents(path, "directory_contents");
+
+//	num_tags = db_tags_from_query(path, &tag_array);
 
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
