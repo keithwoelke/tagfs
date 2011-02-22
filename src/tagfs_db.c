@@ -408,8 +408,10 @@ void db_set_directory_contents(const char *path, const char *table) {
 	DEBUG(EXIT);
 } /* db_set_directory_contents */
 
+/* TODO: This approach may be too slow. May be better to use arrays, or copy to intermediate table and rename. */
 void db_filter_table(const char *tag, const char *table) {
 	DEBUG(ENTRY);
+	const char *select_from = "SELECT * FROM directory_intermediate";
 	bool warn = false; /* whether or not a user visible warning should print */
 	char *file_query = NULL; /* sqlite3 query to select files with tag */
 	char *filter_query = NULL; /* sqlite3 query to select matching files in file_query and table */
@@ -468,7 +470,7 @@ void db_filter_table(const char *tag, const char *table) {
 	db_truncate_table(table);
 
 	/* compile prepared statement */
-	rc = sqlite3_prepare_v2(TAGFS_DATA->db_conn, "SELECT * FROM directory_intermediate", strlen("SELECT * FROM directory_intermediate"), &res, NULL);
+	rc = sqlite3_prepare_v2(TAGFS_DATA->db_conn, select_from, strlen(select_from), &res, NULL);
 
 	if(rc != SQLITE_OK) {
 		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", filter_query, filter_query_length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
@@ -498,3 +500,18 @@ void db_filter_table(const char *tag, const char *table) {
 
 	DEBUG(EXIT);
 } /* db_filter_table */
+
+
+
+
+
+
+
+
+
+
+
+
+void db_get_tags_from_query(const char *path, char ***tag_array) {
+	const char select_distinct[] = "SELECT DISTINCT tag_name FROM all_tables WHERE file_id IN (SELECT file_id FROM directory_contents)";
+} /* db_get_tags_from_query */

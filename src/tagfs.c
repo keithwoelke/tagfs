@@ -68,7 +68,7 @@ static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 	db_set_directory_contents(path, "directory_contents");
 
-//	num_tags = db_tags_from_query(path, &tag_array);
+	num_tags = db_tags_from_query(path, &tag_array);
 
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
