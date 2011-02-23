@@ -35,4 +35,13 @@ void db_set_directory_contents(const char *path, const char *table);
  */
 void db_filter_table(const char *tag, const char *table);
 
+
+
+
+
+int db_tags_from_query(const char *path, char ***tag_array, const char *table);
+
+
+
+
 #endif

@@ -63,17 +63,23 @@ static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 	char **tag_array = NULL;
 	int num_tags = 0;
 	int retstat = 0;
+	const char table[] = "directory_contents";
 	
 	INFO("Reading directory %s", path);
 
-	db_set_directory_contents(path, "directory_contents");
+	db_set_directory_contents(path, table);
 
-	num_tags = db_tags_from_query(path, &tag_array);
+	num_tags = db_tags_from_query(path, &tag_array, table);
 
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
 
 	/* TODO: Fill files and folders */
+	int i = 0;
+	for(i = 0; i < num_tags; i++) {
+		DEBUG("FILLING %s", tag_array[i]);
+		filler(buf, tag_array[i], NULL, 0);
+	}
 
 	DEBUG(EXIT);
 	return retstat;

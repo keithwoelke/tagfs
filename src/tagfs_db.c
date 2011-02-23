@@ -7,6 +7,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+/* TODO: Make sure all functions are db specific */
+
 /**
  * Enable foreign key constraints on the database.
  **/
@@ -408,7 +410,7 @@ void db_set_directory_contents(const char *path, const char *table) {
 	DEBUG(EXIT);
 } /* db_set_directory_contents */
 
-/* TODO: This approach may be too slow. May be better to use arrays, or copy to intermediate table and rename. */
+/* TODO: This approach may be too slow. Probably better to use arrays, or copy to intermediate table and rename. */
 void db_filter_table(const char *tag, const char *table) {
 	DEBUG(ENTRY);
 	const char *select_from = "SELECT * FROM directory_intermediate";
@@ -512,6 +514,141 @@ void db_filter_table(const char *tag, const char *table) {
 
 
 
-void db_get_tags_from_query(const char *path, char ***tag_array) {
-	const char select_distinct[] = "SELECT DISTINCT tag_name FROM all_tables WHERE file_id IN (SELECT file_id FROM directory_contents)";
-} /* db_get_tags_from_query */
+
+
+static int db_array_from_query(char *desired_column_name, const char *result_query, /*@out@*/ char ***result_array) {
+	DEBUG(ENTRY);
+	bool column_match = false;
+	const char *tail = NULL;
+	const unsigned char *result = NULL;
+	int column_count = 0;
+	int desired_column_index = 0;
+	int i = 0;
+	int num_results = 0;
+	sqlite3_stmt *res = NULL;
+	int foo = 0;
+
+
+	assert(result_query != NULL);
+	assert(result_array != NULL);
+	assert(*result_array == NULL);
+
+
+	num_results = db_count_from_query(result_query);
+	DEBUG("FOO: num_results: %d", num_results);
+
+	if(num_results > 0) {
+		*result_array = malloc(num_results * sizeof(**result_array));
+		assert(*result_array != NULL);
+
+
+		foo = sqlite3_prepare_v2(TAGFS_DATA->db_conn, result_query, strlen(result_query), &res, &tail);
+		DEBUG("RETURN FROM PREPARE = %d", foo);
+		column_count = sqlite3_column_count(res);
+		DEBUG("RETURN FROM COLUMN COUNT = %d", column_count);
+
+		for(desired_column_index = 0; desired_column_index < column_count; desired_column_index++) { /* find the requested column */
+			if(strcmp(desired_column_name, sqlite3_column_name(res, desired_column_index)) == 0) { 
+				DEBUG("COLUMN FOUND");
+				column_match = true;
+				break; 
+			}
+		}
+
+		if(column_match == false) {
+				DEBUG("COLUMN NOT FOUND");
+		}
+		for(i = 0; sqlite3_step(res) == SQLITE_ROW; i++) {
+			result = sqlite3_column_text(res, desired_column_index); 
+			(*result_array)[i] = malloc(result == NULL ? sizeof(NULL) : strlen((const char *)result) * sizeof(*result) + 1);
+			assert((*result_array)[i] != NULL);
+			if(result != NULL) {
+				strcpy((*result_array)[i], (char*)result);
+				DEBUG("BAR: %s", (char*)result);
+			}
+			else {
+				(*result_array)[i] = NULL;
+			}
+
+		}
+
+		(void)sqlite3_finalize(res);
+	}
+	else {
+	}
+
+	DEBUG(EXIT);
+	return num_results;
+} /* db_array_from_query */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* TODO: load tags for empty query */
+int db_tags_from_query(const char *path, char ***tag_array, const char *table) {
+	DEBUG(ENTRY);
+	char *query = NULL; /* sqlite3 query to select tags that match the files in the given table */
+	const char select_distinct[] = "SELECT DISTINCT tag_name FROM all_tables WHERE file_id IN (SELECT file_id FROM )";
+	const char select_root[] = "SELECT tag_name FROM tags";
+	int length = 0; /* length of sqlite3 query to select tags */
+	int num_path_tags = 0; /* number of tags in the path */
+	int num_tags = 0; /* number of tags at the directory location */
+	int written = 0; /* characters written by snprintf */
+	const char and_not[] = " AND tag_name != '";
+	int i = 0;
+	char **path_tag_array = NULL;
+
+	assert(path != NULL);
+	assert(tag_array != NULL);
+	assert(*tag_array == NULL);
+
+	DEBUG("Getting tags in path %s and using result table \"%s\"", path, table);
+
+	if(strcmp(path, "/") == 0) {
+		/* get array from query */
+		num_tags = db_array_from_query("tag_name", select_root, tag_array);
+		DEBUG("%d tags at location %s", num_tags, path);
+	}
+	else {
+	/* get tag to exclude and length of query */
+	num_path_tags = path_to_array(path, &path_tag_array);
+	DEBUG("%d tags in path %s", num_path_tags, path);
+	length = strlen(select_distinct) + strlen(table);
+	DEBUG("Length of initial portion of query %s: %d", path, length);
+
+	/* build query */
+	query = calloc(strlen(select_distinct) + (num_tags * (strlen(and_not) + 1) + strlen(path) - num_path_tags + 1), sizeof(query));
+	assert(query != NULL);
+	written = snprintf(query, length + 1, "SELECT DISTINCT tag_name FROM all_tables WHERE file_id IN (SELECT file_id FROM %s)", table);
+	assert(written == length);
+
+for(i = 0; i < num_path_tags; i++) {
+		strcat(strcat(strcat(query, and_not), path_tag_array[i]), "'");
+	}
+	DEBUG("Length of full query %s: %d", path, length);
+
+	/* get array from query */
+	num_tags = db_array_from_query("tag_name", query, tag_array);
+	DEBUG("%d tags at location %s", num_tags, path);
+
+	assert(query != NULL);
+	free(query);
+	query = NULL;
+	}	
+
+	DEBUG("Returning %d tags at location: %s", num_tags, path);
+	DEBUG(EXIT);
+	return num_tags;
+} /* db_tags_from_query */
