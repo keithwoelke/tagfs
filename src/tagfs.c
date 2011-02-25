@@ -21,8 +21,6 @@ int tagfs_getattr(const char *path, struct stat *statbuf) {
 
 	INFO("Retrieving attributes for %s", path);
 
-	db_set_directory_contents("/Video/ogg", "directory_contents"); /* TODO: This is just for testing purposes */
-
 	/* TODO: This all needs to be uncommented/implemented at some point */
 /*	if (valid_path_to_file(path)) {
 		retstat = stat(db_get_file_location(path), statbuf);
@@ -67,9 +65,9 @@ static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 	
 	INFO("Reading directory %s", path);
 
-	db_set_directory_contents(path, table);
+	set_directory_contents(path, table);
 
-	num_tags = db_tags_from_query(path, &tag_array, table);
+	num_tags = tags_from_query(path, &tag_array, table);
 
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
@@ -80,6 +78,8 @@ static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 		DEBUG("FILLING %s", tag_array[i]);
 		filler(buf, tag_array[i], NULL, 0);
 	}
+
+	free_char_ptr_array(&tag_array, num_tags);
 
 	DEBUG(EXIT);
 	return retstat;

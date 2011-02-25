@@ -44,4 +44,38 @@ const int num_tags_in_path(const char* path);
  */
 int num_tags_in_path(const char* path);
 
+/**
+ * Return a query which will select all files which contain the specified tag. The returned query must be free'd by the caller.
+ *
+ * @param tag The tag which will be used to construct the select query.
+ * @return The query which can be used to select all files containing the specified tag.
+ **/
+char *get_query_files_with_tag(const char *tag);
+
+/**
+ * Sets the table contents to all files which are in the given path (have the tags specified by the path) including all files which may have a stricter collection of tags.
+ *
+ * @param path The path to use when looking for matching files.
+ * @param table The table to insert the results into.
+ */
+void set_directory_contents(const char *path, const char *table);
+
+/**
+ * Retrieves all tags at a location in the TagFS. The results are placed into tag_array and are queried from the specified table. This table should be populated prior to calling tags_from_query with a call to db_set_directory_contents(path, table) where table is the same as the table being queried for tags. tag_array must be free'd by the caller once it is no longer needed. free_char_ptr_array can be used for this purpose.
+ *
+ * @param path The path to use when looking for tags in the filesystem.
+ * @param tag_array The array to fill with tags.
+ * @param table The name of the table to use when looking for tags.
+ * @return The number of tags in tag_array.
+ */
+int tags_from_query(const char *path, char ***tag_array, const char *table);
+
+
+
+
+
+
+
+int db_array_from_query(char *desired_column_name, const char *result_query, /*@out@*/ char ***result_array);
+
 #endif
