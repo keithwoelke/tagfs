@@ -70,6 +70,7 @@ void set_directory_contents(const char *path, const char *table);
  */
 int tags_from_query(const char *path, char ***tag_array, const char *table);
 
+int files_from_query(const char *path, char ***file_array, const char *table);
 
 
 

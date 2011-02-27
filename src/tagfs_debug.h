@@ -16,16 +16,35 @@
 #include <stdlib.h>
 
 #define INFO(...) \
-log_timestamp(); 
+log_timestamp(); \
+fprintf(TAGFS_DATA->log_file, ": [INFO] "); \
+fprintf(TAGFS_DATA->log_file, __VA_ARGS__); \
+fprintf(TAGFS_DATA->log_file, "\n"); \
+fflush(TAGFS_DATA->log_file);
 
 #define DEBUG(...) \
-log_timestamp(); 
+log_timestamp(); \
+fprintf(TAGFS_DATA->log_file, ": [DEBUG] "); \
+fprintf(TAGFS_DATA->log_file, __VA_ARGS__); \
+fprintf(TAGFS_DATA->log_file, "\n"); \
+fflush(TAGFS_DATA->log_file);
 
 #define WARN(...) \
-log_timestamp(); 
+log_timestamp(); \
+fprintf(TAGFS_DATA->log_file, ": "); \
+fprintf(TAGFS_DATA->log_file, "%s(%d): [WARNING] ", __FILE__, __LINE__); \
+fprintf(TAGFS_DATA->log_file, __VA_ARGS__); \
+fprintf(TAGFS_DATA->log_file, "\n"); \
+fflush(TAGFS_DATA->log_file);
 
 #define ERROR(...) \
-log_timestamp(); 
+log_timestamp(); \
+fprintf(TAGFS_DATA->log_file, ": "); \
+fprintf(TAGFS_DATA->log_file, "%s(%d): [ERROR] ", __FILE__, __LINE__); \
+fprintf(TAGFS_DATA->log_file, __VA_ARGS__); \
+fprintf(TAGFS_DATA->log_file, "\n"); \
+fflush(TAGFS_DATA->log_file); \
+exit(EXIT_FAILURE)
 
 #define ENTRY "---> %s", __FUNCTION__
 

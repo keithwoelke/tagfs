@@ -58,28 +58,34 @@ int tagfs_mknod(const char *path, mode_t mode, dev_t dev) {
 
 static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
 	DEBUG(ENTRY);
+	char **file_array = NULL;
 	char **tag_array = NULL;
+	const char table[] = "directory_contents";
+	int i = 0;
+	int num_files = 0;
 	int num_tags = 0;
 	int retstat = 0;
-	const char table[] = "directory_contents";
 	
 	INFO("Reading directory %s", path);
 
 	set_directory_contents(path, table);
 
-	num_tags = tags_from_query(path, &tag_array, table);
-
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
 
-	/* TODO: Fill files and folders */
-	int i = 0;
+	num_tags = tags_from_query(path, &tag_array, table);
 	for(i = 0; i < num_tags; i++) {
 		DEBUG("FILLING %s", tag_array[i]);
 		filler(buf, tag_array[i], NULL, 0);
 	}
-
 	free_char_ptr_array(&tag_array, num_tags);
+
+	num_files = files_from_query(path, &file_array, table);
+	for(i = 0; i < num_files; i++) {
+		DEBUG("FILLING %s", file_array[i]);
+		filler(buf, file_array[i], NULL, 0);
+	}
+	free_char_ptr_array(&file_array, num_files);
 
 	DEBUG(EXIT);
 	return retstat;

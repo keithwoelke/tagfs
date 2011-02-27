@@ -231,12 +231,14 @@ int tags_from_query(const char *path, char ***tag_array, const char *table) {
 		length = strlen(select_distinct) + strlen(table);
 		DEBUG("Length of initial portion of query %s: %d", path, length);
 
-		/* build query */
+		/* build inital portion of query */
 		query = calloc(strlen(select_distinct) + (num_tags * (strlen(and_not) + 1) + strlen(path) - num_path_tags + 1), sizeof(query));
 		assert(query != NULL);
 		written = snprintf(query, length + 1, "SELECT DISTINCT tag_name FROM all_tables WHERE file_id IN (SELECT file_id FROM %s)", table);
 		assert(written == length);
+		DEBUG("Initial portion of query: %s", query);
 
+		/* add tags to exclude from query */
 		for(i = 0; i < num_path_tags; i++) {
 			strcat(strcat(strcat(query, and_not), path_tag_array[i]), "'");
 		}
@@ -254,4 +256,41 @@ int tags_from_query(const char *path, char ***tag_array, const char *table) {
 	DEBUG("%d tags at location %s", num_tags, path);
 	DEBUG(EXIT);
 	return num_tags;
+} /* tags_from_query */
+
+int files_from_query(const char *path, char ***file_array, const char *table) {
+	DEBUG(ENTRY);
+	char *query = NULL; /* sqlite3 query to select tags that match the files in the given table */
+	const char select_from[] = "SELECT file_name FROM files JOIN  USING(file_id)";
+	int length = 0; /* length of sqlite3 query to select tags */
+	int num_files = 0; /* number of files at the directory location */
+	int written = 0; /* characters written by snprintf */
+
+	assert(path != NULL);
+	assert(file_array != NULL);
+	assert(*file_array == NULL);
+	assert(table != NULL);
+
+	DEBUG("Getting files in path %s and using result table \"%s\"", path, table);
+
+	/* get length of query */
+	length = strlen(select_from) + strlen(table);
+	DEBUG("Length of query is %d", length);
+
+	/* build query */
+	query = malloc(length * sizeof(*query) + 1);
+	assert(query != NULL);
+	written = snprintf(query, length + 1, "SELECT file_name FROM files JOIN %s USING(file_id)", table);
+	assert(written == length);
+
+	/* get results from root level query */
+	num_files = db_array_from_query("file_name", query, file_array);
+
+	assert(query != NULL);
+	free(query);
+	query = NULL;
+
+	DEBUG("%d tags at location %s", num_files, path);
+	DEBUG(EXIT);
+	return num_files;
 } /* tags_from_query */
