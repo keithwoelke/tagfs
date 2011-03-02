@@ -70,13 +70,40 @@ void set_directory_contents(const char *path, const char *table);
  */
 int tags_from_query(const char *path, char ***tag_array, const char *table);
 
+/**
+ * Returns all files which have the tags as denoted in the path.
+ *
+ * @param path The path to use when looking for tags in the filesystem.
+ * @param file_array The array to fill with files.
+ * @param table The name of the table to use when looking for files.
+ * @return The number of files in file_array.
+ */
 int files_from_query(const char *path, char ***file_array, const char *table);
 
+/**
+ * Checks whether or not a given path is valid. This is specifically done by checking that every component of the path is valid and that every component is unique. Essentially, this is done with calls to valid_tags_in_path and unique_path.
+ *
+ * @param path A string representing a path in the file system.
+ * @return true, if the path is valid. false, if the path is not valid.
+ */
+bool valid_path_to_tag(const char *path);
+
+/**
+ * Checks whether or not a given tag is valid.
+ *
+ * @param tag The tag to check.
+ * @return true, if the tag is valid. false, if the tag is not valid.
+ */
+bool valid_tag(const char *tag);
 
 
 
 
 
-int db_array_from_query(char *desired_column_name, const char *result_query, /*@out@*/ char ***result_array);
+
+
+
+
+int db_array_from_query(char *desired_column_name, const char *result_query, char ***result_array);
 
 #endif

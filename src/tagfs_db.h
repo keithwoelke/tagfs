@@ -10,6 +10,14 @@
 #define TAGFS_DB_H
 
 /**
+ * Return the number of rows returned from the specified query.
+ *
+ * @param query The query which will be run to count the results.
+ * @return The number of rows returned by the query.
+ */
+int db_count_from_query(const char *query);
+
+/**
  * Connect to the database.
  */
 void db_connect();

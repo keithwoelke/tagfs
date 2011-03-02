@@ -294,3 +294,54 @@ int files_from_query(const char *path, char ***file_array, const char *table) {
 	DEBUG(EXIT);
 	return num_files;
 } /* tags_from_query */
+
+bool valid_path_to_tag(const char *path) {
+	DEBUG(ENTRY);
+	bool valid = false;
+
+	assert(path != NULL);
+
+	DEBUG("Checking that %s is a valid path to a tag", path);
+
+	if(strcmp(path, "/") == 0) { valid = true; }
+	else {
+//		if(!unique_tags_in_path(path) || !valid_tags_in_path(path)) { valid = false; }
+//		else { valid = true; }
+	}
+
+	DEBUG("%s is %sa valid path to a tag", path, valid ? "" : "not a ");
+	DEBUG(EXIT);
+	return valid;
+} /* valid_path_to_tag */
+
+bool valid_tag(const char *tag) {
+	DEBUG(ENTRY);
+	bool valid = false;
+	char *query = NULL;
+	const char select_from[] = "SELECT * FROM tags WHERE tag_name = \"\"";
+	int length = 0;
+	int written = 0; /* characters written by snprintf */
+	int count = 0; /* number of results returned by query */
+
+	/* get length of query */
+	length = strlen(select_from) + strlen(tag);
+	DEBUG("Length of query to select matching tags is %d", length);
+
+	/* build query */
+	query = malloc(length * sizeof(*query) + 1);
+	assert(query != NULL);
+	written = snprintf(query, length + 1, "SELECT * FROM tags WHERE tag_name = \"%s\"", tag);
+	assert(written == length);
+	DEBUG("Query to check if tag \"%s\" is valid: %s", tag, query);
+
+	/* check query count */
+	count = db_count_from_query(query);
+	assert(count == 0 || count == 1);
+	DEBUG("%d results returned from query", count);
+
+	if(count == 1) { valid = true; }
+
+	DEBUG("Tag \"%s\" is %s", tag, valid == true ? "valid" : "not valid");
+	DEBUG(EXIT);
+	return valid;
+} /* db_valid_tag */

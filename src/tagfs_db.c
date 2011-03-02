@@ -7,8 +7,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-/* TODO: Make sure all functions are db specific */
-
 /**
  * Enable foreign key constraints on the database.
  **/
@@ -109,13 +107,7 @@ static void db_copy_result_set(sqlite3_stmt *src, const char *dest) {
 	DEBUG(EXIT);
 } /* db_copy_result_set */
 
-/**
- * Return the number of rows returned from the specified query.
- *
- * @param query The query which will be run to count the results.
- * @return The number of rows returned by the query.
- */
-static int db_count_from_query(const char *query) {
+int db_count_from_query(const char *query) {
 	DEBUG(ENTRY);
 	bool warn = false; /* whether or not a user visible warning should print */
 	char *count_query = NULL;
@@ -435,8 +427,6 @@ void db_truncate_table(const char *table) {
 
 
 
-
-
 int db_array_from_query(char *desired_column_name, const char *result_query, /*@out@*/ char ***result_array) {
 	DEBUG(ENTRY);
 	bool column_match = false;
@@ -456,7 +446,6 @@ int db_array_from_query(char *desired_column_name, const char *result_query, /*@
 
 
 	num_results = db_count_from_query(result_query);
-	DEBUG("FOO: num_results: %d", num_results);
 
 	if(num_results > 0) {
 		*result_array = malloc(num_results * sizeof(**result_array));
@@ -464,9 +453,7 @@ int db_array_from_query(char *desired_column_name, const char *result_query, /*@
 
 
 		foo = sqlite3_prepare_v2(TAGFS_DATA->db_conn, result_query, strlen(result_query), &res, &tail);
-		DEBUG("RETURN FROM PREPARE = %d", foo);
 		column_count = sqlite3_column_count(res);
-		DEBUG("RETURN FROM COLUMN COUNT = %d", column_count);
 
 		for(desired_column_index = 0; desired_column_index < column_count; desired_column_index++) { /* find the requested column */
 			if(strcmp(desired_column_name, sqlite3_column_name(res, desired_column_index)) == 0) { 
@@ -501,20 +488,3 @@ int db_array_from_query(char *desired_column_name, const char *result_query, /*@
 	DEBUG(EXIT);
 	return num_results;
 } /* db_array_from_query */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

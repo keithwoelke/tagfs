@@ -25,12 +25,12 @@ int tagfs_getattr(const char *path, struct stat *statbuf) {
 /*	if (valid_path_to_file(path)) {
 		retstat = stat(db_get_file_location(path), statbuf);
 	}
-	else if(valid_path_to_tag(path)) {*/ /* TODO: Set proper folder info? */
+	else */if(valid_path_to_tag(path)) { /* TODO: Set proper folder info? */
 		statbuf->st_mode = S_IFDIR | 0755;
-//	}
-//	else {
-//		retstat = -ENOENT;
-//	}
+	}
+	else {
+		retstat = -ENOENT;
+	}
 
 	DEBUG(EXIT);
 	return retstat;
