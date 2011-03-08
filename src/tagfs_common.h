@@ -88,15 +88,6 @@ int files_from_query(const char *path, char ***file_array, const char *table);
  */
 bool valid_path_to_tag(const char *path);
 
-/**
- * Checks whether or not a given tag is valid.
- *
- * @param tag The tag to check.
- * @return true, if the tag is valid. false, if the tag is not valid.
- */
-bool valid_tag(const char *tag);
-
-
 
 
 

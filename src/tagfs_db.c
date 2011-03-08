@@ -426,7 +426,8 @@ void db_truncate_table(const char *table) {
 
 
 
-
+/* TODO: Add info */
+/* TODO: Check source */
 int db_array_from_query(char *desired_column_name, const char *result_query, /*@out@*/ char ***result_array) {
 	DEBUG(ENTRY);
 	bool column_match = false;
