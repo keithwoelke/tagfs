@@ -36,6 +36,10 @@ static bool valid_tag(const char *tag) {
 	assert(count == 0 || count == 1);
 	DEBUG("%d results returned from query", count);
 
+	assert(query != NULL);
+	free(query);
+	query = NULL;
+
 	if(count == 1) { valid = true; }
 
 	DEBUG("Tag \"%s\" is %s", tag, valid == true ? "valid" : "not valid");
@@ -58,38 +62,48 @@ static bool valid_tags_in_path(const char *path) {
 
 	assert(path != NULL);
 
-	num_tags = tags_from_query(path, &tag_array, "directory_contents");
+	DEBUG("Checking that %s contains valid tags", path);
+
+	/* separate path into individual elements */
+	num_tags = path_to_array(path, &tag_array);
 	DEBUG("%d tags in %s", num_tags, path);
 
+	/* check that each tag is valid */
 	for(i = 0; i < num_tags; i++) {
 		if(!valid_tag(tag_array[i])) { valid = false; }
 	}
 
 	free_char_ptr_array(&tag_array, num_tags);
 
+	DEBUG("The path %s is %s", path, valid ? "valid" : "not valid");
 	DEBUG(EXIT);
 	return valid;
 } /* valid_tags_in_path */
 
-/* TODO: Check source */
-/* TODO: Add info */
+/**
+ * Check that a path has no duplicate elements.
+ *
+ * @param path The path to check.
+ * @return true, if the path has no duplicate elements. false, if the path has duplicated elements.
+ */
 static bool unique_tags_in_path(const char *path) {
+	DEBUG(ENTRY);
 	bool unique = true;
 	char **tag_array = NULL;
 	char **tags_checked = NULL;
 	int i = 0;
 	int num_tokens = 0;
 
-	DEBUG(ENTRY);
-
 	assert(path != NULL);
 
+	/* get array of path elements and allocate array for checked tags */
 	DEBUG("Checking uniqueness of tags in %s", path);
 	num_tokens = path_to_array(path, &tag_array);
 	DEBUG("Number of tokens: %d", num_tokens);
 	tags_checked = malloc(num_tokens * sizeof(*tags_checked));
 	assert(tags_checked != NULL);
 
+	/* check that each tag is only used once */
 	for(i = 0; i < num_tokens; i++) {
 		assert(tag_array != NULL);
 		if(array_contains_string(tags_checked, tag_array[i], i)) {
@@ -106,7 +120,7 @@ static bool unique_tags_in_path(const char *path) {
 	free_char_ptr_array(&tags_checked, i);
 
 	DEBUG("Tags in path are %sunique", unique ? "" : "not ");
-	DEBUG("unique_tags_in_path");
+	DEBUG(EXIT);
 	return unique;
 } /* unique_tags_in_path */
 
@@ -179,37 +193,37 @@ int path_to_array(const char *path, char ***array) {
 } /* path_to_array */
 
 void free_char_ptr_array(char ***array, int count) {
-	DEBUG(ENTRY);
+	/* DEBUG(ENTRY); */
 	int i = 0;
 
-	DEBUG("Attempting to free array of %d pointer(s) plus the main pointer.", count);
+	/* DEBUG("Attempting to free array of %d pointer(s) plus the main pointer.", count); */
 
 	assert(array != NULL);
 	assert(count >= 0);
 
 	/* array is empty */
-	if(*array == NULL) { DEBUG("Array is NULL. Nothing to free."); }
+	if(*array == NULL) { /* DEBUG("Array is NULL. Nothing to free."); */ }
 	/* array is not empty */
 	else {
 		assert(*array != NULL);
 
 		/* free each element */
 		for(i = 0; i < count; i++) {
-			DEBUG("Freeing array[%d] = %s", i, (*array)[i]);
+			/* DEBUG("Freeing array[%d] = %s", i, (*array)[i]); */
 			free((*array)[i]);
 			(*array)[i] = NULL;
 		}
 
-		DEBUG("Free'd %d element(s).", i);
+		/* DEBUG("Free'd %d element(s).", i); */
 
 		assert(*array != NULL);
 		free(*array);
 		*array = NULL;
 
-		DEBUG("Free'd main array pointer.");
+		/* DEBUG("Free'd main array pointer."); */
 	}
 
-	DEBUG(EXIT);
+	/* DEBUG(EXIT); */
 } /* free_char_ptr_array */
 
 int num_tags_in_path(const char *path) {
@@ -418,3 +432,40 @@ bool valid_path_to_tag(const char *path) {
 	DEBUG(EXIT);
 	return valid;
 } /* valid_path_to_tag */
+
+bool array_contains_string(char **array, char *string, int count) {
+	DEBUG(ENTRY);
+	bool contains = false;
+	int i = 0;
+
+	assert(string != NULL);
+	assert(count >= 0);
+
+	DEBUG("Checking if array contains \"%s\"", string);
+
+	/* DEBUG("Array contents:"); */
+
+	/* for(i = 0; i < count; i++) {
+		DEBUG("array[%d] = %s", i, array[i]); 
+	} */
+
+	/* DEBUG("Array comparison:"); */
+
+	if(array != NULL) {
+		/* check each array element and see if it matches string */
+		for(i = 0; i < count; i++) {
+			if(array[i] != NULL && strcmp(array[i], string) == 0) { 
+				/* DEBUG("array[%d] = %s = %s", i, array[i], string); */
+				contains = true;
+				break;
+			}
+			/* else {
+				DEBUG("array[%d] = %s != %s", i, array[i], string);
+			} */
+		}
+	}
+
+	DEBUG("%s \"%s\"", contains ? "Array contains" : "Array does not contain", string);
+	DEBUG(EXIT);
+	return contains;
+} /* array_contains_string */

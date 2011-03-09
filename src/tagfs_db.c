@@ -428,64 +428,69 @@ void db_truncate_table(const char *table) {
 
 /* TODO: Add info */
 /* TODO: Check source */
-int db_array_from_query(char *desired_column_name, const char *result_query, /*@out@*/ char ***result_array) {
+int db_array_from_query(char *desired_column_name, const char *result_query, char ***result_array) {
 	DEBUG(ENTRY);
 	bool column_match = false;
-	const char *tail = NULL;
 	const unsigned char *result = NULL;
 	int column_count = 0;
 	int desired_column_index = 0;
 	int i = 0;
 	int num_results = 0;
 	sqlite3_stmt *res = NULL;
-	int foo = 0;
 
-
+	assert(desired_column_name != NULL);
 	assert(result_query != NULL);
 	assert(result_array != NULL);
 	assert(*result_array == NULL);
 
+	DEBUG("Generating array from query: %s", result_query);
+	DEBUG("Desired column: %s", desired_column_name);
 
 	num_results = db_count_from_query(result_query);
 
 	if(num_results > 0) {
 		*result_array = malloc(num_results * sizeof(**result_array));
+		DEBUG("Allocating array of %d elements", num_results);
 		assert(*result_array != NULL);
 
-
-		foo = sqlite3_prepare_v2(TAGFS_DATA->db_conn, result_query, strlen(result_query), &res, &tail);
+		(void)sqlite3_prepare_v2(TAGFS_DATA->db_conn, result_query, strlen(result_query), &res, NULL);
 		column_count = sqlite3_column_count(res);
 
 		for(desired_column_index = 0; desired_column_index < column_count; desired_column_index++) { /* find the requested column */
 			if(strcmp(desired_column_name, sqlite3_column_name(res, desired_column_index)) == 0) { 
-				DEBUG("COLUMN FOUND");
+				DEBUG("Located matching column for %s at index %d", desired_column_name, desired_column_index);
 				column_match = true;
 				break; 
 			}
 		}
 
 		if(column_match == false) {
-				DEBUG("COLUMN NOT FOUND");
+			DEBUG("Database column was NOT matched successfully");
 		}
+		DEBUG("Query returns %d column(s)", column_count);
+		/* DEBUG("Query results: "); */
+
 		for(i = 0; sqlite3_step(res) == SQLITE_ROW; i++) {
 			result = sqlite3_column_text(res, desired_column_index); 
 			(*result_array)[i] = malloc(result == NULL ? sizeof(NULL) : strlen((const char *)result) * sizeof(*result) + 1);
 			assert((*result_array)[i] != NULL);
 			if(result != NULL) {
 				strcpy((*result_array)[i], (char*)result);
-				DEBUG("BAR: %s", (char*)result);
 			}
 			else {
 				(*result_array)[i] = NULL;
 			}
 
+			/*DEBUG("result_array[%d] = %s, at address %p", i, (*result_array)[i], (*result_array)[i]); */
 		}
 
 		(void)sqlite3_finalize(res);
 	}
 	else {
+		DEBUG("Null array being returned");
 	}
 
+	DEBUG("Query returns %d result(s)", num_results);
 	DEBUG(EXIT);
 	return num_results;
 } /* db_array_from_query */
