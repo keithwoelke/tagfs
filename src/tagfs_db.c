@@ -491,20 +491,20 @@ int db_array_from_query(char *desired_column_name, const char *result_query, cha
 
 char* db_get_file_location(const char *path) {
 	DEBUG(ENTRY);
-	char *file_id_str = NULL;
-	char *file_location = NULL;
-	char *file_name = NULL;
-	char *file_path = NULL;
+	bool warn = false; /* whether or not a user visible warning should print */
+	char *file_id_str = NULL; /* string representation of the file ID */
+	char *file_location = NULL; /* directory location of file on filesystem */
+	char *file_name = NULL; /* name of file */
+	char *file_path = NULL; /* full path of file on the filesystem (from file_location + file_name) */
 	char *query = NULL;
 	char select_from[] = "SELECT file_location, file_name FROM files WHERE file_id = ";
-	int rc = 0; /* return code of sqlite3 operations */
 	int file_id = 0;
+	int file_path_length = 0; /* length of the maximum completed file path */
 	int num_digits_id = 0;
+	int query_length = 0; /* length of the sqlite3 query */
+	int rc = 0; /* return code of sqlite3 operations */
 	int written = 0; /* characters written by snprintf */
 	sqlite3_stmt *res = NULL;
-	int file_path_length = 0;
-	int query_length = 0; /* length of the sqlite3 query */
-	bool warn = false; /* whether or not a user visible warning should print */
 
 	assert(path != NULL);
 
