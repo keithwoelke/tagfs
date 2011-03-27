@@ -50,19 +50,23 @@ void db_load_table(const char *tag, const char *table);
  */
 void db_truncate_table(const char *table);
 
+/**
+ * Returns an array representing a column in the database.
+ *
+ * @param desired_column_name The name of the column to pull results from.
+ * @param result_query The query to run.
+ * @param result_array The array with which to store results from the column returned from result_query matching the name desired_column_name.
+ * @return The number of results returned from the query.
+ */
+int db_array_from_query(char *desired_column_name, const char *result_query, char ***result_array);
 
-
-
-
-
-
-
-
-
-
-
-
-int db_array_from_query(char *desired_column_name, const char *result_query, /*@out@*/ char ***result_array);
+/**
+ * Returns a physical file system location corresponding to a location in the TagFS.
+ *
+ * @param path The path to the file in the TagFS.
+ * @return The physical location in the file system corresponding to the file in the TagFS.
+ */
+char* db_get_file_location(const char *path);
 
 #endif
 

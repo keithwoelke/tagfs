@@ -130,6 +130,7 @@ int num_digits(unsigned int num) {
 
 	DEBUG("Counting number of digits in %u", num);
 
+	/* count number of digits */
 	do {
 		num /= 10;
 		count++;
@@ -422,8 +423,10 @@ bool valid_path_to_tag(const char *path) {
 
 	DEBUG("Checking that %s is a valid path to a tag", path);
 
+	/* if at root directory */
 	if(strcmp(path, "/") == 0) { valid = true; }
 	else {
+		/* if tags are not unique or valid */
 		if(!unique_tags_in_path(path) || !valid_tags_in_path(path)) { valid = false; }
 		else { valid = true; }
 	}

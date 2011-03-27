@@ -416,18 +416,6 @@ void db_truncate_table(const char *table) {
 	DEBUG(EXIT);
 } /* db_truncate_table */
 
-
-
-
-
-
-
-
-
-
-
-/* TODO: Add info */
-/* TODO: Check source */
 int db_array_from_query(char *desired_column_name, const char *result_query, char ***result_array) {
 	DEBUG(ENTRY);
 	bool column_match = false;
@@ -448,6 +436,7 @@ int db_array_from_query(char *desired_column_name, const char *result_query, cha
 
 	num_results = db_count_from_query(result_query);
 
+	/* if query returns rows */
 	if(num_results > 0) {
 		*result_array = malloc(num_results * sizeof(**result_array));
 		DEBUG("Allocating array of %d elements", num_results);
@@ -456,7 +445,8 @@ int db_array_from_query(char *desired_column_name, const char *result_query, cha
 		(void)sqlite3_prepare_v2(TAGFS_DATA->db_conn, result_query, strlen(result_query), &res, NULL);
 		column_count = sqlite3_column_count(res);
 
-		for(desired_column_index = 0; desired_column_index < column_count; desired_column_index++) { /* find the requested column */
+		/* find the requested column */
+		for(desired_column_index = 0; desired_column_index < column_count; desired_column_index++) {
 			if(strcmp(desired_column_name, sqlite3_column_name(res, desired_column_index)) == 0) { 
 				DEBUG("Located matching column for %s at index %d", desired_column_name, desired_column_index);
 				column_match = true;
@@ -465,17 +455,21 @@ int db_array_from_query(char *desired_column_name, const char *result_query, cha
 		}
 
 		if(column_match == false) {
-			DEBUG("Database column was NOT matched successfully");
+			DEBUG("Database column of \"%s\" was NOT matched successfully", desired_column_name);
+			ERROR("An error occured when communicating with the database.");
 		}
+
 		DEBUG("Query returns %d column(s)", column_count);
 		/* DEBUG("Query results: "); */
 
+		/* Copy column results into an array */
 		for(i = 0; sqlite3_step(res) == SQLITE_ROW; i++) {
 			result = sqlite3_column_text(res, desired_column_index); 
 			(*result_array)[i] = malloc(result == NULL ? sizeof(NULL) : strlen((const char *)result) * sizeof(*result) + 1);
 			assert((*result_array)[i] != NULL);
 			if(result != NULL) {
-				strcpy((*result_array)[i], (char*)result);
+				strcpy((*result_array)[i], (char *)result);
+				assert(strcmp((*result_array)[i], (char *)result) == 0);
 			}
 			else {
 				(*result_array)[i] = NULL;
@@ -494,3 +488,89 @@ int db_array_from_query(char *desired_column_name, const char *result_query, cha
 	DEBUG(EXIT);
 	return num_results;
 } /* db_array_from_query */
+
+char* db_get_file_location(const char *path) {
+	DEBUG(ENTRY);
+	char *file_id_str = NULL;
+	char *file_location = NULL;
+	char *file_name = NULL;
+	char *file_path = NULL;
+	char *query = NULL;
+	char select_from[] = "SELECT file_location, file_name FROM files WHERE file_id = ";
+	int rc = 0; /* return code of sqlite3 operations */
+	int file_id = 0;
+	int num_digits_id = 0;
+	int written = 0; /* characters written by snprintf */
+	sqlite3_stmt *res = NULL;
+	int file_path_length = 0;
+	int query_length = 0; /* length of the sqlite3 query */
+	bool warn = false; /* whether or not a user visible warning should print */
+
+	assert(path != NULL);
+
+	DEBUG("Retrieving real file location for %s", path);
+
+	/* get file ID */
+	file_id = db_get_file_id(path);
+	DEBUG("File ID: %d", file_id);
+
+	/* build query to get file location */
+	query_length = strlen(select_from) + num_digits(file_id);
+	query = malloc(query_length * sizeof(*query) + 1);
+	assert(query != NULL);
+	num_digits_id = num_digits(file_id);
+	assert(num_digits > 0);
+	file_id_str = malloc((num_digits_id + 1) * sizeof(*file_id_str));
+	assert(file_id_str != NULL);
+	written = snprintf(file_id_str, num_digits_id + 1, "%d", file_id);
+	assert(written == num_digits_id);
+	snprintf(query, query_length + 1, "SELECT file_location, file_name FROM files WHERE file_id = %s", file_id_str);
+	assert(written == query_length);
+	DEBUG("File location query: %s", query);
+
+	assert(file_id_str != NULL);
+	free(file_id_str);
+	file_id_str = NULL;
+
+	/* run query */
+	rc = sqlite3_prepare_v2(TAGFS_DATA->db_conn, query, strlen(query), &res, NULL);
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", query, query_length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	rc = sqlite3_step(res);
+
+	if(rc != SQLITE_DONE) {
+		DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", query, query_length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	assert(query != NULL);
+	free(query);
+	query = NULL;
+
+	if(warn == true) { WARN("An error occured when communicating with the database"); }
+
+	/* get results from query */
+	file_location = (char*)sqlite3_column_text(res, 0);
+	assert(file_location != NULL);
+	DEBUG("File location: %s", file_location);
+	file_name = (char*)sqlite3_column_text(res, 1);
+	assert(file_name != NULL);
+	DEBUG("File name: %s", file_name);
+
+	/* build full path from file name and file location*/
+	file_path_length = strlen(file_location) + strlen(file_name) + 1;
+	file_path = calloc(file_path_length + 1, sizeof(*file_path));
+	strcat(file_path, file_location);
+	if(strcmp(file_path, "/") != 0) { strcat(file_path, "/"); }
+	strcat(file_path, file_name);
+	DEBUG("File location: %s", file_path);
+
+	sqlite3_finalize(res);
+
+	DEBUG(EXIT);
+	return file_path;
+} /* db_get_file_location */
