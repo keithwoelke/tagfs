@@ -6,167 +6,386 @@
  * @date 07/25/2010
  */
 
-#include "tagfs_common.h"
-#include "tagfs_db.h"
-#include "tagfs_debug.h"
 #include "tagfs_params.h"
 
-#include <assert.h>
-#include <errno.h>
-#include <string.h>
+#include <fuse.h>
 
 int tagfs_getattr(const char *path, struct stat *statbuf) {
 	DEBUG(ENTRY);
 	int retstat = 0;
 
-	INFO("Retrieving attributes for %s", path);
-
-	/* TODO: This all needs to be uncommented/implemented at some point */
-	if (valid_path_to_file(path)) {
-		retstat = stat(db_get_file_location(path), statbuf);
-	}
-	else if(valid_path_to_tag(path)) { /* TODO: Set proper folder info? */
-		statbuf->st_mode = S_IFDIR | 0755;
-	}
-	else {
-		retstat = -ENOENT;
-	}
+	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
 	return retstat;
-} /* tagfs_getattr */
+}
 
 int tagfs_readlink(const char *path, char *link, size_t size) {
 	DEBUG(ENTRY);
 	int retstat = 0;
 
-	ERROR("TODO: %s", __FUNCTION__); /* TODO: This needs to be implemented */
+	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
 	return retstat;
-} /* tagfs_readlink */
+}
 
 int tagfs_mknod(const char *path, mode_t mode, dev_t dev) {
 	DEBUG(ENTRY);
 	int retstat = 0;
 
-	ERROR("TODO: %s", __FUNCTION__); /* TODO: This needs to be implemented */
+	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
 	return retstat;
-} /* tagfs_mknod */
+}
 
-static int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
+int tagfs_mkdir(const char *path, mode_t mode) {
 	DEBUG(ENTRY);
-	char **file_array = NULL;
-	char **tag_array = NULL;
-	const char table[] = "directory_contents";
-	int i = 0;
-	int num_files = 0;
-	int num_tags = 0;
 	int retstat = 0;
-	
-	INFO("Reading directory %s", path);
 
-	set_directory_contents(path, table);
-
-	filler(buf, ".", NULL, 0);
-	filler(buf, "..", NULL, 0);
-
-	num_tags = tags_from_query(path, &tag_array, table);
-	for(i = 0; i < num_tags; i++) {
-		DEBUG("FILLING %s", tag_array[i]);
-		filler(buf, tag_array[i], NULL, 0);
-	}
-	free_char_ptr_array(&tag_array, num_tags);
-
-	num_files = files_from_query(path, &file_array, table);
-	for(i = 0; i < num_files; i++) {
-		DEBUG("FILLING %s", file_array[i]);
-		filler(buf, file_array[i], NULL, 0);
-	}
-	free_char_ptr_array(&file_array, num_files);
+	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
 	return retstat;
-} /* tagfs_readdir */
+}
+
+int tagfs_unlink(const char *path) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_rmdir(const char *path) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_symlink(const char *path, const char *link) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_rename(const char *path, const char *newpath) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_link(const char *path, const char *newpath) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_chmod(const char *path, mode_t mode) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_chown(const char *path, uid_t uid, gid_t gid) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_truncate(const char *path, off_t newsize) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_utime(const char *path, struct utimbuf *ubuf) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_open(const char *path, struct fuse_file_info *fi) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_statfs(const char *path, struct statvfs *statv) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_flush(const char *path, struct fuse_file_info *fi) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_release(const char *path, struct fuse_file_info *fi) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_fsync(const char *path, int datasync, struct fuse_file_info *fi) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_setxattr(const char *path, const char *name, const char *value, size_t size, int flags) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_getxattr(const char *path, const char *name, char *value, size_t size) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_listxattr(const char *path, char *list, size_t size) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_removexattr(const char *path, const char *name) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_opendir(const char *path, struct fuse_file_info *fi) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_releasedir(const char *path, struct fuse_file_info *fi) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
 
 void *tagfs_init(struct fuse_conn_info *conn) {
-	const char *db_name = "tagfs.sl3"; /* TODO: Does this always place in current directory? */
-	const char *log_name = "log_file.txt";
-
-	printf("Initializing TagFS Filesystem...\n");
-	printf("Opening log file: %s\n", log_name);
-	TAGFS_DATA->log_file = fopen("log_file.txt", "w"); /* TODO: Fix so this does not place in working directory */
-
 	DEBUG(ENTRY);
+	int retstat = 0;
 
-	TAGFS_DATA->db_path = malloc(strlen(db_name) * sizeof(*TAGFS_DATA->db_path) + 1);
-	snprintf(TAGFS_DATA->db_path, strlen(db_name) + 1, "%s", db_name);
-
-	db_connect();
+	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
-	return TAGFS_DATA;
-} /* tagfs_init */
+	return retstat;
+}
 
 void tagfs_destroy(void *userdata) {
 	DEBUG(ENTRY);
-	struct tagfs_state *tagfs_data = (struct tagfs_state *)userdata;
+	int retstat = 0;
 
-	DEBUG("Finalizing data...");
-
-	assert(tagfs_data->db_conn != NULL);
-	db_disconnect();
-	tagfs_data->db_conn = NULL;
-	
-	assert(tagfs_data->db_path != NULL);
-	free(tagfs_data->db_path);
-	tagfs_data->db_path = NULL;
+	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
+	return retstat;
+}
 
-	assert(tagfs_data->log_file != NULL);
-	fclose(tagfs_data->log_file);
-	tagfs_data->log_file = NULL;
-} /* tagfs_destroy */
+int tagfs_access(const char *path, int mask) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_create(const char *path, mode_t mode, struct fuse_file_info *fi) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_ftruncate(const char *path, off_t offset, struct fuse_file_info *fi) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
+
+int tagfs_fgetattr(const char *path, struct stat *statbuf, struct fuse_file_info *fi) {
+	DEBUG(ENTRY);
+	int retstat = 0;
+
+	ERROR("TODO: %s", __FUNCTION__);
+
+	DEBUG(EXIT);
+	return retstat;
+}
 
 struct fuse_operations tagfs_oper = {
-	.getattr = tagfs_getattr,
-	.readlink = tagfs_readlink,
-	.mknod = tagfs_mknod,
-//	.mkdir = bb_mkdir, /* TODO: Stub/implement this */
-//	.unlink = bb_unlink, /* TODO: Stub/implement this */
-//	.rmdir = bb_rmdir, /* TODO: Stub/implement this */
-//	.symlink = bb_symlink, /* TODO: Stub/implement this */
-//	.rename = bb_rename, /* TODO: Stub/implement this */
-//	.link = bb_link, /* TODO: Stub/implement this */
-//	.chmod = bb_chmod, /* TODO: Stub/implement this */
-//	.chown = bb_chown, /* TODO: Stub/implement this */
-//	.truncate = bb_truncate, /* TODO: Stub/implement this */
-//	.utime = bb_utime, /* TODO: Stub/implement this */
-//	.open = bb_open, /* TODO: Stub/implement this */
-//	.read = bb_read, /* TODO: Stub/implement this */
-//	.write = bb_write, /* TODO: Stub/implement this */
-//	.statfs = bb_statfs, /* TODO: Stub/implement this */
-//	.flush = bb_flush, /* TODO: Stub/implement this */
-//	.release = bb_release, /* TODO: Stub/implement this */
-//	.fsync = bb_fsync, /* TODO: Stub/implement this */
-//	.setxattr = bb_setxattr, /* TODO: Stub/implement this */
-//	.getxattr = bb_getxattr, /* TODO: Stub/implement this */
-//	.listxattr = bb_listxattr, /* TODO: Stub/implement this */
-//	.removexattr = bb_removexattr, /* TODO: Stub/implement this */
-//	.opendir = bb_opendir, /* TODO: Stub/implement this */
-	.readdir = tagfs_readdir,
-//	.releasedir = bb_releasedir, /* TODO: Stub/implement this */
-//	.fsyncdir = bb_fsyncdir, /* TODO: Stub/implement this */
-	.init = tagfs_init,
-	.destroy = tagfs_destroy,
-//	.access = bb_access, /* TODO: Stub/implement this */
-//	.create = tagfs_create, /* TODO: Stub/implement this */
-//	.ftruncate = bb_ftruncate, /* TODO: Stub/implement this */
-//	.fgetattr = bb_fgetattr /* TODO: Stub/implement this */
-}; /* tagfs_oper */
+  .getattr = tagfs_getattr,
+  .readlink = tagfs_readlink,
+  .mknod = tagfs_mknod,
+  .mkdir = tagfs_mkdir,
+  .unlink = tagfs_unlink,
+  .rmdir = tagfs_rmdir,
+  .symlink = tagfs_symlink,
+  .rename = tagfs_rename,
+  .link = tagfs_link,
+  .chmod = tagfs_chmod,
+  .chown = tagfs_chown,
+  .truncate = tagfs_truncate,
+  .utime = tagfs_utime,
+  .open = tagfs_open,
+  .read = tagfs_read,
+  .write = tagfs_write,
+  .statfs = tagfs_statfs,
+  .flush = tagfs_flush,
+  .release = tagfs_release,
+  .fsync = tagfs_fsync,
+  .setxattr = tagfs_setxattr,
+  .getxattr = tagfs_getxattr,
+  .listxattr = tagfs_listxattr,
+  .removexattr = tagfs_removexattr,
+  .opendir = tagfs_opendir,
+  .readdir = tagfs_readdir,
+  .releasedir = tagfs_releasedir,
+  .fsyncdir = tagfs_fsyncdir,
+  .init = tagfs_init,
+  .destroy = tagfs_destroy,
+  .access = tagfs_access,
+  .create = tagfs_create,
+  .ftruncate = tagfs_ftruncate,
+  .fgetattr = tagfs_fgetattr
+};
 
 int main(int argc, char *argv[]) {
 	struct tagfs_state tagfs_data;
