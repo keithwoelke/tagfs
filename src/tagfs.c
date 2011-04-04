@@ -6,6 +6,7 @@
  * @date 07/25/2010
  */
 
+#include "tagfs_debug.h"
 #include "tagfs_params.h"
 
 #include <fuse.h>
@@ -292,22 +293,18 @@ int tagfs_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi) {
 
 void *tagfs_init(struct fuse_conn_info *conn) {
 	DEBUG(ENTRY);
-	int retstat = 0;
 
 	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
-	return retstat;
 }
 
 void tagfs_destroy(void *userdata) {
 	DEBUG(ENTRY);
-	int retstat = 0;
 
 	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
-	return retstat;
 }
 
 int tagfs_access(const char *path, int mask) {
