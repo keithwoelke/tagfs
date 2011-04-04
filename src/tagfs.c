@@ -6,8 +6,8 @@
  * @date 07/25/2010
  */
 
+#include "tagfs_common.h"
 #include "tagfs_debug.h"
-#include "tagfs_params.h"
 
 #include <fuse.h>
 
@@ -292,11 +292,19 @@ int tagfs_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi) {
 }
 
 void *tagfs_init(struct fuse_conn_info *conn) {
+	const char *db_name = "tagfs.sl3";
+	const char *log_name = "log_file.txt";
+	const char *db_path = NULL;
+	const char *log_path = NULL;
+
+	printf("Initializing TagFS Filesystem...\n");
+	printf("Opening log file: %s\n", log_name);
+	TAGFS_DATA->log_file = fopen("log_file.txt", "w");
+
 	DEBUG(ENTRY);
 
-	ERROR("TODO: %s", __FUNCTION__);
-
 	DEBUG(EXIT);
+	return TAGFS_DATA;
 }
 
 void tagfs_destroy(void *userdata) {
@@ -387,5 +395,7 @@ struct fuse_operations tagfs_oper = {
 int main(int argc, char *argv[]) {
 	struct tagfs_state tagfs_data;
 
+	tagfs_data.exec_path = get_exec_dir(argv[0]);
+	
 	return fuse_main(argc, argv, &tagfs_oper, &tagfs_data);
 } /* main */

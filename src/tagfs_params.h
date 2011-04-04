@@ -21,10 +21,7 @@
  */
 struct tagfs_state {
 	FILE *log_file;
-	bool debug;
-	char *db_path;
-	char *log_path;
-	sqlite3 *db_conn;
+	const char *exec_path;
 };
 #define TAGFS_DATA ((struct tagfs_state *)fuse_get_context()->private_data)
 
