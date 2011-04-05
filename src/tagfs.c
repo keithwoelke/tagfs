@@ -12,12 +12,29 @@
 #include <assert.h>
 #include <fuse.h>
 #include <string.h>
+#include <stdlib.h>
 
 int tagfs_getattr(const char *path, struct stat *statbuf) {
 	DEBUG(ENTRY);
+	char *file_location = NULL;
 	int retstat = 0;
 
-//	ERROR("TODO: %s", __FUNCTION__);
+	INFO("Retrieving attributes for %s", path);
+
+	if (valid_path_to_file(path)) {
+		file_location = db_get_file_location(path);
+		retstat = stat(file_location, statbuf);
+		
+		assert(file_location != NULL);
+		free(file_location);
+		file_location = NULL;
+	}
+	else if(valid_path_to_tag(path)) { /* TODO: Set proper folder info? */
+		statbuf->st_mode = S_IFDIR | 0755;
+	}
+	else {
+		retstat = -ENOENT;
+	}
 
 	DEBUG(EXIT);
 	return retstat;
