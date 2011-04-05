@@ -9,13 +9,15 @@
 #include "tagfs_common.h"
 #include "tagfs_debug.h"
 
+#include <assert.h>
 #include <fuse.h>
+#include <string.h>
 
 int tagfs_getattr(const char *path, struct stat *statbuf) {
 	DEBUG(ENTRY);
 	int retstat = 0;
 
-	ERROR("TODO: %s", __FUNCTION__);
+//	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
 	return retstat;
@@ -294,14 +296,52 @@ int tagfs_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi) {
 void *tagfs_init(struct fuse_conn_info *conn) {
 	const char *db_name = "tagfs.sl3";
 	const char *log_name = "log_file.txt";
-	const char *db_path = NULL;
 	const char *log_path = NULL;
+	int written = 0; /* number of characters written by snprintf */
+	int dir_length = 0;
+	int log_dir_length = 0;
+	int db_dir_length = 0;
+
+	/* get directory length */
+	dir_length = strlen(TAGFS_DATA->exec_dir) + strlen("/");
+
+	/* set log path */
+	log_dir_length = strlen(log_name) + dir_length;
+	log_path = malloc(log_dir_length * sizeof(*log_path) + 1);
+	assert(log_path != NULL);
+	written = snprintf((char *)log_path, log_dir_length + 1, "%s/%s", TAGFS_DATA->exec_dir, log_name);
+	assert(written == log_dir_length);
 
 	printf("Initializing TagFS Filesystem...\n");
 	printf("Opening log file: %s\n", log_name);
-	TAGFS_DATA->log_file = fopen("log_file.txt", "w");
+	TAGFS_DATA->log_file = fopen(log_path, "w");
 
 	DEBUG(ENTRY);
+
+	/* set database path */
+	db_dir_length = strlen(db_name) + dir_length;
+	TAGFS_DATA->db_path = malloc(db_dir_length * sizeof(*TAGFS_DATA->db_path) + 1);
+	written = snprintf((char *)TAGFS_DATA->db_path, db_dir_length + 1, "%s/%s", TAGFS_DATA->exec_dir, db_name);
+	assert(written == db_dir_length);
+
+	assert(log_path != NULL);
+	free((void *)log_path);
+	log_path = NULL;
+
+	int a[] = {5,6,15,8,2,4,7,18,12,3,14,17};
+	int b[] = {1,7,3,15,19,23,18};
+
+	heapSort(a, 12);
+	heapSort(b, 7);
+	int *foo = NULL;
+	
+	int count = array_intersection(a, 12, b, 7, &foo);
+
+	int i = 0;
+	for(i = 0; i < count; i++)
+		printf("%d\n", foo[i]);
+
+	free(foo);
 
 	DEBUG(EXIT);
 	return TAGFS_DATA;
@@ -309,10 +349,23 @@ void *tagfs_init(struct fuse_conn_info *conn) {
 
 void tagfs_destroy(void *userdata) {
 	DEBUG(ENTRY);
+	struct tagfs_state *tagfs_data = (struct tagfs_state *)userdata;
 
-	ERROR("TODO: %s", __FUNCTION__);
+	DEBUG("Finalizing data...");
+
+	assert(tagfs_data->exec_dir != NULL);
+	free((void *)tagfs_data->exec_dir);
+	tagfs_data->exec_dir = NULL;
+
+	assert(tagfs_data->db_path != NULL);
+	free((void *)tagfs_data->db_path);
+	tagfs_data->db_path = NULL;
 
 	DEBUG(EXIT);
+
+	assert(tagfs_data->log_file != NULL);
+	fclose(tagfs_data->log_file);
+	tagfs_data->log_file = NULL;
 }
 
 int tagfs_access(const char *path, int mask) {
@@ -395,7 +448,8 @@ struct fuse_operations tagfs_oper = {
 int main(int argc, char *argv[]) {
 	struct tagfs_state tagfs_data;
 
-	tagfs_data.exec_path = get_exec_dir(argv[0]);
+	debug_init();
+	tagfs_data.exec_dir = get_exec_dir(argv[0]);
 	
 	return fuse_main(argc, argv, &tagfs_oper, &tagfs_data);
 } /* main */

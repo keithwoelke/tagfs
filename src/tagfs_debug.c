@@ -1,7 +1,10 @@
 #include "tagfs_debug.h"
 
 #include <assert.h>
+#include <semaphore.h>
 #include <string.h>
+
+sem_t debug_sem;
 
 void log_timestamp() {
 	char *buf = NULL;
@@ -23,3 +26,14 @@ void log_timestamp() {
 
 	free(buf);
 } /* log_timestamp */
+
+void debug_init() {
+	sem_init(&debug_sem, 0, 1);
+}
+
+void debug_wait() {
+	sem_wait(&debug_sem);
+}
+void debug_post() {
+	sem_post(&debug_sem);
+}

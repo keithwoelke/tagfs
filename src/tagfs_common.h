@@ -11,4 +11,14 @@
 
 const char *get_exec_dir(const char *exec_name);
 
+void heapSort(int a[], int count);
+
+void heapify(int a[], int count);
+
+void siftDown(int a[], int start, int end);
+
+void swap(int *a, int *b);
+
+int array_intersection(int a[], int a_size, int b[], int b_size, int **result);
+
 #endif

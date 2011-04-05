@@ -21,7 +21,8 @@
  */
 struct tagfs_state {
 	FILE *log_file;
-	const char *exec_path;
+	const char *exec_dir;
+	const char *db_path;
 };
 #define TAGFS_DATA ((struct tagfs_state *)fuse_get_context()->private_data)
 
