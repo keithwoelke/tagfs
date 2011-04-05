@@ -27,4 +27,12 @@ void swap(int *a, int *b);
 
 int array_intersection(int a[], int a_size, int b[], int b_size, int **result);
 
+/**
+ * Checks whether or not a given path is valid. This is specifically done by checking that every component of the path is valid and that every component is unique. Essentially, this is done with calls to valid_tags_in_path and unique_path.
+ *
+ * @param path A string representing a path in the file system.
+ * @return true, if the path is valid. false, if the path is not valid.
+ */
+bool valid_path_to_tag(const char *path);
+
 #endif
