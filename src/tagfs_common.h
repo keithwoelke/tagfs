@@ -9,6 +9,12 @@
 #ifndef TAGFS_COMMON_H
 #define TAGFS_COMMON_H
 
+/**
+ * Get the directory of where the TagFS is being executed from (assuming it is passed argv[0]). The returned path must be free'd by the caller.
+ *
+ * @param exec_name The path to the executable given from argv[0].
+ * @return The path to the executable.
+ */
 const char *get_exec_dir(const char *exec_name);
 
 void heapSort(int a[], int count);

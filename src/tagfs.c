@@ -10,9 +10,9 @@
 #include "tagfs_debug.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <fuse.h>
 #include <string.h>
-#include <stdlib.h>
 
 int tagfs_getattr(const char *path, struct stat *statbuf) {
 	DEBUG(ENTRY);
