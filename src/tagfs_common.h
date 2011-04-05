@@ -35,4 +35,11 @@ int array_intersection(int a[], int a_size, int b[], int b_size, int **result);
  */
 bool valid_path_to_tag(const char *path);
 
+/**
+ * Checks if a file is valid. If the files returned from a query contain the file that is being checked, then the file is assumed to be valid.
+ * @param path a string representing a path in the file system
+ * @return true, if the file is valid. false, if the file is not valid.
+ */
+bool valid_path_to_file(const char *path);
+
 #endif
