@@ -44,4 +44,6 @@ bool valid_path_to_tag(const char *path);
  */
 bool valid_path_to_file(const char *path);
 
+int file_id_from_path(const char *path);
+
 #endif

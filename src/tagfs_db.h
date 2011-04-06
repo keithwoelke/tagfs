@@ -9,7 +9,13 @@
 #ifndef TAGFS_DB_H
 #define TAGFS_DB_H
 
-void db_get_file_location(const char *char);
+/**
+ * Returns a physical file system location corresponding to a location in the TagFS.
+ *
+ * @param path The path to the file in the TagFS.
+ * @return The physical location in the file system corresponding to the file in the TagFS.
+ */
+const char *db_get_file_location(int file_id);
 
 #endif
 

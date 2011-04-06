@@ -3,6 +3,7 @@
 #include "tagfs_db.h"
 
 #include <libgen.h>
+#include <string.h>
 
 const char *get_exec_dir(const char *exec_name) {
 	const char *exec_dir = NULL;
@@ -86,9 +87,37 @@ int array_intersection(int a[], int a_size, int b[], int b_size, int **result) {
 } /* array_intersection */
 
 bool valid_path_to_tag(const char *path) {
+	DEBUG(ENTRY);
+
+	if(strcmp(path, "/")) {
+		DEBUG(EXIT);
+		return true;
+	}
+
+	DEBUG(EXIT);
 	return false;
 }
 
 bool valid_path_to_file(const char *path) {
-	return false;
+	DEBUG(ENTRY);
+	if(strcmp(path, "/home/keith/Programming/FUSE/tagfs/src/Files/How fast.ogg") == 0) {
+		DEBUG(EXIT);
+		return true;
+	}
+	else if(strcmp(path, "/home/keith/Programming/FUSE/tagfs/src/Files/Josh Woodward - Swansong.ogg") == 0) {
+		DEBUG(EXIT);
+		return true;
+	}
+	else if(strcmp(path, "/home/keith/Programming/FUSE/tagfs/src/Files/sample_iTunes.mov") == 0) {
+		DEBUG(EXIT);
+		return true;
+	}
+	else {
+		DEBUG(EXIT);
+		return false;
+	}
 }
+
+int file_id_from_path(const char *path) {
+	return 0;
+};

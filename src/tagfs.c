@@ -17,17 +17,19 @@
 
 int tagfs_getattr(const char *path, struct stat *statbuf) {
 	DEBUG(ENTRY);
-	char *file_location = NULL;
+	const char *file_location = NULL;
+	int file_id = 0;
 	int retstat = 0;
 
 	INFO("Retrieving attributes for %s", path);
 
 	if (valid_path_to_file(path)) {
-		file_location = db_get_file_location(path);
+		file_id = file_id_from_path(path);
+		file_location = db_get_file_location(file_id);
 		retstat = stat(file_location, statbuf);
 		
 		assert(file_location != NULL);
-		free(file_location);
+		free((void *)file_location);
 		file_location = NULL;
 	}
 	else if(valid_path_to_tag(path)) { /* TODO: Set proper folder info? */
@@ -195,7 +197,7 @@ int tagfs_statfs(const char *path, struct statvfs *statv) {
 	DEBUG(ENTRY);
 	int retstat = 0;
 
-	ERROR("TODO: %s", __FUNCTION__);
+//	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
 	return retstat;
@@ -275,7 +277,7 @@ int tagfs_opendir(const char *path, struct fuse_file_info *fi) {
 	DEBUG(ENTRY);
 	int retstat = 0;
 
-	ERROR("TODO: %s", __FUNCTION__);
+//	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
 	return retstat;
@@ -295,7 +297,7 @@ int tagfs_releasedir(const char *path, struct fuse_file_info *fi) {
 	DEBUG(ENTRY);
 	int retstat = 0;
 
-	ERROR("TODO: %s", __FUNCTION__);
+//	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
 	return retstat;
