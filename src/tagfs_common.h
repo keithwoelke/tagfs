@@ -9,6 +9,8 @@
 #ifndef TAGFS_COMMON_H
 #define TAGFS_COMMON_H
 
+#include <stdbool.h>
+
 /**
  * Get the directory of where the TagFS is being executed from (assuming it is passed argv[0]). The returned path must be free'd by the caller.
  *

@@ -7,6 +7,7 @@
  */
 
 #include "tagfs_common.h"
+#include "tagfs_db.h"
 #include "tagfs_debug.h"
 
 #include <assert.h>
@@ -344,21 +345,6 @@ void *tagfs_init(struct fuse_conn_info *conn) {
 	assert(log_path != NULL);
 	free((void *)log_path);
 	log_path = NULL;
-
-	int a[] = {5,6,15,8,2,4,7,18,12,3,14,17};
-	int b[] = {1,7,3,15,19,23,18};
-
-	heapSort(a, 12);
-	heapSort(b, 7);
-	int *foo = NULL;
-	
-	int count = array_intersection(a, 12, b, 7, &foo);
-
-	int i = 0;
-	for(i = 0; i < count; i++)
-		printf("%d\n", foo[i]);
-
-	free(foo);
 
 	DEBUG(EXIT);
 	return TAGFS_DATA;

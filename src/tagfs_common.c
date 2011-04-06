@@ -81,10 +81,14 @@ int array_intersection(int a[], int a_size, int b[], int b_size, int **result) {
 		}
 	}
 
-	result = (int *)realloc(*result, num_results * sizeof(int));
+	*result = (int *)realloc(*result, num_results * sizeof(int));
 	return num_results;
 } /* array_intersection */
 
 bool valid_path_to_tag(const char *path) {
+	return false;
+}
+
+bool valid_path_to_file(const char *path) {
 	return false;
 }
