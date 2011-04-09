@@ -12,6 +12,14 @@
 #include <stdbool.h>
 
 /**
+ * Counts the number if digits in an integer.
+ *
+ * @param num The number from which to count digits.
+ * @return The number of digits in num.
+ */
+int num_digits(unsigned int num);
+
+/**
  * Get the directory of where the TagFS is being executed from (assuming it is passed argv[0]). The returned path must be free'd by the caller.
  *
  * @param exec_name The path to the executable given from argv[0].

@@ -1,3 +1,4 @@
+#include "tagfs_common.h"
 #include "tagfs_db.h"
 #include "tagfs_debug.h"
 
@@ -88,7 +89,10 @@ const char *db_get_file_location(int file_id) {
 	bool warn = false; /* whether or not a connection error should be displayed for the user */
 	char *query = NULL;
 	const char *file_location = NULL;
-	const char query_outline[] = "SELECT file_location WHERE file_id == ";
+	const char *tmp_file_directory = NULL; /* holds text from the query so it can be copied to a new memory location */
+	const char *tmp_file_name = NULL; /* hold name of file until it can be copied to a new memory location */
+	const char query_outline[] = "SELECT file_location, file_name FROM files WHERE file_id == ";
+	int file_location_length = 0; /* length of the file location to return */
 	int query_length = 0;
 	int rc = 0; /* return code of sqlite3 operation */
 	int written = 0; /* number of characters written */
@@ -102,7 +106,7 @@ const char *db_get_file_location(int file_id) {
 	/* prepare query */
 	query_length = strlen(query_outline) + num_digits(file_id);
 	query = malloc(query_length * sizeof(*query) + 1);
-	written = snprintf(query, query_length + 1, "SELECT file_location WHERE file_id == %d", file_id);
+	written = snprintf(query, query_length + 1, "SELECT file_location, file_name FROM files WHERE file_id == %d", file_id);
 	assert(written == query_length);
 
 	conn = db_connect();
@@ -125,8 +129,17 @@ const char *db_get_file_location(int file_id) {
 		warn = true;
 	}
 
-	/* get file_id */
-	file_location = (const char *)sqlite3_column_text(res, 0);
+	/* get file location */
+	tmp_file_directory = (const char *)sqlite3_column_text(res, 0);
+	assert(tmp_file_directory != NULL);
+	tmp_file_name = (const char *)sqlite3_column_text(res, 1);
+	assert(tmp_file_name != NULL);
+
+	file_location_length = strlen(tmp_file_directory) + strlen(tmp_file_name) + 1;
+	file_location = malloc(file_location_length * sizeof(*file_location) + 1); 
+	written = snprintf((char *)file_location, file_location_length + 1, "%s//%s", tmp_file_directory, tmp_file_name);
+	printf("%d %d %d\n", written, file_location_length);
+	assert(written == file_location_length);
 
 	rc = sqlite3_finalize(res);
 

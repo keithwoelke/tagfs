@@ -7,6 +7,24 @@
 #include <stdbool.h>
 #include <string.h>
 
+int num_digits(unsigned int num) {
+	DEBUG(ENTRY);
+	int count = 0;
+	int origNum = num;
+
+	DEBUG("Counting number of digits in %u", num);
+
+	/* count number of digits */
+	do {
+		num /= 10;
+		count++;
+	} while(num != 0);
+
+	DEBUG("Number of digits in %u: %d", origNum, count);
+	DEBUG(EXIT);
+	return count;
+} /* num_digits */
+
 const char *get_exec_dir(const char *exec_name) {
 	const char *exec_dir = NULL;
 
