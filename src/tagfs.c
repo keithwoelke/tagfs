@@ -26,13 +26,14 @@ int tagfs_getattr(const char *path, struct stat *statbuf) {
 	if (valid_path_to_file(path)) {
 		file_id = file_id_from_path(path);
 		file_location = db_get_file_location(file_id);
-		retstat = stat(file_location, statbuf);
-		
+
 		assert(file_location != NULL);
 		free((void *)file_location);
 		file_location = NULL;
+
+		retstat = stat("/home/keith/Desktop/foo", statbuf);
 	}
-	else if(valid_path_to_tag(path)) { /* TODO: Set proper folder info? */
+	else if(valid_path_to_folder(path)) { /* TODO: Set proper folder info? */
 		statbuf->st_mode = S_IFDIR | 0755;
 	}
 	else {
@@ -197,7 +198,7 @@ int tagfs_statfs(const char *path, struct statvfs *statv) {
 	DEBUG(ENTRY);
 	int retstat = 0;
 
-//	ERROR("TODO: %s", __FUNCTION__);
+	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
 	return retstat;
@@ -277,7 +278,7 @@ int tagfs_opendir(const char *path, struct fuse_file_info *fi) {
 	DEBUG(ENTRY);
 	int retstat = 0;
 
-//	ERROR("TODO: %s", __FUNCTION__);
+	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
 	return retstat;
@@ -285,9 +286,42 @@ int tagfs_opendir(const char *path, struct fuse_file_info *fi) {
 
 int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
 	DEBUG(ENTRY);
+	int *file_array = NULL;
+	char **folder_array = NULL;
+	int i = 0;
+	int num_files = 0;
+	int num_folders = 0;
 	int retstat = 0;
+	int file_id = 0;
+	char *file_name = NULL;
+	
+	INFO("Reading directory %s", path);
 
-	ERROR("TODO: %s", __FUNCTION__);
+	filler(buf, ".", NULL, 0);
+	filler(buf, "..", NULL, 0);
+
+	num_files = files_at_location(path, &file_array);
+	for(i = 0; i < num_files; i++) {
+		DEBUG("FILLING %d", file_array[i]);
+		file_id = file_array[i];
+		file_name = file_name_from_id(file_id);
+		filler(buf, file_name, NULL, 0);
+		free(file_name);
+	}
+
+	free(file_array);
+
+//	free_char_ptr_array(&file_array, num_files);
+
+	num_folders = folders_at_location(path, file_array, &folder_array);
+	for(i = 0; i < num_folders; i++) {
+		DEBUG("FILLING %s", folder_array[i]);
+		filler(buf, folder_array[i], NULL, 0);
+		free(folder_array[i]);
+	}
+
+	free(folder_array);
+//	free_char_ptr_array(&folder_array, num_folders);
 
 	DEBUG(EXIT);
 	return retstat;
@@ -297,7 +331,7 @@ int tagfs_releasedir(const char *path, struct fuse_file_info *fi) {
 	DEBUG(ENTRY);
 	int retstat = 0;
 
-//	ERROR("TODO: %s", __FUNCTION__);
+	ERROR("TODO: %s", __FUNCTION__);
 
 	DEBUG(EXIT);
 	return retstat;
@@ -427,27 +461,27 @@ struct fuse_operations tagfs_oper = {
   .chown = tagfs_chown,
   .truncate = tagfs_truncate,
   .utime = tagfs_utime,
-  .open = tagfs_open,
-  .read = tagfs_read,
+//  .open = tagfs_open,
+//  .read = tagfs_read,
   .write = tagfs_write,
-  .statfs = tagfs_statfs,
-  .flush = tagfs_flush,
-  .release = tagfs_release,
+//  .statfs = tagfs_statfs,
+//  .flush = tagfs_flush,
+//  .release = tagfs_release,
   .fsync = tagfs_fsync,
   .setxattr = tagfs_setxattr,
   .getxattr = tagfs_getxattr,
   .listxattr = tagfs_listxattr,
   .removexattr = tagfs_removexattr,
-  .opendir = tagfs_opendir,
+//  .opendir = tagfs_opendir,
   .readdir = tagfs_readdir,
-  .releasedir = tagfs_releasedir,
+//  .releasedir = tagfs_releasedir,
   .fsyncdir = tagfs_fsyncdir,
   .init = tagfs_init,
   .destroy = tagfs_destroy,
-  .access = tagfs_access,
-  .create = tagfs_create,
+//  .access = tagfs_access,
+//  .create = tagfs_create,
   .ftruncate = tagfs_ftruncate,
-  .fgetattr = tagfs_fgetattr
+//  .fgetattr = tagfs_fgetattr
 };
 
 int main(int argc, char *argv[]) {

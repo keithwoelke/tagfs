@@ -19,15 +19,7 @@
  */
 const char *get_exec_dir(const char *exec_name);
 
-void heapSort(int a[], int count);
-
-void heapify(int a[], int count);
-
-void siftDown(int a[], int start, int end);
-
-void swap(int *a, int *b);
-
-int array_intersection(int a[], int a_size, int b[], int b_size, int **result);
+//int array_intersection(int a[], int a_size, int b[], int b_size, int **result);
 
 /**
  * Checks whether or not a given path is valid. This is specifically done by checking that every component of the path is valid and that every component is unique. Essentially, this is done with calls to valid_tags_in_path and unique_path.
@@ -35,7 +27,7 @@ int array_intersection(int a[], int a_size, int b[], int b_size, int **result);
  * @param path A string representing a path in the file system.
  * @return true, if the path is valid. false, if the path is not valid.
  */
-bool valid_path_to_tag(const char *path);
+bool valid_path_to_folder(const char *path);
 
 /**
  * Checks if a file is valid. If the files returned from a query contain the file that is being checked, then the file is assumed to be valid.
@@ -45,5 +37,11 @@ bool valid_path_to_tag(const char *path);
 bool valid_path_to_file(const char *path);
 
 int file_id_from_path(const char *path);
+
+int files_at_location(const char *path, int **file_array);
+
+int folders_at_location(const char *path, int *file_array, char ***folder_array);
+
+char *file_name_from_id(int id);
 
 #endif
