@@ -4,6 +4,26 @@
 #include <assert.h>
 #include <string.h>
 
+static void db_disconnect(sqlite3 *conn) {
+	DEBUG(ENTRY);
+	int rc = 0; /* return code of sqlite3 operations */
+
+	//DEBUG("Disconnecting from the database");
+
+	/* close database connection */
+	assert(conn != NULL);
+	rc = sqlite3_close(conn);
+
+	/* handle result code */
+	if(rc != SQLITE_OK) { /* has pending operations or prepared statements to be free'd */
+		DEBUG("WARNING: %s", sqlite3_errmsg(conn));
+		WARN("An error occured while disconnecting from the database");
+	}
+	else { DEBUG("Database disconnection successful"); }
+
+	DEBUG(EXIT);
+} /* db_disconnect */
+
 /**
  * Enable foreign key constraints on the database.
  **/
@@ -64,12 +84,20 @@ static sqlite3 *db_connect() {
 
 const char *db_get_file_location(int file_id) {
 	DEBUG(ENTRY);
+	char query[] = "SELECT file_location WHERE file_id == ";
+	int query_length = 0;
 	sqlite3 *conn = NULL;
 
 	assert(file_id != 0);
 
+	DEBUG("Retrieving physical location for file with ID %d");
+
+	query_length = strlen(query) + num_digits(file_id);
+
 	conn = db_connect();
 
+	assert(conn != NULL);
+	sqlite3_exec(conn, "
 
 
 
@@ -77,6 +105,7 @@ const char *db_get_file_location(int file_id) {
 
 
 
+	db_disconnect(conn);
 
 
 
@@ -132,7 +161,6 @@ const char *db_get_file_location(int file_id) {
 
 
 
-	db_disconnect(conn);
 	DEBUG(EXIT);
 }
 
