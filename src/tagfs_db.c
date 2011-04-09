@@ -2,6 +2,7 @@
 #include "tagfs_debug.h"
 
 #include <assert.h>
+#include <sqlite3.h>
 #include <string.h>
 
 static void db_disconnect(sqlite3 *conn) {
@@ -84,25 +85,35 @@ static sqlite3 *db_connect() {
 
 const char *db_get_file_location(int file_id) {
 	DEBUG(ENTRY);
-	char query[] = "SELECT file_location WHERE file_id == ";
+	bool warn = false; /* whether or not a connection error should be displayed for the user */
+	char *query = NULL;
+	const char *file_location = NULL;
+	const char query_outline[] = "SELECT file_location WHERE file_id == ";
 	int query_length = 0;
+	int rc = 0; /* return code of sqlite3 operation */
+	int written = 0; /* number of characters written */
 	sqlite3 *conn = NULL;
+	sqlite3_stmt *res = NULL;
 
 	assert(file_id != 0);
 
-	DEBUG("Retrieving physical location for file with ID %d");
+	DEBUG("Retrieving physical location for file with ID %d", file_id);
 
-	query_length = strlen(query) + num_digits(file_id);
+	/* prepare query */
+	query_length = strlen(query_outline) + num_digits(file_id);
+	query = malloc(query_length * sizeof(*query) + 1);
+	written = snprintf(query, query_length + 1, "SELECT file_location WHERE file_id == %d", file_id);
+	assert(written == query_length);
 
 	conn = db_connect();
 	assert(conn != NULL);
 
 	/* compile prepared statement */	
-	assert(TAGFS_DATA->db_conn != NULL);
-	rc = sqlite3_prepare_v2(conn, "SELECT file_location WHERE file_id == ", query_length, &res, NULL);
+	assert(conn != NULL);
+	rc = sqlite3_prepare_v2(conn, query, query_length, &res, NULL);
 
 	if(rc != SQLITE_OK) {
-		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", count_query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", query, query_length, rc, sqlite3_errmsg(conn));
 		warn = true;
 	}
 
@@ -110,32 +121,32 @@ const char *db_get_file_location(int file_id) {
 	rc = sqlite3_step(res);
 
 	if(rc != SQLITE_ROW) {
-		DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", count_query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", query, query_length, rc, sqlite3_errmsg(conn));
 		warn = true;
 	}
 
-	/* get result of count */
-	count = sqlite3_column_int(res, 0);
+	/* get file_id */
+	file_location = (const char *)sqlite3_column_text(res, 0);
 
 	rc = sqlite3_finalize(res);
 
 	if(rc != SQLITE_OK) {
-		DEBUG("WARNING: Finalizing statement \"%s\" of length %d FAILED with result code %d: %s", count_query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		DEBUG("WARNING: Finalizing statement \"%s\" of length %d FAILED with result code %d: %s", query, query_length, rc, sqlite3_errmsg(conn));
 		warn = true;
 	}
 
-	assert(count_query != NULL);
-	free(count_query);
-	count_query = NULL;
+	db_disconnect(conn);
+
+	assert(query != NULL);
+	free(query);
+	query = NULL;
 
 	/* handle return code */
 	if(warn == true) { WARN("An error occured when communicating with the database"); }
-	else { DEBUG("Results returned from query: %d", count); }
+	else { DEBUG("File id %d corresponds to %s", file_id, file_location); }
 
-
-
-
-	db_disconnect(conn);
+	DEBUG(EXIT);
+	return file_location;
 
 
 
