@@ -1,10 +1,45 @@
 #include "tagfs_db.h"
 #include "tagfs_debug.h"
 
+#include <assert.h>
 #include <string.h>
+
+/**
+ * Connect to the database.
+ */
+static void db_connect() {
+	DEBUG(ENTRY);
+	int rc = 0; /* return code of sqlite3 operation */
+	sqlite3 *conn = NULL;
+
+//	DEBUG("Connecting to database: %s", TAGFS_DATA->db_path);
+
+	/* connect to the database */
+	assert(TAGFS_DATA->db_path != NULL);
+	rc = sqlite3_open_v2(TAGFS_DATA->db_path, &conn, SQLITE_OPEN_READWRITE, NULL); /* TODO: set as 'SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE' and create the database if it does not exist already */
+	assert(conn != NULL);
+
+	/* handle result code */
+	if(rc != SQLITE_OK) { /* if no space on drive or file does not exist */
+		DEBUG("ERROR: %s", sqlite3_errmsg(conn));
+		ERROR("An error occurred when connecting to the database");
+	}
+//	else {
+//		DEBUG("Database connection successful"); 
+//	}
+
+	/* enable foreign keys */
+	db_enable_foreign_keys();
+
+	DEBUG(EXIT);
+} /* db_connect */
 
 const char *db_get_file_location(int file_id) {
 	DEBUG(ENTRY);
+
+	assert(file_id != 0);
+
+	db_connect();
 
 	DEBUG(EXIT);
 }
