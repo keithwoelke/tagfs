@@ -27,13 +27,13 @@ int tagfs_getattr(const char *path, struct stat *statbuf) {
 		file_id = file_id_from_path(path);
 		file_location = db_get_file_location(file_id);
 
+		retstat = stat(file_location, statbuf);
+
 		assert(file_location != NULL);
 		free((void *)file_location);
 		file_location = NULL;
-
-		retstat = stat("/home/keith/Desktop/foo", statbuf);
 	}
-	else if(valid_path_to_folder(path)) { /* TODO: Set proper folder info? */
+	else if(valid_path_to_folder(path)) {
 		statbuf->st_mode = S_IFDIR | 0755;
 	}
 	else {
