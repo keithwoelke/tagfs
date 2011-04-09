@@ -27,6 +27,12 @@ int num_digits(unsigned int num);
  */
 const char *get_exec_dir(const char *exec_name);
 
+
+
+
+
+
+
 //int array_intersection(int a[], int a_size, int b[], int b_size, int **result);
 
 /**

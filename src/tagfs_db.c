@@ -59,7 +59,7 @@ static void db_enable_foreign_keys(sqlite3 *conn) {
  * Connect to the database.
  */
 static sqlite3 *db_connect() {
-	DEBUG(ENTRY);
+	//DEBUG(ENTRY);
 	int rc = 0; /* return code of sqlite3 operation */
 	sqlite3 *conn = NULL;
 
@@ -80,8 +80,8 @@ static sqlite3 *db_connect() {
 	/* enable foreign keys */
 	db_enable_foreign_keys(conn);
 
+	//DEBUG(EXIT);
 	return conn;
-	DEBUG(EXIT);
 } /* db_connect */
 
 const char *db_get_file_location(int file_id) {
@@ -137,8 +137,7 @@ const char *db_get_file_location(int file_id) {
 
 	file_location_length = strlen(tmp_file_directory) + strlen(tmp_file_name) + 1;
 	file_location = malloc(file_location_length * sizeof(*file_location) + 1); 
-	written = snprintf((char *)file_location, file_location_length + 1, "%s//%s", tmp_file_directory, tmp_file_name);
-	printf("%d %d\n", written, file_location_length);
+	written = snprintf((char *)file_location, file_location_length + 1, "%s/%s", tmp_file_directory, tmp_file_name);
 	assert(written == file_location_length);
 
 	rc = sqlite3_finalize(res);
