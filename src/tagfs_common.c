@@ -11,7 +11,7 @@
 
 
 static bool unique_tags_in_path(const char *path) {
-//	bool unique = true;
+	bool unique = true;
 	char **tag_array = NULL;
 	char **tags_checked = NULL;
 	int i = 0;
@@ -29,23 +29,22 @@ static bool unique_tags_in_path(const char *path) {
 
 	for(i = 0; i < num_tokens; i++) {
 		assert(tag_array != NULL);
-//		if(array_contains_string(tags_checked, tag_array[i], i)) {
-//			unique = false;
-//			break;
-//		}
-//
+		if(array_contains_string(tags_checked, tag_array[i], i)) {
+			unique = false;
+			break;
+		}
+
 		tags_checked[i] = malloc(strlen(tag_array[i]) + 1);
 		assert(tags_checked[i] != NULL);
 		strcpy(tags_checked[i], tag_array[i]);
 	}
-	return true;
-//
-//	free_char_ptr_array(&tag_array, num_tokens);
-//	free_char_ptr_array(&tags_checked, i);
-//
-//	DEBUG("Tags in path are %sunique", unique ? "" : "not ");
-//	DEBUG(EXIT);
-//	return unique;
+
+	free_char_ptr_array(&tag_array, num_tokens);
+	free_char_ptr_array(&tags_checked, i);
+
+	DEBUG("Tags in path are %sunique", unique ? "" : "not ");
+	DEBUG(EXIT);
+	return unique;
 } /* unique_tags_in_path */
 
 
@@ -224,6 +223,42 @@ int num_tags_in_path(const char *path) {
 	return i;
 } /* num_tags_in_path */
 
+bool array_contains_string(char **array, char *string, int count) {
+	DEBUG(ENTRY);
+	bool contains = false;
+	int i = 0;
+
+	assert(string != NULL);
+	assert(count >= 0);
+
+	DEBUG("Checking if array contains \"%s\"", string);
+
+	/* DEBUG("Array contents:"); */
+
+	/* for(i = 0; i < count; i++) {
+		DEBUG("array[%d] = %s", i, array[i]); 
+	} */
+
+	/* DEBUG("Array comparison:"); */
+
+	if(array != NULL) {
+		/* check each array element and see if it matches string */
+		for(i = 0; i < count; i++) {
+			if(array[i] != NULL && strcmp(array[i], string) == 0) { 
+				/* DEBUG("array[%d] = %s = %s", i, array[i], string); */
+				contains = true;
+				break;
+			}
+			/* else {
+				DEBUG("array[%d] = %s != %s", i, array[i], string);
+			} */
+		}
+	}
+
+	DEBUG("%s \"%s\"", contains ? "Array contains" : "Array does not contain", string);
+	DEBUG(EXIT);
+	return contains;
+} /* array_contains_string */
 
 
 

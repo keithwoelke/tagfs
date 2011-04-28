@@ -60,6 +60,14 @@ const int num_tags_in_path(const char* path);
  */
 int num_tags_in_path(const char* path);
 
+/**
+ * Checks if a string is contained within an array. Expects a count parameter to be passed in representing the length of the array.
+ * 
+ * @param array the array the check
+ * @param string the string to check for
+ * @return true, if the string is in the array. false, if the string is not in the array.
+ */
+bool array_contains_string(char **array, char *string, int count);
 
 
 
