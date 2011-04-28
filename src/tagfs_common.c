@@ -71,7 +71,7 @@ char *file_name_from_id(int file_id) {
 
 static bool unique_tags_in_path(const char *path) {
 //	bool unique = true;
-//	char **tag_array = NULL;
+	char **tag_array = NULL;
 //	char **tags_checked = NULL;
 //	int i = 0;
 	int num_tokens = 0;
