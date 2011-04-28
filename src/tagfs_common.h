@@ -27,6 +27,33 @@ int num_digits(unsigned int num);
  */
 const char *get_exec_dir(const char *exec_name);
 
+/**
+ * Retrieves the file name of the file associated with a file ID.
+ *
+ * @param file_id The ID of the file.
+ * @return The name of the file corresponding to the file ID.
+ */
+char *file_name_from_id(int file_id);
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * Counts the number of tags in a path. Uses the standand path delimiter "/" to calculate the total. Function uses strtok, but does not modify the path that is passed in as a parameter.
+ * @param path a string representing a path in the file system.
+const int num_tags_in_path(const char* path);
+ * @return the number of path elements delimited by the "/" character.
+ */
+int num_tags_in_path(const char* path);
 
 
 
@@ -55,7 +82,5 @@ int file_id_from_path(const char *path);
 int files_at_location(const char *path, int **file_array);
 
 int folders_at_location(const char *path, int *file_array, char ***folder_array);
-
-char *file_name_from_id(int id);
 
 #endif

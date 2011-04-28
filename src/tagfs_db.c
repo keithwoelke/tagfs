@@ -6,6 +6,11 @@
 #include <sqlite3.h>
 #include <string.h>
 
+/**
+ * Disconnect from the database.
+ *
+ * @param conn The sqlite3 database connection to close.
+ */
 static void db_disconnect(sqlite3 *conn) {
 	DEBUG(ENTRY);
 	int rc = 0; /* return code of sqlite3 operations */
@@ -28,6 +33,8 @@ static void db_disconnect(sqlite3 *conn) {
 
 /**
  * Enable foreign key constraints on the database.
+ *
+ * @param conn The sqlite3 database connection to enable foreign keys on.
  **/
 static void db_enable_foreign_keys(sqlite3 *conn) {
 	DEBUG(ENTRY);
@@ -57,6 +64,8 @@ static void db_enable_foreign_keys(sqlite3 *conn) {
 
 /**
  * Connect to the database.
+ *
+ * @return The database connection handle.
  */
 static sqlite3 *db_connect() {
 	//DEBUG(ENTRY);
@@ -84,13 +93,13 @@ static sqlite3 *db_connect() {
 	return conn;
 } /* db_connect */
 
-const char *db_get_file_location(int file_id) {
+char *db_get_file_location(int file_id) {
 	DEBUG(ENTRY);
 	bool warn = false; /* whether or not a connection error should be displayed for the user */
 	char *query = NULL;
-	const char *file_location = NULL;
-	const char *tmp_file_directory = NULL; /* holds text from the query so it can be copied to a new memory location */
-	const char *tmp_file_name = NULL; /* hold name of file until it can be copied to a new memory location */
+	char *file_location = NULL;
+	char *tmp_file_directory = NULL; /* holds text from the query so it can be copied to a new memory location */
+	char *tmp_file_name = NULL; /* hold name of file until it can be copied to a new memory location */
 	const char query_outline[] = "SELECT file_location, file_name FROM files WHERE file_id == ";
 	int file_location_length = 0; /* length of the file location to return */
 	int query_length = 0;
@@ -129,12 +138,13 @@ const char *db_get_file_location(int file_id) {
 		warn = true;
 	}
 
-	/* get file location */
-	tmp_file_directory = (const char *)sqlite3_column_text(res, 0);
+	/* get file location and name */
+	tmp_file_directory = (char *)sqlite3_column_text(res, 0);
 	assert(tmp_file_directory != NULL);
-	tmp_file_name = (const char *)sqlite3_column_text(res, 1);
+	tmp_file_name = (char *)sqlite3_column_text(res, 1);
 	assert(tmp_file_name != NULL);
 
+	/* build full file path from name and directory */
 	file_location_length = strlen(tmp_file_directory) + strlen(tmp_file_name) + 1;
 	file_location = malloc(file_location_length * sizeof(*file_location) + 1); 
 	written = snprintf((char *)file_location, file_location_length + 1, "%s/%s", tmp_file_directory, tmp_file_name);
@@ -159,63 +169,30 @@ const char *db_get_file_location(int file_id) {
 
 	DEBUG(EXIT);
 	return file_location;
-
-
-
-
-
-	char *path = NULL;
-
-	if(file_id == 1) {
-		path = malloc(strlen("/home/keith/Programming/FUSE/TagFS/src/Files/How fast.ogg") * sizeof(*path) + 1);
-		snprintf(path, strlen("/home/keith/Programming/FUSE/TagFS/src/Files/How fast.ogg") + 1, "%s", "/home/keith/Programming/FUSE/TagFS/src/Files/How fast.ogg");
-		DEBUG("file id is %d for path %s.\n", 1, path);
-		DEBUG(EXIT);
-		return path;
-	}
-	else if(file_id == 2) {
-		path = malloc(strlen("/home/keith/Programming/FUSE/TagFS/src/Files/Josh Woodward - Swansong.ogg") * sizeof(*path) + 1);
-		snprintf(path, strlen("/home/keith/Programming/FUSE/TagFS/src/Files/Josh Woodward - Swansong.ogg") + 1, "%s", "/home/keith/Programming/FUSE/TagFS/src/Files/Josh Woodward - Swansong.ogg");
-		DEBUG("file id is %d for path %s.\n", 2, path);
-		DEBUG(EXIT);
-		return path;
-	}
-	else if(file_id == 3) {
-		path = malloc(strlen("/home/keith/Programming/FUSE/TagFS/src/Files/sample_iTunes.mov") * sizeof(*path) + 1);
-		snprintf(path, strlen("/home/keith/Programming/FUSE/TagFS/src/Files/sample_iTunes.mov") + 1, "%s", "/home/keith/Programming/FUSE/TagFS/src/Files/sample_iTunes.mov");
-		DEBUG("file id is %d for path %s.\n", 3, path);
-		DEBUG(EXIT);
-		return path;
-	}
-	else if(file_id == 4) {
-		path = malloc(strlen("/home/keith/Programming/FUSE/TagFS/src/Files/Moby Dick.txt") * sizeof(*path) + 1);
-		snprintf(path, strlen("/home/keith/Programming/FUSE/TagFS/src/Files/Moby Dick.txt") + 1, "%s", "/home/keith/Programming/FUSE/TagFS/src/Files/Moby Dick.txt");
-		DEBUG("file id is %d for path %s.\n", 4, path);
-		DEBUG(EXIT);
-		return path;
-	}
-	else {
-		DEBUG("%d is not recognized.", file_id);
-		return path;
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	DEBUG(EXIT);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //const char *db_get_file_location(int file_id) {
 //	DEBUG(ENTRY);

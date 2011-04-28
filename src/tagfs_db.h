@@ -12,10 +12,10 @@
 /**
  * Returns a physical file system location corresponding to a location in the TagFS.
  *
- * @param path The path to the file in the TagFS.
- * @return The physical location in the file system corresponding to the file in the TagFS.
+ * @param file_id The file ID for which to return the full physical path.
+ * @return The path to the physical location in the file system corresponding to the file ID the TagFS.
  */
-const char *db_get_file_location(int file_id);
+char *db_get_file_location(int file_id);
 
 #endif
 

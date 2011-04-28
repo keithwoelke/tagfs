@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <fuse.h>
 #include <string.h>
+#include <unistd.h>
 
 int tagfs_getattr(const char *path, struct stat *statbuf) {
 	DEBUG(ENTRY);

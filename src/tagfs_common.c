@@ -35,6 +35,109 @@ const char *get_exec_dir(const char *exec_name) {
 	return exec_dir;
 } /* get_exec_dir */
 
+char *file_name_from_id(int file_id) {
+	DEBUG(ENTRY);
+	char *file_location = NULL;
+	char *file_name = NULL;
+	char *tmp_file_name = NULL;
+	int file_name_length = 0;
+	int written = 0;
+
+	/* get file location */
+	file_location = db_get_file_location(file_id);
+
+	/* get file name from location */
+	tmp_file_name = basename(file_location);
+
+	file_name_length = strlen(tmp_file_name);
+	file_name = malloc(file_name_length * sizeof(*file_name) + 1);
+	written = snprintf(file_name, file_name_length + 1, "%s", tmp_file_name);
+	assert(written == file_name_length);
+
+	assert(file_location != NULL);
+	free(file_location);
+	file_location = NULL;
+
+	DEBUG(EXIT);
+	return file_name;
+} /* file_name_from_id */
+
+
+
+
+
+
+
+
+static bool unique_tags_in_path(const char *path) {
+//	bool unique = true;
+//	char **tag_array = NULL;
+//	char **tags_checked = NULL;
+//	int i = 0;
+	int num_tokens = 0;
+
+	DEBUG(ENTRY);
+
+	assert(path != NULL);
+
+	DEBUG("Checking uniqueness of tags in %s", path);
+	num_tokens = path_to_array(path, &tag_array);
+	return true;
+//	DEBUG("Number of tokens: %d", num_tokens);
+//	tags_checked = malloc(num_tokens * sizeof(*tags_checked));
+//	assert(tags_checked != NULL);
+//
+//	for(i = 0; i < num_tokens; i++) {
+//		assert(tag_array != NULL);
+//		if(array_contains_string(tags_checked, tag_array[i], i)) {
+//			unique = false;
+//			break;
+//		}
+//
+//		tags_checked[i] = malloc(strlen(tag_array[i]) + 1);
+//		assert(tags_checked[i] != NULL);
+//		strcpy(tags_checked[i], tag_array[i]);
+//	}
+//
+//	free_char_ptr_array(&tag_array, num_tokens);
+//	free_char_ptr_array(&tags_checked, i);
+//
+//	DEBUG("Tags in path are %sunique", unique ? "" : "not ");
+//	DEBUG(EXIT);
+//	return unique;
+} /* unique_tags_in_path */
+
+bool valid_path_to_folder(const char *path) {
+	DEBUG(ENTRY);
+	bool valid = false;
+	int *file_array = NULL;
+	int num_files = 0;
+
+	assert(path != NULL);
+
+	DEBUG("Checking that %s is a valid path to a tag", path);
+
+	if(strcmp(path, "/") == 0) { valid = true; }
+	else {
+		/* count files at location */
+		num_files = files_at_location(path, &file_array);
+		free(file_array);
+
+		/* if tags are not unique (to prevent repeated filtering of identical tags) or there are no files at the location */
+		if(!unique_tags_in_path(path) || num_files == 0) { valid = false; }
+		else {valid = true; }
+	}
+
+	DEBUG("%s is %sa valid path to a tag", path, valid ? "" : "not a ");
+	DEBUG(EXIT);
+	return valid;
+} /* valid_path_to_folder */
+
+
+
+
+
+
 
 
 
@@ -75,59 +178,12 @@ const char *get_exec_dir(const char *exec_name) {
 //	return num_results;
 //} /* array_intersection */
 
-bool valid_path_to_folder(const char *path) {
-	DEBUG(ENTRY);
 
-	if(strcmp(path, "/") == 0) {
-		DEBUG(EXIT);
-		return true;
-	}
-	else if(strcmp(path, "/Video") == 0) {
-		DEBUG(EXIT);
-		return true;
-	}
-	else if(strcmp(path, "/Audio") == 0) {
-		DEBUG(EXIT);
-		return true;
-	}
-	else if(strcmp(path, "/mov") == 0) {
-		DEBUG(EXIT);
-		return true;
-	}
-	else if(strcmp(path, "/ogg") == 0) {
-		DEBUG(EXIT);
-		return true;
-	}
-	else if(strcmp(path, "/Audio/ogg") == 0) {
-		DEBUG(EXIT);
-		return true;
-	}
-	else if(strcmp(path, "/mov/Video") == 0) {
-		DEBUG(EXIT);
-		return true;
-	}
-	else if(strcmp(path, "/ogg/Video") == 0) {
-		DEBUG(EXIT);
-		return true;
-	}
-	else if(strcmp(path, "/ogg/Audio") == 0) {
-		DEBUG(EXIT);
-		return true;
-	}
-	else if(strcmp(path, "/Video/ogg") == 0) {
-		DEBUG(EXIT);
-		return true;
-	}
-	else if(strcmp(path, "/Video/mov") == 0) {
-		DEBUG(EXIT);
-		return true;
-	}
-	else {
-	DEBUG("FOO: %s\n", path);
-		DEBUG(EXIT);
-		return false;
-	}
-}
+
+
+
+
+
 
 bool valid_path_to_file(const char *path) {
 	DEBUG(ENTRY);
@@ -401,34 +457,4 @@ int folders_at_location(const char *path, int *file_array, char ***folder_array)
 	}
 
 	return 0;
-}
-
-char *file_name_from_id(int id) {
-	DEBUG(ENTRY);
-
-	char *foo = NULL;
-
-	if(id == 2) {
-		foo = malloc(strlen("Josh Woodward - Swansong.ogg") * sizeof(foo) + 1);
-		snprintf(foo, strlen("Josh Woodward - Swansong.ogg") + 1, "%s", "Josh Woodward - Swansong.ogg");
-		return foo;
-	}
-	else if(id == 3) {
-		foo = malloc(strlen("sample_iTunes.mov") * sizeof(foo) + 1);
-		snprintf(foo, strlen("sample_iTunes.mov") + 1, "%s", "sample_iTunes.mov");
-		return foo;
-	}
-	else if(id == 1) {
-		foo = malloc(strlen("How fast.ogg") * sizeof(foo) + 1);
-		snprintf(foo, strlen("How fast.ogg") + 1, "%s", "How fast.ogg");
-		return foo;
-	}
-	else if(id == 4) {
-		foo = malloc(strlen("Moby Dick.txt") * sizeof(foo) + 1);
-		snprintf(foo, strlen("Moby Dick.txt") + 1, "%s", "Moby Dick.txt");
-		return foo;
-	}
-
-	DEBUG(EXIT);
-	return malloc(1);
 }
