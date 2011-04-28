@@ -7,6 +7,59 @@
 #include <stdbool.h>
 #include <string.h>
 
+
+
+
+static bool unique_tags_in_path(const char *path) {
+//	bool unique = true;
+	char **tag_array = NULL;
+	char **tags_checked = NULL;
+	int i = 0;
+	int num_tokens = 0;
+
+	DEBUG(ENTRY);
+
+	assert(path != NULL);
+
+	DEBUG("Checking uniqueness of tags in %s", path);
+	num_tokens = path_to_array(path, &tag_array);
+	DEBUG("Number of tokens: %d", num_tokens);
+	tags_checked = malloc(num_tokens * sizeof(*tags_checked));
+	assert(tags_checked != NULL);
+
+	for(i = 0; i < num_tokens; i++) {
+		assert(tag_array != NULL);
+//		if(array_contains_string(tags_checked, tag_array[i], i)) {
+//			unique = false;
+//			break;
+//		}
+//
+		tags_checked[i] = malloc(strlen(tag_array[i]) + 1);
+		assert(tags_checked[i] != NULL);
+		strcpy(tags_checked[i], tag_array[i]);
+	}
+	return true;
+//
+//	free_char_ptr_array(&tag_array, num_tokens);
+//	free_char_ptr_array(&tags_checked, i);
+//
+//	DEBUG("Tags in path are %sunique", unique ? "" : "not ");
+//	DEBUG(EXIT);
+//	return unique;
+} /* unique_tags_in_path */
+
+
+
+
+
+
+
+
+
+
+
+
+
 int num_digits(unsigned int num) {
 	DEBUG(ENTRY);
 	int count = 0;
@@ -62,29 +115,31 @@ char *file_name_from_id(int file_id) {
 	return file_name;
 } /* file_name_from_id */
 
+bool valid_path_to_folder(const char *path) {
+	DEBUG(ENTRY);
+	bool valid = false;
+	int *file_array = NULL;
+	int num_files = 0;
 
+	assert(path != NULL);
 
+	DEBUG("Checking that %s is a valid path to a tag", path);
 
+	if(strcmp(path, "/") == 0) { valid = true; }
+	else {
+		/* count files at location */
+		num_files = files_at_location(path, &file_array);
+		free(file_array);
 
+		/* if tags are not unique (to prevent repeated filtering of identical tags) or there are no files at the location */
+		if(!unique_tags_in_path(path) || num_files == 0) { valid = false; }
+		else {valid = true; }
+	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	DEBUG("%s is %sa valid path to a tag", path, valid ? "" : "not a ");
+	DEBUG(EXIT);
+	return valid;
+} /* valid_path_to_folder */
 
 int path_to_array(const char *path, char ***array) {
 	DEBUG(ENTRY);
@@ -138,69 +193,100 @@ int path_to_array(const char *path, char ***array) {
 	return num_tokens;
 } /* path_to_array */
 
-static bool unique_tags_in_path(const char *path) {
-//	bool unique = true;
-	char **tag_array = NULL;
-//	char **tags_checked = NULL;
-//	int i = 0;
-	int num_tokens = 0;
-
+int num_tags_in_path(const char *path) {
 	DEBUG(ENTRY);
+	char *tmp_path = NULL;
+	char *tok_ptr = NULL;
+	char *token = NULL;
+	int i = 0;
 
 	assert(path != NULL);
 
-	DEBUG("Checking uniqueness of tags in %s", path);
-	num_tokens = path_to_array(path, &tag_array);
-	return true;
-//	DEBUG("Number of tokens: %d", num_tokens);
-//	tags_checked = malloc(num_tokens * sizeof(*tags_checked));
-//	assert(tags_checked != NULL);
-//
-//	for(i = 0; i < num_tokens; i++) {
-//		assert(tag_array != NULL);
-//		if(array_contains_string(tags_checked, tag_array[i], i)) {
-//			unique = false;
-//			break;
-//		}
-//
-//		tags_checked[i] = malloc(strlen(tag_array[i]) + 1);
-//		assert(tags_checked[i] != NULL);
-//		strcpy(tags_checked[i], tag_array[i]);
-//	}
-//
-//	free_char_ptr_array(&tag_array, num_tokens);
-//	free_char_ptr_array(&tags_checked, i);
-//
-//	DEBUG("Tags in path are %sunique", unique ? "" : "not ");
-//	DEBUG(EXIT);
-//	return unique;
-} /* unique_tags_in_path */
+	DEBUG("Calculating number of tags in %s", path);
 
-bool valid_path_to_folder(const char *path) {
-	DEBUG(ENTRY);
-	bool valid = false;
-	int *file_array = NULL;
-	int num_files = 0;
+	/* make copy of path for tokenization */
+	tmp_path = malloc(strlen(path) * sizeof(*tmp_path) + 1);
+	assert(tmp_path != NULL);
 
-	assert(path != NULL);
+	strcpy(tmp_path, path);
+	assert(strcmp(path, tmp_path) == 0);
+	token = strtok_r(tmp_path, "/", &tok_ptr);
 
-	DEBUG("Checking that %s is a valid path to a tag", path);
+	/* count tokens */
+	for(i = 0; token != NULL; i++) { token = strtok_r(NULL, "/", &tok_ptr); }
 
-	if(strcmp(path, "/") == 0) { valid = true; }
-	else {
-		/* count files at location */
-		num_files = files_at_location(path, &file_array);
-		free(file_array);
+	assert(tmp_path != NULL);
+	free(tmp_path);
+	tmp_path = NULL;
 
-		/* if tags are not unique (to prevent repeated filtering of identical tags) or there are no files at the location */
-		if(!unique_tags_in_path(path) || num_files == 0) { valid = false; }
-		else {valid = true; }
-	}
-
-	DEBUG("%s is %sa valid path to a tag", path, valid ? "" : "not a ");
+	DEBUG("%d tags in %s", i, path);
 	DEBUG(EXIT);
-	return valid;
-} /* valid_path_to_folder */
+	return i;
+} /* num_tags_in_path */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
