@@ -69,6 +69,13 @@ int num_tags_in_path(const char* path);
  */
 bool array_contains_string(char **array, char *string, int count);
 
+/**
+ * Responsible for freeing the memory in an array of strings that have been alloc'd. Also frees the array pointer.
+ *
+ * @param array a pointer to the array of pointers to be free'd.
+ * @param count the number of elements in the array to be free'd.
+ */
+void free_char_ptr_array(char ***array, int count);
 
 
 

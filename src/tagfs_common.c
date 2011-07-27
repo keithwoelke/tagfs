@@ -3,12 +3,10 @@
 #include "tagfs_db.h"
 
 #include <assert.h>
+#include <glib.h>
 #include <libgen.h>
 #include <stdbool.h>
 #include <string.h>
-
-
-
 
 static bool unique_tags_in_path(const char *path) {
 	bool unique = true;
@@ -21,6 +19,7 @@ static bool unique_tags_in_path(const char *path) {
 
 	assert(path != NULL);
 
+	/* break path into tags and create array to hold checked tags */
 	DEBUG("Checking uniqueness of tags in %s", path);
 	num_tokens = path_to_array(path, &tag_array);
 	DEBUG("Number of tokens: %d", num_tokens);
@@ -28,15 +27,19 @@ static bool unique_tags_in_path(const char *path) {
 	assert(tags_checked != NULL);
 
 	for(i = 0; i < num_tokens; i++) {
+
+		/* if token is a duplicate */
 		assert(tag_array != NULL);
 		if(array_contains_string(tags_checked, tag_array[i], i)) {
 			unique = false;
 			break;
 		}
 
+		/* save checked tag */
 		tags_checked[i] = malloc(strlen(tag_array[i]) + 1);
 		assert(tags_checked[i] != NULL);
 		strcpy(tags_checked[i], tag_array[i]);
+		assert(strcmp(tags_checked[i], tag_array[i]) == 0);
 	}
 
 	free_char_ptr_array(&tag_array, num_tokens);
@@ -46,18 +49,6 @@ static bool unique_tags_in_path(const char *path) {
 	DEBUG(EXIT);
 	return unique;
 } /* unique_tags_in_path */
-
-
-
-
-
-
-
-
-
-
-
-
 
 int num_digits(unsigned int num) {
 	DEBUG(ENTRY);
@@ -260,6 +251,39 @@ bool array_contains_string(char **array, char *string, int count) {
 	return contains;
 } /* array_contains_string */
 
+void free_char_ptr_array(char ***array, int count) {
+	/* DEBUG(ENTRY); */
+	int i = 0;
+
+	/* DEBUG("Attempting to free array of %d pointer(s) plus the main pointer.", count); */
+
+	assert(array != NULL);
+	assert(count >= 0);
+
+	/* array is empty */
+	if(*array == NULL) { /* DEBUG("Array is NULL. Nothing to free."); */ }
+	/* array is not empty */
+	else {
+		assert(*array != NULL);
+
+		/* free each element */
+		for(i = 0; i < count; i++) {
+			/* DEBUG("Freeing array[%d] = %s", i, (*array)[i]); */
+			free((*array)[i]);
+			(*array)[i] = NULL;
+		}
+
+		/* DEBUG("Free'd %d element(s).", i); */
+
+		assert(*array != NULL);
+		free(*array);
+		*array = NULL;
+
+		/* DEBUG("Free'd main array pointer."); */
+	}
+
+	/* DEBUG(EXIT); */
+} /* free_char_ptr_array */
 
 
 
@@ -587,6 +611,19 @@ int files_at_location(const char *path, int **file_array) {
 
 int folders_at_location(const char *path, int *file_array, char ***folder_array) {
 	DEBUG(ENTRY);
+
+	int foo = SQLITE_MAX_LENGTH;
+
+	GHashTable *table = g_hash_table_new(NULL, NULL);
+	g_hash_table_insert(table, (gpointer)5, (gpointer)5);
+	g_hash_table_insert(table, (gpointer)6, (gpointer)5);
+	GList *list = g_hash_table_get_keys(table);
+
+	DEBUG("FOO");
+
+	DEBUG("%u", (unsigned int)g_hash_table_size(table));
+
+	DEBUG("BAR");
 
 	if(strcmp(path, "/") == 0) {
 		*folder_array = malloc(4 * sizeof(**folder_array));

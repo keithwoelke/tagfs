@@ -163,13 +163,13 @@ char *db_get_file_location(int file_id) {
 	free(query);
 	query = NULL;
 
-	/* handle return code */
+	/* handle result code */
 	if(warn == true) { WARN("An error occured when communicating with the database"); }
 	else { DEBUG("File id %d corresponds to %s", file_id, file_location); }
 
 	DEBUG(EXIT);
 	return file_location;
-}
+} /* db_get_file_location */
 
 
 
