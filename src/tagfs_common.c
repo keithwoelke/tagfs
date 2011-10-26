@@ -444,7 +444,18 @@ int array_intersection(int *a, int a_size, int *b, int b_size, int **intersectio
 
 
 
+int files_at_location(const char *path, int **file_array) {
+	int num_tokens = 0;
+	char **tag_array = NULL;
 
+//	DEBUG(ENTRY);
+
+	assert(path != NULL);
+	
+	num_tokens = path_to_array(path, &tag_array);
+
+//	DEBUG(EXIT);
+} /* files_at_location */
 
 
 
@@ -575,89 +586,89 @@ int file_id_from_path(const char *path) {
 	return 0;
 };
 
-int files_at_location(const char *path, int **file_array) {
-	DEBUG(ENTRY);
-
-	if(strcmp(path, "/Audio") == 0) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 2;
-
-		DEBUG(EXIT);
-		return 1;
-	}
-	else if(strcmp(path, "/Audio/ogg") == 0) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 2;
-
-		DEBUG(EXIT);
-		return 1;
-	}
-	else if(strcmp(path, "/mov") == 0) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 3;
-
-		DEBUG(EXIT);
-		return 1;
-	}
-	else if(strcmp(path, "/mov/Video") == 0) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 3;
-
-		DEBUG(EXIT);
-		return 1;
-	}
-	else if(strcmp(path, "/ogg") == 0) {
-		(*file_array) = malloc(2 * sizeof(**file_array));
-		(*file_array)[0] = 1;
-		(*file_array)[1] = 2;
-
-		DEBUG(EXIT);
-		return 2;
-	}
-	else if(strcmp(path, "/ogg/Video") == 0) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 1;
-
-		DEBUG(EXIT);
-		return 1;
-	}
-	else if(strcmp(path, "/ogg/Audio") == 0) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 2;
-
-		DEBUG(EXIT);
-		return 1;
-	}
-	else if(strcmp(path, "/Video") == 0) {
-		(*file_array) = malloc(2 * sizeof(**file_array));
-		(*file_array)[0] = 1;
-		(*file_array)[1] = 3;
-
-		DEBUG(EXIT);
-		return 2;
-	}
-	else if(strcmp(path, "/Video/ogg") == 0) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 1;
-
-		DEBUG(EXIT);
-		return 1;
-	}
-	else if(strcmp(path, "/Video/mov") == 0) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 3;
-
-		DEBUG(EXIT);
-		return 1;
-	}
-	else if(strcmp(path, "/") == 0) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 4;
-
-		DEBUG(EXIT);
-		return 1;
-	}
-
-	DEBUG(EXIT);
-	return 0;
-}
+//int files_at_location(const char *path, int **file_array) {
+//	DEBUG(ENTRY);
+//
+//	if(strcmp(path, "/Audio") == 0) {
+//		(*file_array) = malloc(1 * sizeof(**file_array));
+//		(*file_array)[0] = 2;
+//
+//		DEBUG(EXIT);
+//		return 1;
+//	}
+//	else if(strcmp(path, "/Audio/ogg") == 0) {
+//		(*file_array) = malloc(1 * sizeof(**file_array));
+//		(*file_array)[0] = 2;
+//
+//		DEBUG(EXIT);
+//		return 1;
+//	}
+//	else if(strcmp(path, "/mov") == 0) {
+//		(*file_array) = malloc(1 * sizeof(**file_array));
+//		(*file_array)[0] = 3;
+//
+//		DEBUG(EXIT);
+//		return 1;
+//	}
+//	else if(strcmp(path, "/mov/Video") == 0) {
+//		(*file_array) = malloc(1 * sizeof(**file_array));
+//		(*file_array)[0] = 3;
+//
+//		DEBUG(EXIT);
+//		return 1;
+//	}
+//	else if(strcmp(path, "/ogg") == 0) {
+//		(*file_array) = malloc(2 * sizeof(**file_array));
+//		(*file_array)[0] = 1;
+//		(*file_array)[1] = 2;
+//
+//		DEBUG(EXIT);
+//		return 2;
+//	}
+//	else if(strcmp(path, "/ogg/Video") == 0) {
+//		(*file_array) = malloc(1 * sizeof(**file_array));
+//		(*file_array)[0] = 1;
+//
+//		DEBUG(EXIT);
+//		return 1;
+//	}
+//	else if(strcmp(path, "/ogg/Audio") == 0) {
+//		(*file_array) = malloc(1 * sizeof(**file_array));
+//		(*file_array)[0] = 2;
+//
+//		DEBUG(EXIT);
+//		return 1;
+//	}
+//	else if(strcmp(path, "/Video") == 0) {
+//		(*file_array) = malloc(2 * sizeof(**file_array));
+//		(*file_array)[0] = 1;
+//		(*file_array)[1] = 3;
+//
+//		DEBUG(EXIT);
+//		return 2;
+//	}
+//	else if(strcmp(path, "/Video/ogg") == 0) {
+//		(*file_array) = malloc(1 * sizeof(**file_array));
+//		(*file_array)[0] = 1;
+//
+//		DEBUG(EXIT);
+//		return 1;
+//	}
+//	else if(strcmp(path, "/Video/mov") == 0) {
+//		(*file_array) = malloc(1 * sizeof(**file_array));
+//		(*file_array)[0] = 3;
+//
+//		DEBUG(EXIT);
+//		return 1;
+//	}
+//	else if(strcmp(path, "/") == 0) {
+//		(*file_array) = malloc(1 * sizeof(**file_array));
+//		(*file_array)[0] = 4;
+//
+//		DEBUG(EXIT);
+//		return 1;
+//	}
+//
+//	DEBUG(EXIT);
+//	return 0;
+//}
