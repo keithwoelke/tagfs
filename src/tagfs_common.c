@@ -412,24 +412,6 @@ int folders_at_location(const char *path, int *files, int num_files, int **folde
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
  
 
 

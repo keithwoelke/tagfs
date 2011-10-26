@@ -113,48 +113,49 @@ void free_double_ptr(void ***array, int count);
  */
 int folders_at_location(const char *path, int *files, int num_files, int **folders);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
  * Counts the number of tags in a path. Uses the standand path delimiter "/" to calculate the total. Function uses strtok, but does not modify the path that is passed in as a parameter.
+ *
  * @param path a string representing a path in the file system.
 const int num_tags_in_path(const char* path);
- * @return the number of path elements delimited by the "/" character.
+ * @return The number of path elements delimited by the "/" character.
  */
 int num_tags_in_path(const char* path);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
