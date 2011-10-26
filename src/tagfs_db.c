@@ -174,6 +174,51 @@ char *db_get_file_location(int file_id) {
 
 
 
+int db_files_from_tag(int tag_id, int **file_array) {}
+	DEBUG(ENTRY);
+
+	if(tag_id == 2) {
+		(*file_array) = malloc(1 * sizeof(**file_array));
+		(*file_array)[0] = 2;
+
+		DEBUG(EXIT);
+		return 1;
+	} else if(tag_id == 4) {
+		(*file_array) = malloc(1 * sizeof(**file_array));
+		(*file_array)[0] = 3;
+
+		DEBUG(EXIT);
+		return 1;
+	} else if(tag_id == 3) {
+		(*file_array) = malloc(2 * sizeof(**file_array));
+		(*file_array)[0] = 1;
+		(*file_array)[1] = 2;
+
+		DEBUG(EXIT);
+		return 2;
+	} else if(tag_id == 1) {
+		(*file_array) = malloc(2 * sizeof(**file_array));
+		(*file_array)[0] = 1;
+		(*file_array)[1] = 3;
+
+		DEBUG(EXIT);
+		return 2;
+	} else if(tag_id == 0) {
+		(*file_array) = malloc(1 * sizeof(**file_array));
+		(*file_array)[0] = 4;
+
+		DEBUG(EXIT);
+		return 1;
+	}
+} /* db_files_from_tag */
+
+
+
+
+
+
+
+
 static int db_insert_query_results_into_hashtable(const char *query, sqlite3 *conn, sqlite3_stmt *res, GHashTable *table) {
 	int rc = 0; /* return code of sqlite3 operation */
 	unsigned long int_from_table = 0;
