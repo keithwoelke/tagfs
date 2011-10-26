@@ -403,8 +403,8 @@ int folders_at_location(const char *path, int *files, int num_files, int **folde
 	return num_folders;
 } /* folders_at_location */
 
-int array_intersection(int *a, int a_size, int *b, int b_size, int **folders) {
-	int folder_index = 0;
+int array_intersection(int *a, int a_size, int *b, int b_size, int **intersection) {
+	int intersection_index = 0;
 	int i = 0;
 	int j = 0;
 	int min_size = 0;
@@ -417,13 +417,13 @@ int array_intersection(int *a, int a_size, int *b, int b_size, int **folders) {
 	assert(b_size > 0);
 
 	min_size = a_size > b_size ? a_size : b_size;
-	*folders = malloc(min_size * sizeof(**folders));
-	assert(*folders != NULL);
+	*intersection = malloc(min_size * sizeof(**intersection));
+	assert(*intersection != NULL);
 
 	while(i < a_size) {
 		while(j < b_size) {
 			if(a[i] == b[j]) {
-				(*folders)[folder_index++] = a[i];
+				(*intersection)[intersection_index++] = a[i];
 				i++;
 				j++;
 				break;
@@ -438,7 +438,7 @@ int array_intersection(int *a, int a_size, int *b, int b_size, int **folders) {
 	}
 
 	DEBUG(EXIT);
-	return folder_index;
+	return intersection_index;
 } /* array_intersection */
 
 
