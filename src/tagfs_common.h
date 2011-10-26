@@ -72,7 +72,7 @@ int path_to_array(const char *path, char ***array);
  * @param path A string representing a path in the file system.
  * @return The number of path elements delimited by the "/" character.
  */
-int num_tags_in_path(const char* path);
+int num_tags_in_path(const char *path);
 
 /**
  * Checks if a string is contained within an array. Expects a count parameter 
@@ -120,7 +120,14 @@ int folders_at_location(const char *path, int *files, int num_files, int **folde
 const int num_tags_in_path(const char* path);
  * @return The number of path elements delimited by the "/" character.
  */
-int num_tags_in_path(const char* path);
+int num_tags_in_path(const char *path);
+
+
+
+
+
+
+int array_intersection(int a[], int a_size, int b[], int b_size, int **result);
 
 
 
@@ -156,13 +163,6 @@ int num_tags_in_path(const char* path);
 
 
 
-
-
-
-
-
-
-//int array_intersection(int a[], int a_size, int b[], int b_size, int **result);
 
 
 /**

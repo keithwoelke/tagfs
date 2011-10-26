@@ -583,18 +583,23 @@ struct fuse_operations tagfs_oper = {
 };
 
 int main(int argc, char *argv[]) {
-	//struct tagfs_state tagfs_data;
+//	struct tagfs_state tagfs_data;
 
-	//debug_init();
-	//tagfs_data.exec_dir = get_exec_dir(argv[0]);
+//	debug_init();
+//	tagfs_data.exec_dir = get_exec_dir(argv[0]);
 
-	//int foo[] = {4, 2, 7, 1, 3, 6, 5};
-	//heap_sort(foo, 7);
+	int foo[] = {1, 3, 4};
+	heap_sort(foo, 3);
+	int bar[] = {7, 9, 15};
+	heap_sort(bar, 3);
+	int *baz = NULL;
 
-	//int i = 0;
-	//for(;i<7;i++) {
-	//printf("%d", foo[i]);
-	//}
+	int baz_count = array_intersection(foo, 3, bar, 3, &baz);
+
+	int i = 0;
+	for(;i<baz_count;i++) {
+	printf("%d", baz[i]);
+	}
 
 	return 0;//fuse_main(argc, argv, &tagfs_oper, &tagfs_data);
 } /* main */

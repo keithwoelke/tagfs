@@ -33,9 +33,9 @@ static void sift_down(int *array, int start, int end) {
 	int save_swap = 0;
 
 	assert(array != NULL);
-	assert(start > 0);
-	assert(end > 0);
-	assert(start < end);
+	assert(start >= 0);
+	assert(end >= 0);
+	assert(start <= end);
 
 	while (root * 2 + 1 <= end) {
 		child = root * 2 + 1;
@@ -81,10 +81,10 @@ static void heapify(int *array, int count) {
  * @param array The array of integers to be sorted.
  * @param count The number of elements in the array.
  */
-static void heap_sort(int *array, int count) {
+void heap_sort(int *array, int count) {
 	int end = 0;
 
-	DEBUG(ENTRY);
+//	DEBUG(ENTRY);
 
 	assert(array != NULL);
 	assert(count > 0);
@@ -98,7 +98,7 @@ static void heap_sort(int *array, int count) {
 		sift_down(array, 0, --end);
 	}
 
-	DEBUG(EXIT);
+//	DEBUG(EXIT);
 } /* heap_sort */
 
 /**
@@ -404,6 +404,71 @@ int folders_at_location(const char *path, int *files, int num_files, int **folde
 } /* folders_at_location */
 
 
+
+
+int array_intersection(int *a, int a_size, int *b, int b_size, int **folders) {
+//	int *big = NULL;
+//	int *small = NULL;
+//	int big_size = 0;
+//	int small_size = 0;
+	int folder_index = 0;
+	int i = 0;
+	int j = 0;
+	int min_size = 0;
+
+//	DEBUG(ENTRY);
+
+	assert(a != NULL);
+	assert(b != NULL);
+	assert(a_size > 0);
+	assert(b_size > 0);
+
+//	if(a_size > b_size) {
+//		big = a;
+//		small = b;
+//		big_size = a_size;
+//		small_size = b_size;
+//	} else {
+//		big = b;
+//		small = a;
+//		big_size = b_size;
+//		small_size = a_size;
+//	}
+
+	min_size = a_size > b_size ? a_size : b_size;
+	*folders = malloc(min_size * sizeof(**folders));
+	printf("Malloc'ing array of length %d.\n", min_size);
+
+	while(i < a_size) {
+		//if(j == b_size) {
+		//	printf("Inner array has reached end. Stopping");
+		//	break;
+		//}// else if(i == a_size) {
+		//		printf("Outer array has reached end. Stopping");
+		//	}
+		printf("Outer loop is on %d. (i=%d, j=%d)\n", a[i], i, j);
+		while(j < b_size) {
+			printf("  Inner loop is on %d.\n", b[j]);
+
+			if(a[i] == b[j]) {
+				printf("    %d is equal to %d.\n", a[i], b[j]);
+				(*folders)[folder_index++] = a[i];
+				i++;
+				j++;
+				break;
+			} else if(a[i] > b[j]) {
+				j++;
+				break;
+			} else {
+				i++;
+				break;
+			}
+		}
+	}
+
+//	DEBUG(EXIT);
+	return 0;
+}
 
 
 
