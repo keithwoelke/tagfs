@@ -255,7 +255,7 @@ static int db_insert_query_results_into_hashtable(const char *query, sqlite3 *co
 	}
 
 	return rc;
-} /* foo */
+} /* db_insert_query_results_into_hashtable */
 
 int db_get_tags_from_files(const int *files, int num_files, int **tags) {
 	GHashTable *table = NULL;
@@ -376,9 +376,39 @@ int db_get_tags_from_files(const int *files, int num_files, int **tags) {
 
 
 
+char *db_tag_name_from_tag_id(int tag_id) {
+	char * foo = NULL;
 
+	if(tag_id == 1) {
+		foo = malloc(6 * sizeof(*foo));
+		snprintf(foo, 6, "Video");
+	} else if(tag_id == 2) {
+		foo = malloc(6 * sizeof(*foo));
+		snprintf(foo, 6, "Audio");
+	} else if(tag_id == 3) {
+		foo = malloc(4 * sizeof(*foo));
+		snprintf(foo, 4, "ogg");
+	} else if(tag_id == 4) {
+		foo = malloc(4 * sizeof(*foo));
+		snprintf(foo, 4, "mov");
+	}
 
+	return foo;
+} /* db_tag_name_from_tag_id */
 
+int db_tag_id_from_tag_name(const char *tag) {
+	if(strcmp(tag, "Video") == 0)
+		return 1;
+	} else if(strcmp(tag, "Audio") == 0) {
+		return 2;
+	} else if(strcmp(tag, "ogg") == 0) {
+		return 3;
+	} else if(strcmp(tag, "mov") == 0) {
+		return 4;
+	} else if(strcmp(tag, "/") == 0) {
+		return 0;
+	}
+} /* db_tag_id_from_tag_name */
 
 
 
