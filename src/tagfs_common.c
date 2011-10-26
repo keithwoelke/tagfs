@@ -84,7 +84,7 @@ static void heapify(int *array, int count) {
 void heap_sort(int *array, int count) {
 	int end = 0;
 
-//	DEBUG(ENTRY);
+	DEBUG(ENTRY);
 
 	assert(array != NULL);
 	assert(count > 0);
@@ -98,7 +98,7 @@ void heap_sort(int *array, int count) {
 		sift_down(array, 0, --end);
 	}
 
-//	DEBUG(EXIT);
+	DEBUG(EXIT);
 } /* heap_sort */
 
 /**
