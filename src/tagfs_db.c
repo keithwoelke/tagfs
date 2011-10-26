@@ -174,7 +174,7 @@ char *db_get_file_location(int file_id) {
 
 
 
-int db_files_from_tag(int tag_id, int **file_array) {}
+int db_files_from_tag_id(int tag_id, int **file_array) {}
 	DEBUG(ENTRY);
 
 	if(tag_id == 2) {
@@ -210,7 +210,7 @@ int db_files_from_tag(int tag_id, int **file_array) {}
 		DEBUG(EXIT);
 		return 1;
 	}
-} /* db_files_from_tag */
+} /* db_files_from_tag_id */
 
 
 
@@ -257,7 +257,7 @@ static int db_insert_query_results_into_hashtable(const char *query, sqlite3 *co
 	return rc;
 } /* db_insert_query_results_into_hashtable */
 
-int db_get_tags_from_files(const int *files, int num_files, int **tags) {
+int db_tags_from_files(const int *files, int num_files, int **tags) {
 	GHashTable *table = NULL;
 	GHashTableIter iter;
 	char *file_id_str = NULL;
@@ -367,7 +367,7 @@ int db_get_tags_from_files(const int *files, int num_files, int **tags) {
 	DEBUG("Returning array of %d elements", hash_table_size);
 	DEBUG(EXIT);
 	return hash_table_size;
-} /* db_get_tags_from_files */
+} /* db_tags_from_files */
 
 
 
