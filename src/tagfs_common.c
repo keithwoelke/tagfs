@@ -403,55 +403,26 @@ int folders_at_location(const char *path, int *files, int num_files, int **folde
 	return num_folders;
 } /* folders_at_location */
 
-
-
-
 int array_intersection(int *a, int a_size, int *b, int b_size, int **folders) {
-//	int *big = NULL;
-//	int *small = NULL;
-//	int big_size = 0;
-//	int small_size = 0;
 	int folder_index = 0;
 	int i = 0;
 	int j = 0;
 	int min_size = 0;
 
-//	DEBUG(ENTRY);
+	DEBUG(ENTRY);
 
 	assert(a != NULL);
 	assert(b != NULL);
 	assert(a_size > 0);
 	assert(b_size > 0);
 
-//	if(a_size > b_size) {
-//		big = a;
-//		small = b;
-//		big_size = a_size;
-//		small_size = b_size;
-//	} else {
-//		big = b;
-//		small = a;
-//		big_size = b_size;
-//		small_size = a_size;
-//	}
-
 	min_size = a_size > b_size ? a_size : b_size;
 	*folders = malloc(min_size * sizeof(**folders));
-	printf("Malloc'ing array of length %d.\n", min_size);
+	assert(*folders != NULL);
 
 	while(i < a_size) {
-		//if(j == b_size) {
-		//	printf("Inner array has reached end. Stopping");
-		//	break;
-		//}// else if(i == a_size) {
-		//		printf("Outer array has reached end. Stopping");
-		//	}
-		printf("Outer loop is on %d. (i=%d, j=%d)\n", a[i], i, j);
 		while(j < b_size) {
-			printf("  Inner loop is on %d.\n", b[j]);
-
 			if(a[i] == b[j]) {
-				printf("    %d is equal to %d.\n", a[i], b[j]);
 				(*folders)[folder_index++] = a[i];
 				i++;
 				j++;
@@ -466,9 +437,9 @@ int array_intersection(int *a, int a_size, int *b, int b_size, int **folders) {
 		}
 	}
 
-//	DEBUG(EXIT);
-	return 0;
-}
+	DEBUG(EXIT);
+	return folder_index;
+} /* array_intersection */
 
 
 
