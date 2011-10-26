@@ -122,12 +122,17 @@ const int num_tags_in_path(const char* path);
  */
 int num_tags_in_path(const char *path);
 
-
-
-
-
-
-int array_intersection(int a[], int a_size, int b[], int b_size, int **result);
+/*
+ * Finds the overlap between two arrays. Namely, it will return an array with the elements both arrays have in common. Both arrays are assumed to contain sorted array of unique values. Caller is responsible for freeing the memory for returned folder array.
+ *
+ * @param a The first array to compare.
+ * @param a_size The size of the first array.
+ * @param b The second array to compare.
+ * @param b_size The size of the second array.
+ * @param folders An array of items which exist in both arrays.
+ * @return The number of items in the intersection.
+ */
+int array_intersection(int *a, int a_size, int *b, int b_size, int **intersection);
 
 
 
