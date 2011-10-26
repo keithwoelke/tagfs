@@ -39,7 +39,7 @@ int tagfs_getattr(const char *path, struct stat *statbuf) {
 		/* read information from actual file */
 		retstat = stat(file_location, statbuf);
 
-		free_single_ptr((void *)&file_location);
+		free_single_ptr((void **)&file_location);
 	}
 	else if(valid_path_to_folder(path)) {
 		statbuf->st_mode = S_IFDIR | 0755; /* TODO: Set hard links, etc. */
@@ -334,6 +334,7 @@ int tagfs_opendir(const char *path, struct fuse_file_info *fi) {
  * Introduced in version 2.3
  */ 
 int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
+	char **path_array = NULL;
 	char *file_name = NULL;
 	char *folder_name = NULL;
 	int *files = NULL;
@@ -343,10 +344,13 @@ int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t off
 	int i = 0;
 	int num_files = 0;
 	int num_folders = 0;
+	int path_count = 0;
 	int retstat = 0;
 	int tag_id = 0;
 
 	DEBUG(ENTRY);
+
+	assert(path != NULL);
 
 	INFO("Reading directory %s", path);
 
@@ -368,31 +372,39 @@ int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t off
 				retstat = -ENOMEM;
 			}
 
-			free_single_ptr((void *)&file_name);
+			free_single_ptr((void **)&file_name);
 		}
 	}
 
 	/* add folders */
 	num_folders = folders_at_location(path, files, num_files, &folders);
-	free_single_ptr((void *)&files);
+	free_single_ptr((void **)&files);
+
+	path_count = path_to_array(path, &path_array);
 
 	if(num_folders > 0) {
 		for(i = 0; i < num_folders; i++) {
 			tag_id = folders[i];
 			folder_name = tag_name_from_id(tag_id);
 
-			filler_ret = filler(buf, folder_name, NULL, 0);
+			/* filter tags out of path */
+			if(!array_contains_string((const char **)path_array, folder_name, path_count)) {
+				filler_ret = filler(buf, folder_name, NULL, 0);
+			}
+			
 			if(filler_ret != 0) {
 				DEBUG("filler returned %d", filler_ret);
 				WARN("An error occured while loading tags. Out of memory?");
 				retstat = -ENOMEM;
 			}
 
-			free_single_ptr((void *)&folder_name);
+			free_single_ptr((void **)&folder_name);
 		}
 
-		free_single_ptr((void *)&folders);
+		free_single_ptr((void **)&folders);
 	}
+
+	free_double_ptr((void ***)&path_array, path_count);
 
 	DEBUG(EXIT);
 	return retstat;
@@ -459,7 +471,7 @@ void *tagfs_init(struct fuse_conn_info *conn) {
 	written = snprintf((char *)TAGFS_DATA->db_path, db_dir_length + 1, "%s/%s", TAGFS_DATA->exec_dir, db_name);
 	assert(written == db_dir_length);
 	
-	free_single_ptr((void *)&log_path);
+	free_single_ptr((void **)&log_path);
 
 	DEBUG(EXIT);
 	return TAGFS_DATA;
@@ -478,8 +490,8 @@ void *tagfs_init(struct fuse_conn_info *conn) {
 
 	DEBUG("Finalizing data...");
 
-	free_single_ptr((void *)&tagfs_data->exec_dir);
-	free_single_ptr((void *)&tagfs_data->db_path);
+	free_single_ptr((void **)&tagfs_data->exec_dir);
+	free_single_ptr((void **)&tagfs_data->db_path);
 
 	DEBUG(EXIT);
 
@@ -571,10 +583,18 @@ struct fuse_operations tagfs_oper = {
 };
 
 int main(int argc, char *argv[]) {
-	struct tagfs_state tagfs_data;
+	//struct tagfs_state tagfs_data;
 
-	debug_init();
-	tagfs_data.exec_dir = get_exec_dir(argv[0]);
+	//debug_init();
+	//tagfs_data.exec_dir = get_exec_dir(argv[0]);
 
-	return fuse_main(argc, argv, &tagfs_oper, &tagfs_data);
+	//int foo[] = {4, 2, 7, 1, 3, 6, 5};
+	//heap_sort(foo, 7);
+
+	//int i = 0;
+	//for(;i<7;i++) {
+	//printf("%d", foo[i]);
+	//}
+
+	return 0;//fuse_main(argc, argv, &tagfs_oper, &tagfs_data);
 } /* main */

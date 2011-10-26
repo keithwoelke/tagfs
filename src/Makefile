@@ -5,7 +5,7 @@ run : tagfs
 	./tagfs -f TagFS
 
 run-valgrind : tagfs
-	valgrind ./tagfs -f TagFS
+	export G_DEBUG=gc-friendly && export G_SLICE=always-malloc && valgrind --leak-check=full ./tagfs -f TagFS
 
 clean :
 	rm tagfs
