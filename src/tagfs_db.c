@@ -204,14 +204,11 @@ int db_files_from_tag_id(int tag_id, int **file_array) {
 		DEBUG(EXIT);
 		return 2;
 	} else if(tag_id == 0) {
-		(*file_array) = malloc(4 * sizeof(**file_array));
-		(*file_array)[0] = 1;
-		(*file_array)[1] = 2;
-		(*file_array)[2] = 3;
-		(*file_array)[3] = 4;
+		(*file_array) = malloc(1 * sizeof(**file_array));
+		(*file_array)[0] = 4;
 
 		DEBUG(EXIT);
-		return 4;
+		return 1;
 	}
 
 	WARN("Tag ID is %d.", tag_id);
