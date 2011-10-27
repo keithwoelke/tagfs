@@ -394,6 +394,10 @@ int db_tags_from_files(const int *files, int num_files, int **tags) {
 
 char *db_tag_name_from_tag_id(int tag_id) {
 	char * foo = NULL;
+	
+	DEBUG(ENTRY);
+	
+	assert(tag_id > 0);
 
 	if(tag_id == 1) {
 		foo = malloc(6 * sizeof(*foo));
@@ -409,10 +413,13 @@ char *db_tag_name_from_tag_id(int tag_id) {
 		snprintf(foo, 4, "mov");
 	}
 
+	DEBUG(EXIT);
 	return foo;
 } /* db_tag_name_from_tag_id */
 
 int db_tag_id_from_tag_name(const char *tag) {
+	DEBUG(ENTRY);
+	
 	if(strcmp(tag, "Video") == 0) {
 		return 1;
 	} else if(strcmp(tag, "Audio") == 0) {
@@ -425,6 +432,7 @@ int db_tag_id_from_tag_name(const char *tag) {
 		return 0;
 	}
 
+	DEBUG(EXIT);
 	return -1;
 } /* db_tag_id_from_tag_name */
 
