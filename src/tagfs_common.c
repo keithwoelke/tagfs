@@ -505,6 +505,13 @@ int files_at_location(const char *path, int **file_array) {
 		for(i = 1; i < num_tokens; i++) {
 			/* get files with tag */
 			tag_id = db_tag_id_from_tag_name(tag_array[i]);
+			
+			if(tag_id < 0) {
+				free_single_ptr((void *)&prev_files);
+				num_prev_files = 0;
+				break;
+			}
+			
 			num_cur_files = db_files_from_tag_id(tag_id, &cur_files);
 
 			/* find intersection of both arrays */
