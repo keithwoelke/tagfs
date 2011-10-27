@@ -174,7 +174,7 @@ char *db_get_file_location(int file_id) {
 
 
 
-int db_files_from_tag_id(int tag_id, int **file_array) {}
+int db_files_from_tag_id(int tag_id, int **file_array) {
 	DEBUG(ENTRY);
 
 	if(tag_id == 2) {
@@ -204,12 +204,17 @@ int db_files_from_tag_id(int tag_id, int **file_array) {}
 		DEBUG(EXIT);
 		return 2;
 	} else if(tag_id == 0) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 4;
+		(*file_array) = malloc(4 * sizeof(**file_array));
+		(*file_array)[0] = 1;
+		(*file_array)[1] = 2;
+		(*file_array)[2] = 3;
+		(*file_array)[3] = 4;
 
 		DEBUG(EXIT);
-		return 1;
+		return 4;
 	}
+
+	return 0;
 } /* db_files_from_tag_id */
 
 
@@ -397,7 +402,7 @@ char *db_tag_name_from_tag_id(int tag_id) {
 } /* db_tag_name_from_tag_id */
 
 int db_tag_id_from_tag_name(const char *tag) {
-	if(strcmp(tag, "Video") == 0)
+	if(strcmp(tag, "Video") == 0) {
 		return 1;
 	} else if(strcmp(tag, "Audio") == 0) {
 		return 2;
@@ -408,6 +413,8 @@ int db_tag_id_from_tag_name(const char *tag) {
 	} else if(strcmp(tag, "/") == 0) {
 		return 0;
 	}
+
+	return -1;
 } /* db_tag_id_from_tag_name */
 
 

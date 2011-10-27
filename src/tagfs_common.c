@@ -28,8 +28,8 @@ static void swap(int *a, int *b) {
  * @param end The end of the array segment to sift.
  */
 static void sift_down(int *array, int start, int end) {
-	int root = start;
 	int child = 0;
+	int root = start;
 	int save_swap = 0;
 
 	assert(array != NULL);
@@ -81,7 +81,7 @@ static void heapify(int *array, int count) {
  * @param array The array of integers to be sorted.
  * @param count The number of elements in the array.
  */
-void heap_sort(int *array, int count) {
+static void heap_sort(int *array, int count) {
 	int end = 0;
 
 	DEBUG(ENTRY);
@@ -394,7 +394,7 @@ int folders_at_location(const char *path, int *files, int num_files, int **folde
 	}
 	/* get all tags on file array */
 	else {
-		num_folders = db_get_tags_from_files(files, num_files, folders);
+		num_folders = db_tags_from_files(files, num_files, folders);
 		assert(num_folders >= 0);
 		DEBUG("There are %d folders at %s", num_folders, path);
 	}
@@ -404,8 +404,8 @@ int folders_at_location(const char *path, int *files, int num_files, int **folde
 } /* folders_at_location */
 
 int array_intersection(int *a, int a_size, int *b, int b_size, int **intersection) {
-	int intersection_index = 0;
 	int i = 0;
+	int intersection_index = 0;
 	int j = 0;
 	int min_size = 0;
 
@@ -416,11 +416,15 @@ int array_intersection(int *a, int a_size, int *b, int b_size, int **intersectio
 	assert(a_size > 0);
 	assert(b_size > 0);
 
-	min_size = a_size > b_size ? a_size : b_size;
+	min_size = a_size < b_size ? a_size : b_size;
 	*intersection = malloc(min_size * sizeof(**intersection));
 	assert(*intersection != NULL);
 
 	while(i < a_size) {
+		if(j == b_size) {
+			break;
+		}
+
 		while(j < b_size) {
 			if(a[i] == b[j]) {
 				(*intersection)[intersection_index++] = a[i];
@@ -444,17 +448,52 @@ int array_intersection(int *a, int a_size, int *b, int b_size, int **intersectio
 
 
 
-int files_at_location(const char *path, int **file_array) {
-	int num_tokens = 0;
-	char **tag_array = NULL;
 
-//	DEBUG(ENTRY);
+
+int files_at_location(const char *path, int **file_array) {
+	char **tag_array = NULL;
+	int *cur_files = NULL;
+	int *intersection_files = NULL;
+	int *prev_files = NULL;
+	int i = 0;
+	int num_cur_files = 0;
+	int num_intersection_files = 0;
+	int num_prev_files;
+	int num_tokens = 0;
+	int tag_id = 0;
+
+	DEBUG(ENTRY);
 
 	assert(path != NULL);
 	
 	num_tokens = path_to_array(path, &tag_array);
 
-//	DEBUG(EXIT);
+	/* get all files */
+	tag_id = db_tag_id_from_tag_name("/");
+	num_prev_files = db_files_from_tag_id(tag_id, &prev_files);
+
+	for(i = 0; i < num_tokens; i++) {
+		/* get files with tag */
+		tag_id = db_tag_id_from_tag_name(tag_array[i]);
+		num_cur_files = db_files_from_tag_id(tag_id, &cur_files);
+
+		/* find intersection of both arrays */
+		num_intersection_files = array_intersection(prev_files, num_prev_files, cur_files, num_cur_files, &intersection_files);
+
+		free_single_ptr((void *)&prev_files);
+		free_single_ptr((void *)&cur_files);
+
+		/* assign result to prev_files array */
+		prev_files = intersection_files;
+		num_prev_files = num_intersection_files;
+	}
+
+	free_double_ptr((void *)&tag_array, num_tokens);
+	*file_array = prev_files;
+
+	DEBUG(EXIT);
+
+	return num_prev_files;
 } /* files_at_location */
 
 

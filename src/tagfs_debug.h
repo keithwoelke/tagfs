@@ -24,14 +24,14 @@ fprintf(TAGFS_DATA->log_file, "\n"); \
 fflush(TAGFS_DATA->log_file); \
 debug_post();
 
-#define DEBUG(...) \
+#define DEBUG(...)/* \
 debug_wait(); \
 log_timestamp(); \
 fprintf(TAGFS_DATA->log_file, ": [DEBUG] "); \
 fprintf(TAGFS_DATA->log_file, __VA_ARGS__); \
 fprintf(TAGFS_DATA->log_file, "\n"); \
 fflush(TAGFS_DATA->log_file); \
-debug_post();
+debug_post(); */
 
 #define WARN(...) \
 debug_wait(); \
