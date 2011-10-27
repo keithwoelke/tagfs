@@ -490,8 +490,8 @@ int files_at_location(const char *path, int **file_array) {
 	DEBUG("Path broken up into %d tokens for %s.", num_tokens, path);
 
 	if(num_tokens == 0) {
-		DEBUG("Retrieving a list of all files for root view.");
-		/* get all files */
+		DEBUG("Retrieving a list of files with no tags for root view.");
+		/* get all untagged files */
 		tag_id = db_tag_id_from_tag_name("/");
 		num_prev_files = db_files_from_tag_id(tag_id, &prev_files);
 	} else {
