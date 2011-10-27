@@ -214,6 +214,8 @@ int db_files_from_tag_id(int tag_id, int **file_array) {
 		return 4;
 	}
 
+	WARN("Tag ID is %d.", tag_id);
+	DEBUG(EXIT);
 	return 0;
 } /* db_files_from_tag_id */
 
@@ -261,6 +263,15 @@ static int db_insert_query_results_into_hashtable(const char *query, sqlite3 *co
 
 	return rc;
 } /* db_insert_query_results_into_hashtable */
+
+
+
+
+
+
+
+
+
 
 int db_tags_from_files(const int *files, int num_files, int **tags) {
 	GHashTable *table = NULL;
