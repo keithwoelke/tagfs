@@ -134,6 +134,14 @@ int num_tags_in_path(const char *path);
  */
 int array_intersection(int *a, int a_size, int *b, int b_size, int **intersection);
 
+/**
+ * Returns a collection of the files at the specified path in the filesystem.
+ *
+ * @param path The TagFS path.
+ * @param file_array A collection containing the files in the specified path.
+ * @return The number of files at the specified location.
+ */
+int files_at_location(const char *path, int **file_array);
 
 
 
@@ -179,11 +187,8 @@ bool valid_path_to_file(const char *path);
 
 int file_id_from_path(const char *path);
 
-int files_at_location(const char *path, int **file_array);
 
 
 char *tag_name_from_id(int file_id);
-
-int filter_path_from_folders(const char *path, int **folders, int num_folders);
 
 #endif
