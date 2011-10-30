@@ -44,4 +44,6 @@ int db_tags_from_files(const int *files, int num_files, int **tags);
 
 int db_get_all_tags(int **folders);
 
+char *db_tag_name_from_tag_id(int tag_id);
+
 #endif

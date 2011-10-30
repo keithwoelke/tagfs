@@ -3,8 +3,8 @@
 #include "tagfs_debug.h"
 
 #include <assert.h>
-#include <libgen.h>
 #include <stdbool.h>
+#include <libgen.h>
 #include <string.h>
 
 /**
@@ -151,10 +151,8 @@ static bool unique_tags_in_path(const char *path) {
 		}
 
 		/* save checked tag */
-		tags_checked[i] = malloc(strlen(tag) * sizeof(*tag) + 1);
+		tags_checked[i] = strdup(tag_array[i]);
 		assert(tags_checked[i] != NULL);
-		strcpy(tags_checked[i], tag_array[i]);
-		assert(strcmp(tags_checked[i], tag_array[i]) == 0);
 	}
 
 	free_double_ptr((void ***)&tag_array, num_tokens);
@@ -163,6 +161,7 @@ static bool unique_tags_in_path(const char *path) {
 	DEBUG("Tags in path are %sunique", unique ? "" : "not ");
 	DEBUG(EXIT);
 	return unique;
+	return true;
 } /* unique_tags_in_path */
 
 int num_digits(unsigned int num) {
@@ -185,10 +184,13 @@ int num_digits(unsigned int num) {
 
 char *get_exec_dir(const char *exec_name) {
 	char *exec_dir = NULL;
+	char *real_path = NULL;
 
 	assert(exec_name != NULL);
 
-	exec_dir = dirname(realpath(exec_name, NULL));
+	real_path = realpath(exec_name, NULL);
+	exec_dir = dir_name(real_path);
+	free_single_ptr((void **)&real_path);
 
 	return exec_dir;
 } /* get_exec_dir */
@@ -269,24 +271,18 @@ int path_to_array(const char *path, char ***array) {
 		num_tokens = num_tags_in_path(path);
 		DEBUG("Number of tokens in path: %d", num_tokens);
 
-		/* make a copy of the path that can be modified */
-		tmp_path = malloc(strlen(path) * sizeof(*tmp_path) + 1);
-		assert(tmp_path != NULL);
-
 		*array = malloc(num_tokens * sizeof(**array));
 		assert(*array != NULL);
 
-		strcpy(tmp_path, path);
-		assert(strcmp(path, tmp_path) == 0);
+		tmp_path = strdup(path);
+		assert(tmp_path != NULL);
 
 		/* copy tags from path into an array */
 		token = strtok_r(tmp_path, "/", &tok_ptr);
 		DEBUG("Array contents:");
 		for(i = 0; token != NULL; i++) {
-			(*array)[i] = malloc(strlen(token) * sizeof((**array)[i]) + 1);
-			assert((*array)[i] != NULL);
-			strncpy((*array)[i], token, strlen(token) + 1);
-			assert(strcmp((*array)[i], token) == 0);
+			(*array)[i] = strdup(token);
+			assert((*array)[i] != 0);
 			DEBUG("array[%d] = %s, at address %p.", i, (*array)[i], (*array)[i]);
 			token = strtok_r(NULL, "/", &tok_ptr);
 		}
@@ -312,12 +308,8 @@ int num_tags_in_path(const char *path) {
 
 	DEBUG("Calculating number of tags in %s", path);
 
-	/* make copy of path for tokenization */
-	tmp_path = malloc(strlen(path) * sizeof(*tmp_path) + 1);
-	assert(tmp_path != NULL);
-
-	strcpy(tmp_path, path);
-	assert(strcmp(path, tmp_path) == 0);
+	tmp_path = strdup(path);
+	assert(tmp_path != 0);
 	token = strtok_r(tmp_path, "/", &tok_ptr);
 
 	/* count tokens */
@@ -473,7 +465,7 @@ int files_at_location(const char *path, int **file_array) {
 	int i = 0;
 	int num_cur_files = 0;
 	int num_intersection_files = 0;
-	int num_prev_files;
+	int num_prev_files = 0;
 	int num_tokens = 0;
 	int tag_id = 0;
 
@@ -488,43 +480,46 @@ int files_at_location(const char *path, int **file_array) {
 		DEBUG("Retrieving a list of files with no tags for root view.");
 		/* get all untagged files */
 		tag_id = db_tag_id_from_tag_name("/");
+		assert(tag_id >= 0);
 		num_prev_files = db_files_from_tag_id(tag_id, &prev_files);
 	} else {
 		DEBUG("Retrieving files for %s.", tag_array[i]);
 		/* get first tag files */
 		tag_id = db_tag_id_from_tag_name(tag_array[i]);
-		DEBUG("Tag ID of %s is %d.", tag_array[i], tag_id);
-		num_prev_files = db_files_from_tag_id(tag_id, &prev_files);
-		DEBUG("%d file(s) with %s tag.", num_prev_files, tag_array[i]);
 
-		for(i = 1; i < num_tokens; i++) {
-			/* get files with tag */
-			tag_id = db_tag_id_from_tag_name(tag_array[i]);
-			
-			if(tag_id < 0) {
+		if(tag_id >= 0) {
+			DEBUG("Tag ID of %s is %d.", tag_array[i], tag_id);
+			num_prev_files = db_files_from_tag_id(tag_id, &prev_files);
+			DEBUG("%d file(s) with %s tag.", num_prev_files, tag_array[i]);
+
+			for(i = 1; i < num_tokens; i++) {
+				/* get files with tag */
+				tag_id = db_tag_id_from_tag_name(tag_array[i]);
+
+				if(tag_id < 0) {
+					free_single_ptr((void *)&prev_files);
+					num_prev_files = 0;
+					break;
+				}
+
+				num_cur_files = db_files_from_tag_id(tag_id, &cur_files);
+				/* find intersection of both arrays */
+				heap_sort(prev_files, num_prev_files);
+				heap_sort(cur_files, num_cur_files);
+
+				num_intersection_files = array_intersection(prev_files, num_prev_files, cur_files, num_cur_files, &intersection_files);
+
 				free_single_ptr((void *)&prev_files);
-				num_prev_files = 0;
-				break;
+				free_single_ptr((void *)&cur_files);
+
+				/* assign result to prev_files array */
+				prev_files = intersection_files;
+				num_prev_files = num_intersection_files;
 			}
-			
-			num_cur_files = db_files_from_tag_id(tag_id, &cur_files);
-
-			/* find intersection of both arrays */
-			heap_sort(prev_files, num_prev_files);
-			heap_sort(cur_files, num_cur_files);
-		
-			num_intersection_files = array_intersection(prev_files, num_prev_files, cur_files, num_cur_files, &intersection_files);
-
-			free_single_ptr((void *)&prev_files);
-			free_single_ptr((void *)&cur_files);
-
-			/* assign result to prev_files array */
-			prev_files = intersection_files;
-			num_prev_files = num_intersection_files;
 		}
 	}
 
-	free_double_ptr((void *)&tag_array, num_tokens);
+	free_double_ptr((void ***)&tag_array, num_tokens);
 	*file_array = prev_files;
 
 	DEBUG(EXIT);
@@ -532,6 +527,9 @@ int files_at_location(const char *path, int **file_array) {
 	return num_prev_files;
 } /* files_at_location */
 
+char *tag_name_from_tag_id(int tag_id) {
+	return db_tag_name_from_tag_id(tag_id);
+} /* file_name_from_id */
 
 
  
@@ -539,29 +537,97 @@ int files_at_location(const char *path, int **file_array) {
 
 
 
+//bool valid_path_to_file(const char *path) {
+//	bool valid = false;
+//	char *dir_path = NULL;
+//	char *file_found = NULL;
+//	char *filename = NULL;
+//	char *tmp_path = NULL;
+//	int *file_array = NULL;
+//	int file_count = 0;
+//	int i = 0;
+//
+//	DEBUG(ENTRY);
+//
+//	assert(path != NULL);
+//
+//	/* get dirname */
+//	DEBUG("Path is %s", path);
+//	tmp_path = strdup(path);
+//	assert(tmp_path != NULL);
+//	DEBUG("Temp path is %s", tmp_path);
+//	dir_path = dir_name(tmp_path);
+//	free_single_ptr((void **)&tmp_path);
+//	assert(dir_path != NULL);
+//	DEBUG("Directory path is %s", dir_path);
+//
+//	DEBUG("Path is now %s", path);
+//	filename = basename((char *)path);
+//	assert(filename != NULL);
+//	DEBUG("Filename is %s", filename);
+//	DEBUG("Path is now %s", path);
+//
+//	file_count = files_at_location(dir_path, &file_array);
+//	free_single_ptr((void **)&dir_path);
+//
+//	for(i = 0; i < file_count; i++) {
+//		file_found = file_name_from_id(file_array[i]);
+//
+//		if(strcmp(file_found, filename) == 0) {
+//			valid = true;
+//		}
+//
+//		free_single_ptr((void **)&file_found);
+//
+//		if(valid == true) {
+//			break;
+//		}
+//	}
+//
+//	free_single_ptr((void **)&file_array);
+//
+//	DEBUG("%s is %sa valid file.", path, valid ? "" : "not "); 
+//	DEBUG(EXIT);
+//	return valid;
+//} /* valid_path_to_file */
 
 
 
 
-char *tag_name_from_id(int tag_id) {
-	char * foo = NULL;
 
-	if(tag_id == 1) {
-		foo = malloc(6 * sizeof(*foo));
-		snprintf(foo, 6, "Video");
-	} else if(tag_id == 2) {
-		foo = malloc(6 * sizeof(*foo));
-		snprintf(foo, 6, "Audio");
-	} else if(tag_id == 3) {
-		foo = malloc(4 * sizeof(*foo));
-		snprintf(foo, 4, "ogg");
-	} else if(tag_id == 4) {
-		foo = malloc(4 * sizeof(*foo));
-		snprintf(foo, 4, "mov");
+
+char *dir_name(const char *path) {
+	char *tmp_path = NULL;
+	int i = 0;
+	int length = 0;
+
+	printf("Path is %s\n", path);
+	tmp_path = strdup(path);
+	assert(tmp_path != NULL);
+	printf("Temp path is %s\n", tmp_path);
+	assert(strcmp(path, tmp_path) == 0);
+
+	length = strlen(tmp_path);
+
+	for(i = length - 1; i >= 0; i--) {
+		if(i == 0) {
+			tmp_path[1] = '\0';
+		}
+		else if(tmp_path[i] == '/') {
+			tmp_path[i] = '\0';
+			break;
+		}
 	}
 
-	return foo;
-} /* file_name_from_id */
+	printf("Final dirname is %s\n", tmp_path);
+	return tmp_path;
+} /* dirname */
+
+//char *basename(const char *path) {
+//	DEBUG(ENTRY);
+//
+//	DEBUG(EXIT);
+//} /* basename */
 
 bool valid_path_to_file(const char *path) {
 	DEBUG(ENTRY);

@@ -385,7 +385,7 @@ int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t off
 	if(num_folders > 0) {
 		for(i = 0; i < num_folders; i++) {
 			tag_id = folders[i];
-			folder_name = tag_name_from_id(tag_id);
+			folder_name = tag_name_from_tag_id(tag_id);
 
 			/* filter tags out of path */
 			if(!array_contains_string((const char **)path_array, folder_name, path_count)) {
@@ -460,7 +460,7 @@ void *tagfs_init(struct fuse_conn_info *conn) {
 	assert(written == log_dir_length);
 
 	printf("Initializing TagFS Filesystem...\n");
-	printf("Opening log file: %s\n", log_name);
+	printf("Opening log file: %s\n", log_path);
 	TAGFS_DATA->log_file = fopen(log_path, "w");
 
 	DEBUG(ENTRY);
