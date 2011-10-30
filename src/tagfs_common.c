@@ -4,7 +4,6 @@
 
 #include <assert.h>
 #include <stdbool.h>
-#include <libgen.h>
 #include <string.h>
 
 /**
@@ -189,7 +188,7 @@ char *get_exec_dir(const char *exec_name) {
 	assert(exec_name != NULL);
 
 	real_path = realpath(exec_name, NULL);
-	exec_dir = dir_name(real_path);
+	exec_dir = dirname(real_path);
 	free_single_ptr((void **)&real_path);
 
 	return exec_dir;
@@ -215,6 +214,7 @@ char *file_name_from_id(int file_id) {
 	file_name = malloc(file_name_length * sizeof(*file_name) + 1);
 	assert(file_name != NULL);
 	written = snprintf(file_name, file_name_length + 1, "%s", tmp_file_name);
+	free_single_ptr((void **)&tmp_file_name);
 	assert(written == file_name_length);
 
 	free_single_ptr((void **)&file_location);
@@ -261,8 +261,6 @@ int path_to_array(const char *path, char ***array) {
 	DEBUG(ENTRY);
 
 	assert(path != NULL);
-
-	*array = NULL;
 
 	DEBUG("Converting %s to array", path);
 
@@ -528,84 +526,19 @@ int files_at_location(const char *path, int **file_array) {
 } /* files_at_location */
 
 char *tag_name_from_tag_id(int tag_id) {
+	assert(tag_id > 0);
 	return db_tag_name_from_tag_id(tag_id);
 } /* file_name_from_id */
 
-
- 
-
-
-
-
-//bool valid_path_to_file(const char *path) {
-//	bool valid = false;
-//	char *dir_path = NULL;
-//	char *file_found = NULL;
-//	char *filename = NULL;
-//	char *tmp_path = NULL;
-//	int *file_array = NULL;
-//	int file_count = 0;
-//	int i = 0;
-//
-//	DEBUG(ENTRY);
-//
-//	assert(path != NULL);
-//
-//	/* get dirname */
-//	DEBUG("Path is %s", path);
-//	tmp_path = strdup(path);
-//	assert(tmp_path != NULL);
-//	DEBUG("Temp path is %s", tmp_path);
-//	dir_path = dir_name(tmp_path);
-//	free_single_ptr((void **)&tmp_path);
-//	assert(dir_path != NULL);
-//	DEBUG("Directory path is %s", dir_path);
-//
-//	DEBUG("Path is now %s", path);
-//	filename = basename((char *)path);
-//	assert(filename != NULL);
-//	DEBUG("Filename is %s", filename);
-//	DEBUG("Path is now %s", path);
-//
-//	file_count = files_at_location(dir_path, &file_array);
-//	free_single_ptr((void **)&dir_path);
-//
-//	for(i = 0; i < file_count; i++) {
-//		file_found = file_name_from_id(file_array[i]);
-//
-//		if(strcmp(file_found, filename) == 0) {
-//			valid = true;
-//		}
-//
-//		free_single_ptr((void **)&file_found);
-//
-//		if(valid == true) {
-//			break;
-//		}
-//	}
-//
-//	free_single_ptr((void **)&file_array);
-//
-//	DEBUG("%s is %sa valid file.", path, valid ? "" : "not "); 
-//	DEBUG(EXIT);
-//	return valid;
-//} /* valid_path_to_file */
-
-
-
-
-
-
-char *dir_name(const char *path) {
+char *dirname(const char *path) {
 	char *tmp_path = NULL;
 	int i = 0;
 	int length = 0;
 
-	printf("Path is %s\n", path);
+	assert(path != NULL);
+
 	tmp_path = strdup(path);
 	assert(tmp_path != NULL);
-	printf("Temp path is %s\n", tmp_path);
-	assert(strcmp(path, tmp_path) == 0);
 
 	length = strlen(tmp_path);
 
@@ -619,63 +552,150 @@ char *dir_name(const char *path) {
 		}
 	}
 
-	printf("Final dirname is %s\n", tmp_path);
 	return tmp_path;
 } /* dirname */
 
-//char *basename(const char *path) {
-//	DEBUG(ENTRY);
-//
-//	DEBUG(EXIT);
-//} /* basename */
+char *basename(const char *path) {
+	char *tmp_path = NULL;
+	int i = 0;
+	int j = 0;
+	int length = 0;
 
-bool valid_path_to_file(const char *path) {
 	DEBUG(ENTRY);
 
-	if(strcmp(path, "/Audio/Josh Woodward - Swansong.ogg") == 0) {
-		DEBUG(EXIT);
-		return true;
-	} else if(strcmp(path, "/Audio/ogg/Josh Woodward - Swansong.ogg") == 0) {
-		DEBUG(EXIT);
-		return true;
-	} else if(strcmp(path, "/mov/Video/sample_iTunes.mov") == 0) {
-		DEBUG(EXIT);
-		return true;
-	} else if(strcmp(path, "/mov/sample_iTunes.mov") == 0) {
-		DEBUG(EXIT);
-		return true;
-	} else if(strcmp(path, "/ogg/How fast.ogg") == 0) {
-		DEBUG(EXIT);
-		return true;
-	} else if(strcmp(path, "/ogg/Josh Woodward - Swansong.ogg") == 0) {
-		DEBUG(EXIT);
-		return true;
-	} else if(strcmp(path, "/ogg/Video/How fast.ogg") == 0) {
-		DEBUG(EXIT);
-		return true;
-	} else if(strcmp(path, "/ogg/Audio/Josh Woodward - Swansong.ogg") == 0) {
-		DEBUG(EXIT);
-		return true;
-	} else if(strcmp(path, "/Video/How fast.ogg") == 0) {
-		DEBUG(EXIT);
-		return true;
-	} else if(strcmp(path, "/Video/sample_iTunes.mov") == 0) {
-		DEBUG(EXIT);
-		return true;
-	} else if(strcmp(path, "/Video/ogg/How fast.ogg") == 0) {
-		DEBUG(EXIT);
-		return true;
-	} else if(strcmp(path, "/Video/mov/sample_iTunes.mov") == 0) {
-		DEBUG(EXIT);
-		return true;
-	} else if(strcmp(path, "/Moby Dick.txt") == 0) {
-		DEBUG(EXIT);
-		return true;
+	assert(path != NULL);
+
+	tmp_path = strdup(path);
+	assert(tmp_path != NULL);
+
+	length = strlen(tmp_path);
+
+	for(i = length - 1; i >= 0; i--) {
+		if(tmp_path[i] == '/') {
+			i++; /* increment to start after the '/' character */
+			
+			for(; i <= length; i++) {
+				tmp_path[j++] = tmp_path[i];		
+			}
+			break;
+		}
 	}
-	else {
-		return false;
+
+	DEBUG("Base name is %s", tmp_path);
+	DEBUG(EXIT);
+	return tmp_path;
+} /* basename */
+ 
+
+
+
+
+
+
+
+
+bool valid_path_to_file(const char *path) {
+	bool valid = false;
+	char *dirpath = NULL;
+	char *file_found = NULL;
+	char *filename = NULL;
+	char *tmp_path = NULL;
+	int *file_array = NULL;
+	int file_count = 0;
+	int i = 0;
+
+	DEBUG(ENTRY);
+
+	assert(path != NULL);
+
+	/* get dirname */
+	DEBUG("Path is %s", path);
+	dirpath = dirname(path);
+	DEBUG("Directory path is %s", dirpath);
+
+	DEBUG("Path is now %s", path);
+	filename = basename(path);
+	DEBUG("Filename is %s", filename);
+	DEBUG("Path is now %s", path);
+
+	file_count = files_at_location(dirpath, &file_array);
+	free_single_ptr((void **)&dirpath);
+
+	for(i = 0; i < file_count; i++) {
+		file_found = file_name_from_id(file_array[i]);
+
+		if(strcmp(file_found, filename) == 0) {
+			valid = true;
+		}
+
+		free_single_ptr((void **)&file_found);
+
+		if(valid == true) {
+			break;
+		}
 	}
-}
+
+	free_single_ptr((void **)&file_array);
+
+	DEBUG("%s is %sa valid file.", path, valid ? "" : "not "); 
+	DEBUG(EXIT);
+	return valid;
+} /* valid_path_to_file */
+
+
+
+
+
+
+
+
+//bool valid_path_to_file(const char *path) {
+//	DEBUG(ENTRY);
+//
+//	if(strcmp(path, "/Audio/Josh Woodward - Swansong.ogg") == 0) {
+//		DEBUG(EXIT);
+//		return true;
+//	} else if(strcmp(path, "/Audio/ogg/Josh Woodward - Swansong.ogg") == 0) {
+//		DEBUG(EXIT);
+//		return true;
+//	} else if(strcmp(path, "/mov/Video/sample_iTunes.mov") == 0) {
+//		DEBUG(EXIT);
+//		return true;
+//	} else if(strcmp(path, "/mov/sample_iTunes.mov") == 0) {
+//		DEBUG(EXIT);
+//		return true;
+//	} else if(strcmp(path, "/ogg/How fast.ogg") == 0) {
+//		DEBUG(EXIT);
+//		return true;
+//	} else if(strcmp(path, "/ogg/Josh Woodward - Swansong.ogg") == 0) {
+//		DEBUG(EXIT);
+//		return true;
+//	} else if(strcmp(path, "/ogg/Video/How fast.ogg") == 0) {
+//		DEBUG(EXIT);
+//		return true;
+//	} else if(strcmp(path, "/ogg/Audio/Josh Woodward - Swansong.ogg") == 0) {
+//		DEBUG(EXIT);
+//		return true;
+//	} else if(strcmp(path, "/Video/How fast.ogg") == 0) {
+//		DEBUG(EXIT);
+//		return true;
+//	} else if(strcmp(path, "/Video/sample_iTunes.mov") == 0) {
+//		DEBUG(EXIT);
+//		return true;
+//	} else if(strcmp(path, "/Video/ogg/How fast.ogg") == 0) {
+//		DEBUG(EXIT);
+//		return true;
+//	} else if(strcmp(path, "/Video/mov/sample_iTunes.mov") == 0) {
+//		DEBUG(EXIT);
+//		return true;
+//	} else if(strcmp(path, "/Moby Dick.txt") == 0) {
+//		DEBUG(EXIT);
+//		return true;
+//	}
+//	else {
+//		return false;
+//	}
+//}
 
 int file_id_from_path(const char *path) {
 	DEBUG(ENTRY);

@@ -154,11 +154,18 @@ char *tag_name_from_tag_id(int file_id);
 /**
  * Returns the directory for a given path. Specifically, a string will be returned which is the specified path minus everything after the last '/' character.
  *
- * @param path A string representing a path in the file system
+ * @param path A string representing a path in the file system.
  * @return The directory of the specified path.
  */
-char *dir_name(const char *path);
+char *dirname(const char *path);
 
+/**
+ * Returns the base name for a given path. specifically, a string will be returned which is the everything following the last '/' character.
+ *
+ * @param path A string representing a path in the file system.
+ * @return The base name of the specified path.
+ */
+char *basename(const char *path);
 
 
 
@@ -203,6 +210,5 @@ bool valid_path_to_file(const char *path);
 int file_id_from_path(const char *path);
 
 
-//char *basename(const char *path);
 
 #endif
