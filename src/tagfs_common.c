@@ -301,7 +301,7 @@ int num_tags_in_path(const char *path) {
 	int i = 0;
 
 	DEBUG(ENTRY);
-	
+
 	assert(path != NULL);
 
 	DEBUG("Calculating number of tags in %s", path);
@@ -573,7 +573,7 @@ char *basename(const char *path) {
 	for(i = length - 1; i >= 0; i--) {
 		if(tmp_path[i] == '/') {
 			i++; /* increment to start after the '/' character */
-			
+
 			for(; i <= length; i++) {
 				tmp_path[j++] = tmp_path[i];		
 			}
@@ -585,38 +585,42 @@ char *basename(const char *path) {
 	DEBUG(EXIT);
 	return tmp_path;
 } /* basename */
- 
-
-
-
-
-
-
-
 
 bool valid_path_to_file(const char *path) {
+	bool valid = false;
+	int file_id = 0;
+
+	DEBUG(ENTRY);
+
+	assert(path != NULL);
+
+	file_id = file_id_from_path(path);
+
+	if(file_id > 0) {
+		return true;
+	}
+
+	DEBUG("%s is %sa valid file.", path, valid ? "" : "not "); 
+	DEBUG(EXIT);
+	return valid;
+} /* valid_path_to_file */
+
+int file_id_from_path(const char *path) {
 	bool valid = false;
 	char *dirpath = NULL;
 	char *file_found = NULL;
 	char *filename = NULL;
-	char *tmp_path = NULL;
 	int *file_array = NULL;
 	int file_count = 0;
+	int file_id = 0;
 	int i = 0;
 
 	DEBUG(ENTRY);
 
 	assert(path != NULL);
 
-	/* get dirname */
-	DEBUG("Path is %s", path);
 	dirpath = dirname(path);
-	DEBUG("Directory path is %s", dirpath);
-
-	DEBUG("Path is now %s", path);
 	filename = basename(path);
-	DEBUG("Filename is %s", filename);
-	DEBUG("Path is now %s", path);
 
 	file_count = files_at_location(dirpath, &file_array);
 	free_single_ptr((void **)&dirpath);
@@ -625,6 +629,7 @@ bool valid_path_to_file(const char *path) {
 		file_found = file_name_from_id(file_array[i]);
 
 		if(strcmp(file_found, filename) == 0) {
+			file_id = file_array[i];
 			valid = true;
 		}
 
@@ -636,113 +641,9 @@ bool valid_path_to_file(const char *path) {
 	}
 
 	free_single_ptr((void **)&file_array);
+	free_single_ptr((void **)&filename);
 
-	DEBUG("%s is %sa valid file.", path, valid ? "" : "not "); 
+	DEBUG("%s had file ID of %d.", path, file_id); 
 	DEBUG(EXIT);
-	return valid;
-} /* valid_path_to_file */
-
-
-
-
-
-
-
-
-//bool valid_path_to_file(const char *path) {
-//	DEBUG(ENTRY);
-//
-//	if(strcmp(path, "/Audio/Josh Woodward - Swansong.ogg") == 0) {
-//		DEBUG(EXIT);
-//		return true;
-//	} else if(strcmp(path, "/Audio/ogg/Josh Woodward - Swansong.ogg") == 0) {
-//		DEBUG(EXIT);
-//		return true;
-//	} else if(strcmp(path, "/mov/Video/sample_iTunes.mov") == 0) {
-//		DEBUG(EXIT);
-//		return true;
-//	} else if(strcmp(path, "/mov/sample_iTunes.mov") == 0) {
-//		DEBUG(EXIT);
-//		return true;
-//	} else if(strcmp(path, "/ogg/How fast.ogg") == 0) {
-//		DEBUG(EXIT);
-//		return true;
-//	} else if(strcmp(path, "/ogg/Josh Woodward - Swansong.ogg") == 0) {
-//		DEBUG(EXIT);
-//		return true;
-//	} else if(strcmp(path, "/ogg/Video/How fast.ogg") == 0) {
-//		DEBUG(EXIT);
-//		return true;
-//	} else if(strcmp(path, "/ogg/Audio/Josh Woodward - Swansong.ogg") == 0) {
-//		DEBUG(EXIT);
-//		return true;
-//	} else if(strcmp(path, "/Video/How fast.ogg") == 0) {
-//		DEBUG(EXIT);
-//		return true;
-//	} else if(strcmp(path, "/Video/sample_iTunes.mov") == 0) {
-//		DEBUG(EXIT);
-//		return true;
-//	} else if(strcmp(path, "/Video/ogg/How fast.ogg") == 0) {
-//		DEBUG(EXIT);
-//		return true;
-//	} else if(strcmp(path, "/Video/mov/sample_iTunes.mov") == 0) {
-//		DEBUG(EXIT);
-//		return true;
-//	} else if(strcmp(path, "/Moby Dick.txt") == 0) {
-//		DEBUG(EXIT);
-//		return true;
-//	}
-//	else {
-//		return false;
-//	}
-//}
-
-int file_id_from_path(const char *path) {
-	DEBUG(ENTRY);
-
-	if(strcmp(path, "/Audio/Josh Woodward - Swansong.ogg") == 0)
-	{
-		return 2;
-	} else if(strcmp(path, "/Audio/ogg/Josh Woodward - Swansong.ogg") == 0)
-	{
-		return 2;
-	} else if(strcmp(path, "/mov/sample_iTunes.mov") == 0)
-	{
-		return 3;
-	} else if(strcmp(path, "/mov/Video/sample_iTunes.mov") == 0)
-	{
-		return 3;
-	} else if(strcmp(path, "/ogg/Josh Woodward - Swansong.ogg") == 0)
-	{
-		return 2;
-	} else if(strcmp(path, "/ogg/How fast.ogg") == 0)
-	{
-		return 1;
-	} else if(strcmp(path, "/ogg/Audio/Josh Woodward - Swansong.ogg") == 0)
-	{
-		return 2;
-	} else if(strcmp(path, "/ogg/Video/How fast.ogg") == 0)
-	{
-		return 1;
-	} else if(strcmp(path, "/Video/How fast.ogg") == 0)
-	{
-		return 1;
-	} else if(strcmp(path, "/Video/ogg/How fast.ogg") == 0)
-	{
-		return 1;
-	} else if(strcmp(path, "/Video/sample_iTunes.mov") == 0)
-	{
-		return 3;
-	} else if(strcmp(path, "/Video/mov/sample_iTunes.mov") == 0)
-	{
-		return 3;
-	} else if(strcmp(path, "/Moby Dick.txt") == 0)
-	{
-		return 4;
-	} else {
-		DEBUG("%s is not recognized.", path);
-	}
-
-	DEBUG(EXIT);
-	return 0;
-};
+	return file_id;
+} /* file_id_from_path */

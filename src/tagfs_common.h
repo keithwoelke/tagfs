@@ -45,7 +45,7 @@ char *file_name_from_id(int file_id);
  * is unique. Essentially, this is done with calls to valid_tags_in_path() and 
  * unique_path().
  *
- * @param path A string representing a path in the file system.
+ * @param path A string representing a path in the filesystem.
  * @return True, if the path is valid. False, if the path is not.
  */
 bool valid_path_to_folder(const char *path);
@@ -58,7 +58,7 @@ bool valid_path_to_folder(const char *path);
  * array pointer, and the pointers of each token in the array. The function 
  * free_double_ptr() can be used for this purpose.
  *
- * @param path A string representing a path in the file system.
+ * @param path A string representing a path in the filesystem.
  * @param array A pointer to an array of strings (char pointers).
  * @return The number of elements in the path array.
  */
@@ -69,7 +69,7 @@ int path_to_array(const char *path, char ***array);
  * calculate the total. Function uses strtok_r, but does not modify the path 
  * that is passed in as a parameter.
  *
- * @param path A string representing a path in the file system.
+ * @param path A string representing a path in the filesystem.
  * @return The number of path elements delimited by the "/" character.
  */
 int num_tags_in_path(const char *path);
@@ -105,7 +105,7 @@ void free_double_ptr(void ***array, int count);
 /**
  * Returns a list of the folders at the specified location in the filesystem. This based on the files which are at the same location.
  *
- * @param path A string representing a path in the file system.
+ * @param path A string representing a path in the filesystem.
  * @param files The files at the specified filesystem location.
  * @param num_files The number of files in the specified filesystem location.
  * @param folders The array of folders will be populated based on the tags on the specified files.
@@ -116,7 +116,7 @@ int folders_at_location(const char *path, int *files, int num_files, int **folde
 /**
  * Counts the number of tags in a path. Uses the standand path delimiter "/" to calculate the total. Function uses strtok, but does not modify the path that is passed in as a parameter.
  *
- * @param path A string representing a path in the file system.
+ * @param path A string representing a path in the filesystem.
 const int num_tags_in_path(const char* path);
  * @return The number of path elements delimited by the "/" character.
  */
@@ -137,7 +137,7 @@ int array_intersection(int *a, int a_size, int *b, int b_size, int **intersectio
 /**
  * Returns a collection of the files at the specified path in the filesystem.
  *
- * @param path A string representing a path in the file system.
+ * @param path A string representing a path in the filesystem.
  * @param file_array A collection containing the files in the specified path.
  * @return The number of files at the specified location.
  */
@@ -154,7 +154,7 @@ char *tag_name_from_tag_id(int file_id);
 /**
  * Returns the directory for a given path. Specifically, a string will be returned which is the specified path minus everything after the last '/' character.
  *
- * @param path A string representing a path in the file system.
+ * @param path A string representing a path in the filesystem.
  * @return The directory of the specified path.
  */
 char *dirname(const char *path);
@@ -162,53 +162,26 @@ char *dirname(const char *path);
 /**
  * Returns the base name for a given path. specifically, a string will be returned which is the everything following the last '/' character.
  *
- * @param path A string representing a path in the file system.
+ * @param path A string representing a path in the filesystem.
  * @return The base name of the specified path.
  */
 char *basename(const char *path);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
- * Checks if a file is valid. If the files returned from a query contain the file that is being checked, then the file is assumed to be valid.
+ * Checks if a file is valid. This is done with a call to file_id_from_path. If a file has a file ID, then the file is assumed to be valid.
  *
- * @param path A string representing a path in the file system.
+ * @param path A string representing a path in the filesystem.
  * @return True, if the file is valid. False, if the file is not valid.
  */
 bool valid_path_to_file(const char *path);
 
+/**
+ * Retrieves the file ID for a file specified by path. File is identified by determining which files belong at the given location and retrieving the file ID for the file at the specified location.
+
+ *
+ * @param path A string representing a path in the filesystem.
+ * @return The file ID corresponding to the file specified by path.
+ */
 int file_id_from_path(const char *path);
-
-
 
 #endif
