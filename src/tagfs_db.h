@@ -29,7 +29,7 @@ char *db_get_file_location(int file_id);
  *
  * @return The number of unique tags associated with the file IDs.
  */
-int db_get_tags_from_files(const int *files, int num_files, int **folders);
+int db_tags_from_files(const int *files, int num_files, int **folders);
 
 
 

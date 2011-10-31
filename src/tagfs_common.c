@@ -239,11 +239,13 @@ bool valid_path_to_folder(const char *path) {
 	else {
 		/* count files at location */
 		num_files = files_at_location(path, &file_array);
-		free_single_ptr((void **)&file_array);
 
 		/* if tags are not unique (to prevent repeated filtering of identical tags) or there are no files at the location */
 		if(!unique_tags_in_path(path) || num_files == 0) { valid = false; }
-		else {valid = true; }
+		else {
+			valid = true;
+			free_single_ptr((void **)&file_array);
+		}
 	}
 
 	DEBUG("%s is %sa valid path to a folder", path, valid ? "" : "not a ");
@@ -261,6 +263,7 @@ int path_to_array(const char *path, char ***array) {
 	DEBUG(ENTRY);
 
 	assert(path != NULL);
+	assert(*array == NULL);
 
 	DEBUG("Converting %s to array", path);
 
@@ -347,6 +350,7 @@ bool array_contains_string(const char **array, const char *string, int count) {
 } /* array_contains_string */
 
 void free_single_ptr(void **ptr) {
+	assert(*ptr != NULL);
 	free(*ptr);
 	*ptr = NULL;
 } /* free_single_ptr */
@@ -356,28 +360,23 @@ void free_double_ptr(void ***array, int count) {
 
 	DEBUG(ENTRY);
 
-	assert(array != NULL);
+	assert(*array != NULL);
 	assert(count >= 0);
 
 	DEBUG("Attempting to free array of %d pointer(s) plus the main pointer.", count);
 
-	/* array is empty */
-	if(*array == NULL) { DEBUG("Array is NULL. Nothing to free."); }
-	/* array is not empty */
-	else {
-		assert(*array != NULL);
+	assert(*array != NULL);
 
-		/* free each element */
-		for(i = 0; i < count; i++) {
-			free_single_ptr((void **)&(*array)[i]);
-		}
-
-		DEBUG("Free'd %d element(s).", i);
-
-		free_single_ptr((void **)array);
-
-		DEBUG("Free'd main array pointer.");
+	/* free each element */
+	for(i = 0; i < count; i++) {
+		free_single_ptr((void **)&(*array)[i]);
 	}
+
+	DEBUG("Free'd %d element(s).", i);
+
+	free_single_ptr((void **)array);
+
+	DEBUG("Free'd main array pointer.");
 
 	DEBUG(EXIT);
 } /* free_double_ptr */
@@ -390,6 +389,7 @@ int folders_at_location(const char *path, int *files, int num_files, int **folde
 	assert(path != NULL);
 	assert(files != NULL);
 	assert(num_files > 0);
+	assert(*folders == NULL);
 
 	/* show all tags at root level */
 	if(strcmp(path, "/") == 0) {
@@ -420,6 +420,7 @@ int array_intersection(int *a, int a_size, int *b, int b_size, int **intersectio
 	assert(b != NULL);
 	assert(a_size > 0);
 	assert(b_size > 0);
+	assert(*intersection == NULL);
 
 	DEBUG("a length is %d. b length is %d.", a_size, b_size);
 	min_size = a_size < b_size ? a_size : b_size;
@@ -470,6 +471,7 @@ int files_at_location(const char *path, int **file_array) {
 	DEBUG(ENTRY);
 
 	assert(path != NULL);
+	assert(*file_array == NULL);
 
 	num_tokens = path_to_array(path, &tag_array);
 	DEBUG("Path broken up into %d tokens for %s.", num_tokens, path);
@@ -515,9 +517,10 @@ int files_at_location(const char *path, int **file_array) {
 				num_prev_files = num_intersection_files;
 			}
 		}
+
+		free_double_ptr((void ***)&tag_array, num_tokens);
 	}
 
-	free_double_ptr((void ***)&tag_array, num_tokens);
 	*file_array = prev_files;
 
 	DEBUG(EXIT);

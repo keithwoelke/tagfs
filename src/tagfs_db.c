@@ -418,14 +418,19 @@ int db_tag_id_from_tag_name(const char *tag) {
 	DEBUG(ENTRY);
 	
 	if(strcmp(tag, "Video") == 0) {
+		DEBUG(EXIT);
 		return 1;
 	} else if(strcmp(tag, "Audio") == 0) {
+		DEBUG(EXIT);
 		return 2;
 	} else if(strcmp(tag, "ogg") == 0) {
+		DEBUG(EXIT);
 		return 3;
 	} else if(strcmp(tag, "mov") == 0) {
+		DEBUG(EXIT);
 		return 4;
 	} else if(strcmp(tag, "/") == 0) {
+		DEBUG(EXIT);
 		return 0;
 	}
 

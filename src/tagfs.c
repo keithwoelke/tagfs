@@ -360,7 +360,7 @@ int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t off
 	/* add files */
 	num_files = files_at_location(path, &files);
 
-	if(num_files >0) {
+	if(num_files > 0) {
 		for(i = 0; i < num_files; i++) {
 			file_id = files[i];
 			file_name = file_name_from_id(file_id);
@@ -380,9 +380,9 @@ int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t off
 	num_folders = folders_at_location(path, files, num_files, &folders);
 	free_single_ptr((void **)&files);
 
-	path_count = path_to_array(path, &path_array);
-
 	if(num_folders > 0) {
+		path_count = path_to_array(path, &path_array);
+
 		for(i = 0; i < num_folders; i++) {
 			tag_id = folders[i];
 			folder_name = tag_name_from_tag_id(tag_id);
@@ -402,9 +402,11 @@ int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t off
 		}
 
 		free_single_ptr((void **)&folders);
-	}
 
-	free_double_ptr((void ***)&path_array, path_count);
+		if(path_array != NULL) {
+			free_double_ptr((void ***)&path_array, path_count);
+		}
+	}
 
 	DEBUG(EXIT);
 	return retstat;
