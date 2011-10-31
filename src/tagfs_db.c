@@ -168,108 +168,6 @@ char *db_get_file_location(int file_id) {
 	return file_location;
 } /* db_get_file_location */
 
-
-
-
-
-
-
-int db_files_from_tag_id(int tag_id, int **file_array) {
-	DEBUG(ENTRY);
-
-	if(tag_id == 2) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 2;
-
-		DEBUG(EXIT);
-		return 1;
-	} else if(tag_id == 4) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 3;
-
-		DEBUG(EXIT);
-		return 1;
-	} else if(tag_id == 3) {
-		(*file_array) = malloc(2 * sizeof(**file_array));
-		(*file_array)[0] = 1;
-		(*file_array)[1] = 2;
-
-		DEBUG(EXIT);
-		return 2;
-	} else if(tag_id == 1) {
-		(*file_array) = malloc(2 * sizeof(**file_array));
-		(*file_array)[0] = 1;
-		(*file_array)[1] = 3;
-
-		DEBUG(EXIT);
-		return 2;
-	} else if(tag_id == 0) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 4;
-
-		DEBUG(EXIT);
-		return 1;
-	}
-
-	WARN("Tag ID is %d.", tag_id);
-	DEBUG(EXIT);
-	return 0;
-} /* db_files_from_tag_id */
-
-
-
-
-
-
-
-
-static int db_insert_query_results_into_hashtable(const char *query, sqlite3 *conn, sqlite3_stmt *res, GHashTable *table) {
-	int rc = 0; /* return code of sqlite3 operation */
-	unsigned long int_from_table = 0;
-
-	DEBUG("Preparing to execute query: %s", query);
-	rc = sqlite3_prepare_v2(conn, query, (int)strlen(query), &res, NULL);
-
-	if(rc != SQLITE_OK) {
-		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", query, (int)strlen(query), rc, sqlite3_errmsg(conn));
-		WARN("An error occured when communicating with the database");
-	}
-
-	rc = sqlite3_step(res);
-
-	/* insert results into hashset */
-	do {
-		if(rc != SQLITE_ROW) {
-			DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", query, (int)strlen(query), rc, sqlite3_errmsg(conn));
-			WARN("An error occured when communicating with the database");
-		}
-
-		int_from_table = sqlite3_column_int(res, 0);
-		g_hash_table_insert(table, (gpointer)int_from_table, (gpointer)int_from_table);
-
-		rc = sqlite3_step(res);
-	}
-	while(rc == SQLITE_ROW);
-
-	rc = sqlite3_finalize(res);
-
-	if(rc != SQLITE_OK) {
-		DEBUG("WARNING: Finalizing statement \"%s\" of length %d FAILED with result code %d: %s", query, (int)strlen(query), rc, sqlite3_errmsg(conn));
-		WARN("An error occured when communicating with the database");
-	}
-
-	return rc;
-} /* db_insert_query_results_into_hashtable */
-
-
-
-
-
-
-
-
-
-
 int db_tags_from_files(const int *files, int num_files, int **tags) {
 	GHashTable *table = NULL;
 	GHashTableIter iter;
@@ -294,8 +192,9 @@ int db_tags_from_files(const int *files, int num_files, int **tags) {
 
 	DEBUG(ENTRY);
 
-	assert(num_files > 0);
 	assert(files != NULL);
+	assert(num_files > 0);
+	assert(tags == NULL);
 
 	/* prepare query/table */
 	query_outline_length = strlen(query_outline);
@@ -389,30 +288,62 @@ int db_tags_from_files(const int *files, int num_files, int **tags) {
 
 
 
-char *db_tag_name_from_tag_id(int tag_id) {
-	char * foo = NULL;
-	
-	DEBUG(ENTRY);
-	
-	assert(tag_id > 0);
 
-	if(tag_id == 1) {
-		foo = malloc(6 * sizeof(*foo));
-		snprintf(foo, 6, "Video");
-	} else if(tag_id == 2) {
-		foo = malloc(6 * sizeof(*foo));
-		snprintf(foo, 6, "Audio");
-	} else if(tag_id == 3) {
-		foo = malloc(4 * sizeof(*foo));
-		snprintf(foo, 4, "ogg");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+int db_files_from_tag_id(int tag_id, int **file_array) {
+	DEBUG(ENTRY);
+
+	if(tag_id == 2) {
+		(*file_array) = malloc(1 * sizeof(**file_array));
+		(*file_array)[0] = 2;
+
+		DEBUG(EXIT);
+		return 1;
 	} else if(tag_id == 4) {
-		foo = malloc(4 * sizeof(*foo));
-		snprintf(foo, 4, "mov");
+		(*file_array) = malloc(1 * sizeof(**file_array));
+		(*file_array)[0] = 3;
+
+		DEBUG(EXIT);
+		return 1;
+	} else if(tag_id == 3) {
+		(*file_array) = malloc(2 * sizeof(**file_array));
+		(*file_array)[0] = 1;
+		(*file_array)[1] = 2;
+
+		DEBUG(EXIT);
+		return 2;
+	} else if(tag_id == 1) {
+		(*file_array) = malloc(2 * sizeof(**file_array));
+		(*file_array)[0] = 1;
+		(*file_array)[1] = 3;
+
+		DEBUG(EXIT);
+		return 2;
+	} else if(tag_id == 0) {
+		(*file_array) = malloc(1 * sizeof(**file_array));
+		(*file_array)[0] = 4;
+
+		DEBUG(EXIT);
+		return 1;
 	}
 
+	WARN("Tag ID is %d.", tag_id);
 	DEBUG(EXIT);
-	return foo;
-} /* db_tag_name_from_tag_id */
+	return 0;
+} /* db_files_from_tag_id */
 
 int db_tag_id_from_tag_name(const char *tag) {
 	DEBUG(ENTRY);
@@ -438,23 +369,6 @@ int db_tag_id_from_tag_name(const char *tag) {
 	return -1;
 } /* db_tag_id_from_tag_name */
 
-
-
-
-
-
-
-
-
-
-
-
-//
-//
-//
-//
-//
-//
 int db_get_all_tags(int **folders) {
 	int *array = NULL;
 
@@ -470,3 +384,102 @@ int db_get_all_tags(int **folders) {
 	DEBUG(EXIT);
 	return 4;
 }
+
+char *db_tag_name_from_tag_id(int tag_id) {
+	char * foo = NULL;
+	
+	DEBUG(ENTRY);
+	
+	assert(tag_id > 0);
+
+	if(tag_id == 1) {
+		foo = malloc(6 * sizeof(*foo));
+		snprintf(foo, 6, "Video");
+	} else if(tag_id == 2) {
+		foo = malloc(6 * sizeof(*foo));
+		snprintf(foo, 6, "Audio");
+	} else if(tag_id == 3) {
+		foo = malloc(4 * sizeof(*foo));
+		snprintf(foo, 4, "ogg");
+	} else if(tag_id == 4) {
+		foo = malloc(4 * sizeof(*foo));
+		snprintf(foo, 4, "mov");
+	}
+
+	DEBUG(EXIT);
+	return foo;
+} /* db_tag_name_from_tag_id */
+
+
+
+
+
+
+static int db_insert_query_results_into_hashtable(const char *query, sqlite3 *conn, sqlite3_stmt *res, GHashTable *table) {
+	int rc = 0; /* return code of sqlite3 operation */
+	unsigned long int_from_table = 0;
+
+	DEBUG("Preparing to execute query: %s", query);
+	rc = sqlite3_prepare_v2(conn, query, (int)strlen(query), &res, NULL);
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", query, (int)strlen(query), rc, sqlite3_errmsg(conn));
+		WARN("An error occured when communicating with the database");
+	}
+
+	rc = sqlite3_step(res);
+
+	/* insert results into hashset */
+	do {
+		if(rc != SQLITE_ROW) {
+			DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", query, (int)strlen(query), rc, sqlite3_errmsg(conn));
+			WARN("An error occured when communicating with the database");
+		}
+
+		int_from_table = sqlite3_column_int(res, 0);
+		g_hash_table_insert(table, (gpointer)int_from_table, (gpointer)int_from_table);
+
+		rc = sqlite3_step(res);
+	}
+	while(rc == SQLITE_ROW);
+
+	rc = sqlite3_finalize(res);
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Finalizing statement \"%s\" of length %d FAILED with result code %d: %s", query, (int)strlen(query), rc, sqlite3_errmsg(conn));
+		WARN("An error occured when communicating with the database");
+	}
+
+	return rc;
+} /* db_insert_query_results_into_hashtable */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
