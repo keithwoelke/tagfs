@@ -27,7 +27,7 @@ char *db_get_file_location(int file_id);
  * @param folders The collection of tags associated with the file IDs.
  * @return The number of unique tags associated with the file IDs.
  */
-int db_tags_from_files(const int *files, int num_files, int **folders);
+int db_tags_from_files(int *files, int num_files, int **folders);
 
 
 
@@ -42,7 +42,7 @@ int db_tags_from_files(const int *files, int num_files, int **folders);
  * @param query The query which will be run to count the results.
  * @return The number of rows returned by the query.
  */
-int db_count_from_query(const char *query);
+int db_count_from_query(char *query);
 
 /**
  * Returns an array representing a column in the database.
@@ -52,7 +52,7 @@ int db_count_from_query(const char *query);
  * @param result_array The array with which to store results from the column returned from result_query matching the name desired_column_name.
  * @return The number of results returned from the query.
  */
-int db_array_from_query(char *desired_column_name, const char *result_query, char ***result_array);
+int db_array_from_query(char *desired_column_name, char *result_query, char ***result_array);
 
 int db_files_from_tag_id(int tag_id, int **file_array);
 
