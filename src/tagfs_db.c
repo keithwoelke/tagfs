@@ -141,7 +141,7 @@ static int db_finalize_statement(sqlite3 *conn, char *query, sqlite3_stmt *res) 
  * @param query An SQL statement, UTF-8 encoded.
  */
 static void db_insert_query_results_into_hashtable(sqlite3 *conn, char *query, GHashTable *table) {
-	int rc = SQL_ERROR;
+	int rc = SQLITE_ERROR;
 	sqlite3_stmt *res = NULL;
 	unsigned long int_from_table = 0;
 
@@ -691,7 +691,7 @@ int db_array_from_query(char *desired_column_name, char *result_query, char ***r
 			DEBUG("COLUMN NOT FOUND");
 		}
 		for(i = 0; sqlite3_step(res) == SQLITE_ROW; i++) {
-			result = sqlite3_column_text(res, desired_column_index); 
+			result = (char *)sqlite3_column_text(res, desired_column_index); 
 			(*result_array)[i] = malloc(result == NULL ? sizeof(NULL) : strlen((char *)result) * sizeof(*result) + 1);
 			assert((*result_array)[i] != NULL);
 			if(result != NULL) {
