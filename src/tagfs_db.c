@@ -435,7 +435,7 @@ int db_tags_from_files(int *files, int num_files, int **tags) {
 
 char *db_tag_name_from_tag_id(int tag_id) {
 	char *query = NULL;
-	unsigned char *tag_name = NULL;
+	const unsigned char *tag_name = NULL;
 	char query_outline[] = "SELECT tag_name FROM tags WHERE tag_id = ";
 	int num_digits_in_id = 0;
 	int query_length = 0;
