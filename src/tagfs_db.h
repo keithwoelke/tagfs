@@ -56,7 +56,7 @@ int db_array_from_query(char *desired_column_name, char *result_query, char ***r
 
 int db_files_from_tag_id(int tag_id, int **file_array);
 
-int db_tag_id_from_tag_name(const char *tag);
+int db_tag_id_from_tag_name(char *tag);
 
 int db_get_all_tags(int **folders);
 
