@@ -91,7 +91,7 @@ static int db_execute_statement(sqlite3 *conn, char *query, sqlite3_stmt **res) 
 	DEBUG("Executing query: %s", query);
 
 	rc = db_prepare_statement(conn, query, res);
-	
+
 	/* handle result code */
 	if(rc == SQLITE_OK) {
 		rc = db_step_statement(conn, query, *res);
@@ -158,17 +158,11 @@ static int db_insert_query_results_into_hashtable(sqlite3 *conn, char *query, GH
 
 	/* insert results into hashset */
 	do {
-		if(rc != SQLITE_ROW) {
-			DEBUG("WARNING: Executing statement \"%s\" failed with result code %d: %s", query, rc, sqlite3_errmsg(conn));
-			WARN("An error occured when communicating with the database");
-		}
-
 		int_from_table = sqlite3_column_int(res, 0);
 		g_hash_table_insert(table, (gpointer)int_from_table, (gpointer)int_from_table);
 
 		rc = db_step_statement(conn, query, res);
-	}
-	while(rc == SQLITE_ROW);
+	} while(rc == SQLITE_ROW);
 
 	rc = db_finalize_statement(conn, query, res);
 
@@ -211,7 +205,7 @@ static void db_disconnect(sqlite3 *conn) {
  **/
 static void db_enable_foreign_keys(sqlite3 *conn) {
 	char *err_msg = NULL; /* sqlite3 error message */
-	const char enable_foreign_keys[] = "PRAGMA foreign_keys = ON";
+	char enable_foreign_keys[] = "PRAGMA foreign_keys = ON";
 	int rc = 0; /* return code of sqlite3 operation */
 
 	DEBUG(ENTRY);
@@ -272,7 +266,7 @@ char *db_get_file_location(int file_id) {
 	char *query = NULL;
 	char *tmp_file_directory = NULL; /* holds text from the query so it can be copied to a new memory location */
 	char *tmp_file_name = NULL; /* hold name of file until it can be copied to a new memory location */
-	const char query_outline[] = "SELECT file_location, file_name FROM files WHERE file_id = ";
+	char query_outline[] = "SELECT file_location, file_name FROM files WHERE file_id = ";
 	int file_location_length = 0; /* length of the file location to return */
 	int query_length = 0;
 	int written = 0; /* number of characters written */
@@ -319,13 +313,13 @@ char *db_get_file_location(int file_id) {
 	return file_location;
 } /* db_get_file_location */
 
-int db_tags_from_files(const int *files, int num_files, int **tags) {
+int db_tags_from_files(int *files, int num_files, int **tags) {
 	GHashTable *table = NULL;
 	GHashTableIter iter;
 	char *file_id_str = NULL;
 	char *query = NULL;
-	const char or_outline[] = " OR file_id = ";
-	const char query_outline[] = "SELECT DISTINCT tag_id FROM all_tables WHERE file_id = ";
+	char or_outline[] = " OR file_id = ";
+	char query_outline[] = "SELECT DISTINCT tag_id FROM all_tables WHERE file_id = ";
 	const int QUERY_LENGTH_CAP = 1024;
 	gpointer key = NULL;
 	gpointer value = NULL;
@@ -439,6 +433,57 @@ int db_tags_from_files(const int *files, int num_files, int **tags) {
 
 
 
+char *db_tag_name_from_tag_id(int tag_id) {
+	char *tag_name = NULL;
+	char query_outline[] = "SELECT tag_name FROM tags WHERE tag_id = ";
+	int num_digits_in_id = 0;
+	int query_outline_length = 0;
+	int written = 0; /* number of characters written */
+	sqlite3 *conn = NULL;
+	sqlite3_stmt *res = NULL;
+
+	DEBUG(ENTRY);
+
+	assert(tag_id > 0);
+
+	DEBUG("Retrieving tag name for tag ID %d", tag_id);
+
+	/* prepare query */
+	num_digits_in_id = num_digits(tag_id);
+	query_outline_length = strlen(query_outline) + num_digits_in_id;
+	written = snprintf(query_outline, query_outline_length + 1, "%s%d", query_outline, tag_id);
+	assert(written == query_outline_length + num_digits_in_id);
+
+	/* connect to database */
+	conn = db_connect();
+	assert(conn != NULL);
+
+	db_execute_statement(conn, query, &res);
+
+	/* get name corresponding to tag_id */
+	tag_name = sqlite3_column_text(res, 0); 
+
+	db_disconnect(conn);
+
+	DEBUG("Tag ID %d corresponds to tag %s", tag_id, tag_name);
+	DEBUG(EXIT);
+	return foo;
+} /* db_tag_name_from_tag_id */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -491,9 +536,9 @@ int db_files_from_tag_id(int tag_id, int **file_array) {
 	return 0;
 } /* db_files_from_tag_id */
 
-int db_tag_id_from_tag_name(const char *tag) {
+int db_tag_id_from_tag_name(char *tag) {
 	DEBUG(ENTRY);
-	
+
 	if(strcmp(tag, "Video") == 0) {
 		DEBUG(EXIT);
 		return 1;
@@ -531,41 +576,41 @@ int db_get_all_tags(int **folders) {
 	return 4;
 }
 
-char *db_tag_name_from_tag_id(int tag_id) {
-	char * foo = NULL;
-	
-	DEBUG(ENTRY);
-	
-	assert(tag_id > 0);
-
-	if(tag_id == 1) {
-		foo = malloc(6 * sizeof(*foo));
-		snprintf(foo, 6, "Video");
-	} else if(tag_id == 2) {
-		foo = malloc(6 * sizeof(*foo));
-		snprintf(foo, 6, "Audio");
-	} else if(tag_id == 3) {
-		foo = malloc(4 * sizeof(*foo));
-		snprintf(foo, 4, "ogg");
-	} else if(tag_id == 4) {
-		foo = malloc(4 * sizeof(*foo));
-		snprintf(foo, 4, "mov");
-	}
-
-	DEBUG(EXIT);
-	return foo;
-} /* db_tag_name_from_tag_id */
-
-
+//char *db_tag_name_from_tag_id(int tag_id) {
+//	char * foo = NULL;
+//
+//	DEBUG(ENTRY);
+//
+//	assert(tag_id > 0);
+//
+//	if(tag_id == 1) {
+//		foo = malloc(6 * sizeof(*foo));
+//		snprintf(foo, 6, "Video");
+//	} else if(tag_id == 2) {
+//		foo = malloc(6 * sizeof(*foo));
+//		snprintf(foo, 6, "Audio");
+//	} else if(tag_id == 3) {
+//		foo = malloc(4 * sizeof(*foo));
+//		snprintf(foo, 4, "ogg");
+//	} else if(tag_id == 4) {
+//		foo = malloc(4 * sizeof(*foo));
+//		snprintf(foo, 4, "mov");
+//	}
+//
+//	DEBUG(EXIT);
+//	return foo;
+//} /* db_tag_name_from_tag_id */
 
 
 
 
-int db_count_from_query(const char *query) {
+
+
+int db_count_from_query(char *query) {
 	DEBUG(ENTRY);
 	bool warn = false; /* whether or not a user visible warning should print */
 	char *count_query = NULL;
-	const char select_count_outline[] = "SELECT COUNT(*) FROM ()";
+	char select_count_outline[] = "SELECT COUNT(*) FROM ()";
 	int count = 0; /* number of rows returned from the count query */
 	int length = 0; /* length of the sqlite3 count query */
 	int rc = 0; /* return code of sqlite3 operations */
@@ -625,11 +670,11 @@ int db_count_from_query(const char *query) {
 	return count;
 } /* db_count_from_query */
 
-int db_array_from_query(char *desired_column_name, const char *result_query, char ***result_array) {
+int db_array_from_query(char *desired_column_name, char *result_query, char ***result_array) {
 	DEBUG(ENTRY);
 	bool column_match = false;
-	const char *tail = NULL;
-	const unsigned char *result = NULL;
+	char *tail = NULL;
+	unsigned char *result = NULL;
 	int column_count = 0;
 	int desired_column_index = 0;
 	int i = 0;
@@ -662,11 +707,11 @@ int db_array_from_query(char *desired_column_name, const char *result_query, cha
 		}
 
 		if(column_match == false) {
-				DEBUG("COLUMN NOT FOUND");
+			DEBUG("COLUMN NOT FOUND");
 		}
 		for(i = 0; sqlite3_step(res) == SQLITE_ROW; i++) {
 			result = sqlite3_column_text(res, desired_column_index); 
-			(*result_array)[i] = malloc(result == NULL ? sizeof(NULL) : strlen((const char *)result) * sizeof(*result) + 1);
+			(*result_array)[i] = malloc(result == NULL ? sizeof(NULL) : strlen((char *)result) * sizeof(*result) + 1);
 			assert((*result_array)[i] != NULL);
 			if(result != NULL) {
 				strcpy((*result_array)[i], (char*)result);
