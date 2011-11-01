@@ -9,23 +9,194 @@
 #include <string.h>
 
 /**
+ * Compiles an SQL statement into byte-code.
+ *
+ * @param conn A sqlite database handle.
+ * @param query An SQL statement, UTF-8 encoded.
+ * @param res OUT: A sqlite statement handle.
+ * @return The result of the operation, corresponding to the return codes of the sqlite3_prepare_v2 function call.
+ */
+static int db_prepare_statement(sqlite3 *conn, char *query, sqlite3_stmt **res) {
+	int query_length = 0;
+	int rc = SQLITE_ERROR; /* return code of sqlite operation */
+
+	DEBUG(ENTRY);
+
+	assert(conn != NULL);
+	assert(query != NULL);
+	assert(*res == NULL);
+
+	DEBUG("Compiling query: %s", query);
+
+	query_length = strlen(query);
+
+	rc = sqlite3_prepare_v2(conn, query, query_length, res, NULL);
+
+	/* handle result code */
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Compiling statement \"%s\" failed with result code %d: %s", query, rc, sqlite3_errmsg(conn));
+		WARN("An error occured while communicating with the database");
+	}
+
+	DEBUG("Query compilation was %ssuccessful", rc == SQLITE_OK ? "" : "un");
+	DEBUG(EXIT);
+	return rc;
+} /* db_prepare_statement */
+
+/**
+ * Run the sqlite statement.
+ *
+ * @param res A sqlite statement handle.
+ * @return The result of the operation, corresponding to the return codes of the sqlite3_step function call.
+ */
+static int db_step_statement(sqlite3 *conn, char *query, sqlite3_stmt *res) {
+	int rc = SQLITE_ERROR; /* return code of sqlite operation */
+
+	DEBUG(ENTRY);
+
+	assert(res != NULL);
+
+	DEBUG("Executing query...");
+
+	rc = sqlite3_step(res);
+
+	/* handle result code */
+	if(rc != SQLITE_ROW) {
+		DEBUG("WARNING: Executing statement \"%s\" failed with result code %d: %s", query, rc, sqlite3_errmsg(conn));
+		WARN("An error occured while communicating with the database");
+	}
+
+	DEBUG("Query step complete with result code: %d", rc);
+	DEBUG(EXIT);
+	return rc;
+} /* db_step_statement */
+
+/*
+ * Execute the SQL statement.
+ *
+ * @param conn A sqlite database handle.
+ * @param query An SQL statement, UTF-8 encoded.
+ * @param res OUT: A sqlite statement handle.
+ * @return The result of the operation, corresponding to the return codes of the sqlite3_prepare_v2 function call (if it fails), otherwise the error code that is returned corresponds to the return codes of the sqlite3_step function call.
+ */
+static int db_execute_statement(sqlite3 *conn, char *query, sqlite3_stmt **res) {
+	int rc = SQLITE_ERROR;
+
+	DEBUG(ENTRY);
+
+	assert(conn != NULL);
+	assert(query != NULL);
+	assert(*res == NULL);
+
+	DEBUG("Executing query: %s", query);
+
+	rc = db_prepare_statement(conn, query, res);
+	
+	/* handle result code */
+	if(rc == SQLITE_OK) {
+		rc = db_step_statement(conn, query, *res);
+	}
+
+	DEBUG("Query execution complete with result code: %d", rc);
+	DEBUG(EXIT);
+	return rc;
+} /* db_execute_statement */
+
+/**
+ * Finalize a sqlite statement.
+ *
+ * @param conn A sqlite database handle.
+ * @param query An SQL statement, UTF-8 encoded.
+ * @param res A sqlite statement handle.
+ * @return The result of the operation, corresponding to the return codes of the sqlite3_finalize function call.
+ */
+static int db_finalize_statement(sqlite3 *conn, char *query, sqlite3_stmt *res) {
+	int rc = SQLITE_ERROR;
+
+	DEBUG(ENTRY);
+
+	assert(conn != NULL);
+	assert(query != NULL);
+	assert(res != NULL);
+
+	DEBUG("Finalizing statement.");
+
+	rc = sqlite3_finalize(res);
+
+	/* handle result code */
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Finalizing statement \"%s\" failed with result code %d: %s", query, rc, sqlite3_errmsg(conn));
+		WARN("An error occured when communicating with the database");
+	}
+
+	DEBUG("Statement finalization completed with result code: %d", rc);
+	DEBUG(EXIT);
+	return rc;
+} /* db_step_statement */
+
+/**
+ * Insert the results of the specified query into the specified table. Only the results of the first column are entered into the table, and the values are assumed to be integers.
+ *
+ * @param conn A sqlite database handle.
+ * @param query An SQL statement, UTF-8 encoded.
+ * @return The result of the operation, corresponding to the return codes of the sqlite3_finalize function call.
+ */
+static int db_insert_query_results_into_hashtable(sqlite3 *conn, char *query, GHashTable *table) {
+	int rc = SQLITE_ERROR; /* return code of sqlite3 operation */
+	sqlite3_stmt *res = NULL;
+	unsigned long int_from_table = 0;
+
+	DEBUG(ENTRY);
+
+	assert(query != NULL);
+	assert(conn != NULL);
+	assert(table != NULL);
+
+	DEBUG("Inserting into table results from query: %s", query);
+
+	rc = db_execute_statement(conn, query, &res);
+
+	/* insert results into hashset */
+	do {
+		if(rc != SQLITE_ROW) {
+			DEBUG("WARNING: Executing statement \"%s\" failed with result code %d: %s", query, rc, sqlite3_errmsg(conn));
+			WARN("An error occured when communicating with the database");
+		}
+
+		int_from_table = sqlite3_column_int(res, 0);
+		g_hash_table_insert(table, (gpointer)int_from_table, (gpointer)int_from_table);
+
+		rc = db_step_statement(conn, query, res);
+	}
+	while(rc == SQLITE_ROW);
+
+	rc = db_finalize_statement(conn, query, res);
+
+	DEBUG("Results entered into table from query: %s", query);
+	DEBUG(EXIT);
+	return rc;
+} /* db_insert_query_results_into_hashtable */
+
+/**
  * Disconnect from the database.
  *
  * @param conn The sqlite3 database connection to close.
  */
 static void db_disconnect(sqlite3 *conn) {
-	DEBUG(ENTRY);
 	int rc = 0; /* return code of sqlite3 operations */
+
+	DEBUG(ENTRY);
+
+	assert(conn != NULL);
 
 	DEBUG("Disconnecting from the database");
 
 	/* close database connection */
-	assert(conn != NULL);
 	rc = sqlite3_close(conn);
 
 	/* handle result code */
 	if(rc != SQLITE_OK) { /* has pending operations or prepared statements to be free'd */
-		DEBUG("WARNING: %s", sqlite3_errmsg(conn));
+		DEBUG("WARNING: Disconnecting from database failed with result code %d: %s", rc, sqlite3_errmsg(conn));
 		WARN("An error occured while disconnecting from the database");
 	}
 	else { DEBUG("Database disconnection successful"); }
@@ -39,21 +210,23 @@ static void db_disconnect(sqlite3 *conn) {
  * @param conn The sqlite3 database connection to enable foreign keys on.
  **/
 static void db_enable_foreign_keys(sqlite3 *conn) {
-	/* DEBUG(ENTRY); */
 	char *err_msg = NULL; /* sqlite3 error message */
 	const char enable_foreign_keys[] = "PRAGMA foreign_keys = ON";
 	int rc = 0; /* return code of sqlite3 operation */
 
-	/* DEBUG("Enabling foreign keys"); */
+	DEBUG(ENTRY);
+
+	assert(conn != NULL);
+
+	DEBUG("Enabling foreign keys");
 
 	/* execute statement */
-	assert(conn != NULL);
 	rc = sqlite3_exec(conn, enable_foreign_keys, NULL, NULL, &err_msg);
 
 	/* handle return code */
 	if(rc != SQLITE_OK) {
 		if(err_msg != NULL) {
-			DEBUG("Error when enabling foreign keys: %s", err_msg);
+			DEBUG("ERROR: Enabling foreign keys failed with result code %d: %s", rc, sqlite3_errmsg(conn));
 			sqlite3_free(err_msg);
 		}
 
@@ -70,10 +243,10 @@ static void db_enable_foreign_keys(sqlite3 *conn) {
  * @return The database connection handle.
  */
 static sqlite3 *db_connect() {
-	DEBUG(ENTRY);
 	int rc = 0; /* return code of sqlite3 operation */
 	sqlite3 *conn = NULL;
 
+	DEBUG(ENTRY);
 	DEBUG("Connecting to database: %s", TAGFS_DATA->db_path);
 
 	/* connect to the database */
@@ -83,12 +256,11 @@ static sqlite3 *db_connect() {
 
 	/* handle result code */
 	if(rc != SQLITE_OK) { /* if no space on drive or file does not exist */
-		DEBUG("ERROR: %s", sqlite3_errmsg(conn));
+		DEBUG("ERROR: Connecting to the database failed with result code %d: %s", rc, sqlite3_errmsg(conn));
 		ERROR("An error occurred when connecting to the database");
 	}
 	else { DEBUG("Database connection successful"); }
 
-	/* enable foreign keys */
 	db_enable_foreign_keys(conn);
 
 	DEBUG(EXIT);
@@ -96,20 +268,20 @@ static sqlite3 *db_connect() {
 } /* db_connect */
 
 char *db_get_file_location(int file_id) {
-	DEBUG(ENTRY);
-	char *query = NULL;
 	char *file_location = NULL;
+	char *query = NULL;
 	char *tmp_file_directory = NULL; /* holds text from the query so it can be copied to a new memory location */
 	char *tmp_file_name = NULL; /* hold name of file until it can be copied to a new memory location */
 	const char query_outline[] = "SELECT file_location, file_name FROM files WHERE file_id = ";
 	int file_location_length = 0; /* length of the file location to return */
 	int query_length = 0;
-	int rc = 0; /* return code of sqlite3 operation */
 	int written = 0; /* number of characters written */
 	sqlite3 *conn = NULL;
 	sqlite3_stmt *res = NULL;
 
-	assert(file_id != 0);
+	DEBUG(ENTRY);
+
+	assert(file_id > 0);
 
 	DEBUG("Retrieving physical location for file with ID %d", file_id);
 
@@ -123,22 +295,7 @@ char *db_get_file_location(int file_id) {
 	conn = db_connect();
 	assert(conn != NULL);
 
-	/* compile prepared statement */	
-	assert(conn != NULL);
-	rc = sqlite3_prepare_v2(conn, query, query_length, &res, NULL);
-
-	if(rc != SQLITE_OK) {
-		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", query, query_length, rc, sqlite3_errmsg(conn));
-		WARN("An error occured when communicating with the database");
-	}
-
-	/* execute statement */
-	rc = sqlite3_step(res);
-
-	if(rc != SQLITE_ROW) {
-		DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", query, query_length, rc, sqlite3_errmsg(conn));
-		WARN("An error occured when communicating with the database");
-	}
+	db_execute_statement(conn, query, &res);
 
 	/* get file location and name */
 	tmp_file_directory = (char *)sqlite3_column_text(res, 0);
@@ -152,13 +309,7 @@ char *db_get_file_location(int file_id) {
 	written = snprintf((char *)file_location, file_location_length + 1, "%s/%s", tmp_file_directory, tmp_file_name);
 	assert(written == file_location_length);
 
-	rc = sqlite3_finalize(res);
-
-	if(rc != SQLITE_OK) {
-		DEBUG("WARNING: Finalizing statement \"%s\" of length %d FAILED with result code %d: %s", query, query_length, rc, sqlite3_errmsg(conn));
-		WARN("An error occured when communicating with the database");
-	}
-
+	db_finalize_statement(conn, query, res);
 	db_disconnect(conn);
 
 	free_single_ptr((void *)&query);
@@ -188,13 +339,14 @@ int db_tags_from_files(const int *files, int num_files, int **tags) {
 	int sql_max_length = 0;
 	int written = 0; /* number of characters written */
 	sqlite3 *conn = NULL;
-	sqlite3_stmt *res = NULL;
 
 	DEBUG(ENTRY);
 
 	assert(files != NULL);
 	assert(num_files > 0);
-	assert(tags == NULL);
+	assert(*tags == NULL);
+
+	DEBUG("Retrieving tags from %d files", num_files);
 
 	/* prepare query/table */
 	query_outline_length = strlen(query_outline);
@@ -244,7 +396,7 @@ int db_tags_from_files(const int *files, int num_files, int **tags) {
 			DEBUG("Query has reached maximum length...");
 			i--; /* leave it for next iteration */
 
-			db_insert_query_results_into_hashtable(query, conn, res, table);
+			db_insert_query_results_into_hashtable(conn, query, table);
 
 			free_single_ptr((void *)&query);
 
@@ -258,7 +410,7 @@ int db_tags_from_files(const int *files, int num_files, int **tags) {
 		free_single_ptr((void *)&file_id_str);
 	}
 
-	db_insert_query_results_into_hashtable(query, conn, res, table);
+	db_insert_query_results_into_hashtable(conn, query, table);
 
 	free_single_ptr((void *)&query);
 	db_disconnect(conn);
@@ -280,12 +432,6 @@ int db_tags_from_files(const int *files, int num_files, int **tags) {
 	DEBUG(EXIT);
 	return hash_table_size;
 } /* db_tags_from_files */
-
-
-
-
-
-
 
 
 
@@ -415,71 +561,64 @@ char *db_tag_name_from_tag_id(int tag_id) {
 
 
 
-static int db_insert_query_results_into_hashtable(const char *query, sqlite3 *conn, sqlite3_stmt *res, GHashTable *table) {
-	int rc = 0; /* return code of sqlite3 operation */
-	unsigned long int_from_table = 0;
+int db_array_from_query(char *desired_column_name, const char *result_query, char ***result_array) {
+	DEBUG(ENTRY);
+	bool column_match = false;
+	const char *tail = NULL;
+	const unsigned char *result = NULL;
+	int column_count = 0;
+	int desired_column_index = 0;
+	int i = 0;
+	int num_results = 0;
+	sqlite3_stmt *res = NULL;
+	int foo = 0;
 
-	DEBUG("Preparing to execute query: %s", query);
-	rc = sqlite3_prepare_v2(conn, query, (int)strlen(query), &res, NULL);
 
-	if(rc != SQLITE_OK) {
-		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", query, (int)strlen(query), rc, sqlite3_errmsg(conn));
-		WARN("An error occured when communicating with the database");
-	}
+	assert(result_query != NULL);
+	assert(result_array != NULL);
+	assert(*result_array == NULL);
 
-	rc = sqlite3_step(res);
 
-	/* insert results into hashset */
-	do {
-		if(rc != SQLITE_ROW) {
-			DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", query, (int)strlen(query), rc, sqlite3_errmsg(conn));
-			WARN("An error occured when communicating with the database");
+	num_results = db_count_from_query(result_query);
+
+	if(num_results > 0) {
+		*result_array = malloc(num_results * sizeof(**result_array));
+		assert(*result_array != NULL);
+
+
+		foo = sqlite3_prepare_v2(TAGFS_DATA->db_conn, result_query, strlen(result_query), &res, &tail);
+		column_count = sqlite3_column_count(res);
+
+		for(desired_column_index = 0; desired_column_index < column_count; desired_column_index++) { /* find the requested column */
+			if(strcmp(desired_column_name, sqlite3_column_name(res, desired_column_index)) == 0) { 
+				DEBUG("COLUMN FOUND");
+				column_match = true;
+				break; 
+			}
 		}
 
-		int_from_table = sqlite3_column_int(res, 0);
-		g_hash_table_insert(table, (gpointer)int_from_table, (gpointer)int_from_table);
+		if(column_match == false) {
+				DEBUG("COLUMN NOT FOUND");
+		}
+		for(i = 0; sqlite3_step(res) == SQLITE_ROW; i++) {
+			result = sqlite3_column_text(res, desired_column_index); 
+			(*result_array)[i] = malloc(result == NULL ? sizeof(NULL) : strlen((const char *)result) * sizeof(*result) + 1);
+			assert((*result_array)[i] != NULL);
+			if(result != NULL) {
+				strcpy((*result_array)[i], (char*)result);
+				DEBUG("BAR: %s", (char*)result);
+			}
+			else {
+				(*result_array)[i] = NULL;
+			}
 
-		rc = sqlite3_step(res);
+		}
+
+		(void)sqlite3_finalize(res);
 	}
-	while(rc == SQLITE_ROW);
-
-	rc = sqlite3_finalize(res);
-
-	if(rc != SQLITE_OK) {
-		DEBUG("WARNING: Finalizing statement \"%s\" of length %d FAILED with result code %d: %s", query, (int)strlen(query), rc, sqlite3_errmsg(conn));
-		WARN("An error occured when communicating with the database");
+	else {
 	}
 
-	return rc;
-} /* db_insert_query_results_into_hashtable */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	DEBUG(EXIT);
+	return num_results;
+} /* db_array_from_query */

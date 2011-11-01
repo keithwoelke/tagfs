@@ -529,8 +529,18 @@ int files_at_location(const char *path, int **file_array) {
 } /* files_at_location */
 
 char *tag_name_from_tag_id(int tag_id) {
+	char *tag_name = NULL;
+
+	DEBUG(ENTRY);
+
 	assert(tag_id > 0);
-	return db_tag_name_from_tag_id(tag_id);
+
+	DEBUG("Retrieving tag name from tag ID %d", tag_id);
+	tag_name = db_tag_name_from_tag_id(tag_id);
+
+	DEBUG("Tag ID %d has name of %s", tag_id, tag_name);
+	DEBUG(EXIT);
+	return tag_name;
 } /* file_name_from_id */
 
 char *dirname(const char *path) {
@@ -568,6 +578,8 @@ char *basename(const char *path) {
 
 	assert(path != NULL);
 
+	DEBUG("Calculating the basename of %s", path);
+
 	tmp_path = strdup(path);
 	assert(tmp_path != NULL);
 
@@ -597,6 +609,8 @@ bool valid_path_to_file(const char *path) {
 
 	assert(path != NULL);
 
+	DEBUG("Checking if %s is a valid path to a file", path);
+
 	file_id = file_id_from_path(path);
 
 	if(file_id > 0) {
@@ -621,6 +635,8 @@ int file_id_from_path(const char *path) {
 	DEBUG(ENTRY);
 
 	assert(path != NULL);
+	
+	DEBUG("Retrieving file ID from %s", path);
 
 	dirpath = dirname(path);
 	filename = basename(path);
@@ -646,7 +662,7 @@ int file_id_from_path(const char *path) {
 	free_single_ptr((void **)&file_array);
 	free_single_ptr((void **)&filename);
 
-	DEBUG("%s had file ID of %d.", path, file_id); 
+	DEBUG("%s has file ID of %d.", path, file_id); 
 	DEBUG(EXIT);
 	return file_id;
 } /* file_id_from_path */
