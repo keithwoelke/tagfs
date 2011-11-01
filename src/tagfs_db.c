@@ -139,10 +139,9 @@ static int db_finalize_statement(sqlite3 *conn, char *query, sqlite3_stmt *res) 
  *
  * @param conn A sqlite database handle.
  * @param query An SQL statement, UTF-8 encoded.
- * @return The result of the operation, corresponding to the return codes of the sqlite3_finalize function call.
  */
-static int db_insert_query_results_into_hashtable(sqlite3 *conn, char *query, GHashTable *table) {
-	int rc = SQLITE_ERROR; /* return code of sqlite3 operation */
+static void db_insert_query_results_into_hashtable(sqlite3 *conn, char *query, GHashTable *table) {
+	int rc = SQL_ERROR;
 	sqlite3_stmt *res = NULL;
 	unsigned long int_from_table = 0;
 
@@ -154,7 +153,7 @@ static int db_insert_query_results_into_hashtable(sqlite3 *conn, char *query, GH
 
 	DEBUG("Inserting into table results from query: %s", query);
 
-	rc = db_execute_statement(conn, query, &res);
+	db_execute_statement(conn, query, &res);
 
 	/* insert results into hashset */
 	do {
@@ -164,11 +163,10 @@ static int db_insert_query_results_into_hashtable(sqlite3 *conn, char *query, GH
 		rc = db_step_statement(conn, query, res);
 	} while(rc == SQLITE_ROW);
 
-	rc = db_finalize_statement(conn, query, res);
+	db_finalize_statement(conn, query, res);
 
 	DEBUG("Results entered into table from query: %s", query);
 	DEBUG(EXIT);
-	return rc;
 } /* db_insert_query_results_into_hashtable */
 
 /**
@@ -467,6 +465,7 @@ char *db_tag_name_from_tag_id(int tag_id) {
 	/* get name corresponding to tag_id */
 	tag_name = (char *)sqlite3_column_text(res, 0); 
 
+	db_finalize_statement(conn, query, res);
 	db_disconnect(conn);
 
 	DEBUG("Tag ID %d corresponds to tag %s", tag_id, tag_name);
@@ -611,15 +610,15 @@ int db_get_all_tags(int **folders) {
 
 
 int db_count_from_query(char *query) {
-	DEBUG(ENTRY);
-	bool warn = false; /* whether or not a user visible warning should print */
 	char *count_query = NULL;
 	char select_count_outline[] = "SELECT COUNT(*) FROM ()";
 	int count = 0; /* number of rows returned from the count query */
 	int length = 0; /* length of the sqlite3 count query */
-	int rc = 0; /* return code of sqlite3 operations */
 	int written = 0; /* characters written by snprintf */
+	sqlite3 *conn = NULL;
 	sqlite3_stmt *res = NULL;
+
+	DEBUG(ENTRY);
 
 	assert(query != NULL);
 
@@ -635,41 +634,19 @@ int db_count_from_query(char *query) {
 	written = snprintf(count_query, length + 1, "SELECT COUNT(*) FROM (%s)", query);
 	assert(written == length);
 
+	db_connect(conn);
+
 	/* compile prepared statement */	
-	assert(TAGFS_DATA->db_conn != NULL);
-	rc = sqlite3_prepare_v2(TAGFS_DATA->db_conn, count_query, length, &res, NULL);
-
-	if(rc != SQLITE_OK) {
-		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", count_query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
-		warn = true;
-	}
-
-	/* execute statement */
-	rc = sqlite3_step(res);
-
-	if(rc != SQLITE_ROW) {
-		DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", count_query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
-		warn = true;
-	}
+	db_execute_statement(conn, query, &res);
 
 	/* get result of count */
 	count = sqlite3_column_int(res, 0);
 
-	rc = sqlite3_finalize(res);
+	db_finalize_statement(conn, query, res);
+	db_disconnect(conn);
+	free_single_ptr((void **)&count_query);
 
-	if(rc != SQLITE_OK) {
-		DEBUG("WARNING: Finalizing statement \"%s\" of length %d FAILED with result code %d: %s", count_query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
-		warn = true;
-	}
-
-	assert(count_query != NULL);
-	free(count_query);
-	count_query = NULL;
-
-	/* handle return code */
-	if(warn == true) { WARN("An error occured when communicating with the database"); }
-	else { DEBUG("Results returned from query: %d", count); }
-
+	DEBUG("Query returns a count of %d", count);
 	DEBUG(EXIT);
 	return count;
 } /* db_count_from_query */
