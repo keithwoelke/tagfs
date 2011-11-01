@@ -434,9 +434,11 @@ int db_tags_from_files(int *files, int num_files, int **tags) {
 
 
 char *db_tag_name_from_tag_id(int tag_id) {
+	char *query = NULL;
 	char *tag_name = NULL;
 	char query_outline[] = "SELECT tag_name FROM tags WHERE tag_id = ";
 	int num_digits_in_id = 0;
+	int query_length = 0;
 	int query_outline_length = 0;
 	int written = 0; /* number of characters written */
 	sqlite3 *conn = NULL;
@@ -451,7 +453,9 @@ char *db_tag_name_from_tag_id(int tag_id) {
 	/* prepare query */
 	num_digits_in_id = num_digits(tag_id);
 	query_outline_length = strlen(query_outline) + num_digits_in_id;
-	written = snprintf(query_outline, query_outline_length + 1, "%s%d", query_outline, tag_id);
+	query_length = query_outline_length + num_digits_in_id;
+	query = malloc(query_outline_length * sizeof(*query) + 1);
+	written = snprintf(query, query_outline_length + 1, "%s%d", query_outline, tag_id);
 	assert(written == query_outline_length + num_digits_in_id);
 
 	/* connect to database */
