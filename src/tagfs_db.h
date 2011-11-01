@@ -34,6 +34,26 @@ int db_tags_from_files(const int *files, int num_files, int **folders);
 
 
 
+
+
+/**
+ * Return the number of rows returned from the specified query.
+ *
+ * @param query The query which will be run to count the results.
+ * @return The number of rows returned by the query.
+ */
+int db_count_from_query(const char *query);
+
+/**
+ * Returns an array representing a column in the database.
+ *
+ * @param desired_column_name The name of the column to pull results from.
+ * @param result_query The query to run.
+ * @param result_array The array with which to store results from the column returned from result_query matching the name desired_column_name.
+ * @return The number of results returned from the query.
+ */
+int db_array_from_query(char *desired_column_name, const char *result_query, char ***result_array);
+
 int db_files_from_tag_id(int tag_id, int **file_array);
 
 int db_tag_id_from_tag_name(const char *tag);

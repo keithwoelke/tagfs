@@ -561,6 +561,70 @@ char *db_tag_name_from_tag_id(int tag_id) {
 
 
 
+int db_count_from_query(const char *query) {
+	DEBUG(ENTRY);
+	bool warn = false; /* whether or not a user visible warning should print */
+	char *count_query = NULL;
+	const char select_count_outline[] = "SELECT COUNT(*) FROM ()";
+	int count = 0; /* number of rows returned from the count query */
+	int length = 0; /* length of the sqlite3 count query */
+	int rc = 0; /* return code of sqlite3 operations */
+	int written = 0; /* characters written by snprintf */
+	sqlite3_stmt *res = NULL;
+
+	assert(query != NULL);
+
+	DEBUG("Calculating number of results returned from query: %s", query);
+
+	/* calculate query length */
+	length = strlen(query) + strlen(select_count_outline);
+	DEBUG("Length of query to count the results: %d", length);
+
+	/* build count query */
+	count_query = malloc(length * sizeof(*query) + 1);
+	assert(count_query != NULL);
+	written = snprintf(count_query, length + 1, "SELECT COUNT(*) FROM (%s)", query);
+	assert(written == length);
+
+	/* compile prepared statement */	
+	assert(TAGFS_DATA->db_conn != NULL);
+	rc = sqlite3_prepare_v2(TAGFS_DATA->db_conn, count_query, length, &res, NULL);
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Compiling statement \"%s\" of length %d FAILED with result code %d: %s", count_query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	/* execute statement */
+	rc = sqlite3_step(res);
+
+	if(rc != SQLITE_ROW) {
+		DEBUG("WARNING: Executing statement \"%s\" of length %d FAILED with result code %d: %s", count_query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	/* get result of count */
+	count = sqlite3_column_int(res, 0);
+
+	rc = sqlite3_finalize(res);
+
+	if(rc != SQLITE_OK) {
+		DEBUG("WARNING: Finalizing statement \"%s\" of length %d FAILED with result code %d: %s", count_query, length, rc, sqlite3_errmsg(TAGFS_DATA->db_conn));
+		warn = true;
+	}
+
+	assert(count_query != NULL);
+	free(count_query);
+	count_query = NULL;
+
+	/* handle return code */
+	if(warn == true) { WARN("An error occured when communicating with the database"); }
+	else { DEBUG("Results returned from query: %d", count); }
+
+	DEBUG(EXIT);
+	return count;
+} /* db_count_from_query */
+
 int db_array_from_query(char *desired_column_name, const char *result_query, char ***result_array) {
 	DEBUG(ENTRY);
 	bool column_match = false;
