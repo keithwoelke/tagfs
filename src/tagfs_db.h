@@ -29,13 +29,6 @@ char *db_get_file_location(int file_id);
  */
 int db_tags_from_files(int *files, int num_files, int **folders);
 
-
-
-
-
-
-
-
 /**
  * Return the number of rows returned from the specified query.
  *
@@ -43,6 +36,25 @@ int db_tags_from_files(int *files, int num_files, int **folders);
  * @return The number of rows returned by the query.
  */
 int db_count_from_query(char *query);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Returns an array representing a column in the database.

@@ -243,7 +243,7 @@ static sqlite3 *db_connect() {
 
 	/* connect to the database */
 	assert(TAGFS_DATA->db_path != NULL);
-	rc = sqlite3_open_v2(TAGFS_DATA->db_path, &conn, SQLITE_OPEN_READWRITE, NULL); /* TODO: set as 'SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE' and create the database if it does not exist already */
+	rc = sqlite3_open_v2(/*TAGFS_DATA->db_path*/"/home/keith/Programming/FUSE/TagFS/src/tagfs.sl3", &conn, SQLITE_OPEN_READWRITE, NULL); /* TODO: set as 'SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE' and create the database if it does not exist already */
 	assert(conn != NULL);
 
 	/* handle result code */
@@ -425,53 +425,111 @@ int db_tags_from_files(int *files, int num_files, int **tags) {
 	return hash_table_size;
 } /* db_tags_from_files */
 
-
-
-
-
-
-
-char *db_tag_name_from_tag_id(int tag_id) {
-	char *query = NULL;
-	char *tag_name = NULL;
-	char query_outline[] = "SELECT tag_name FROM tags WHERE tag_id = ";
-	int num_digits_in_id = 0;
-	int query_length = 0;
-	int query_outline_length = 0;
-	int written = 0; /* number of characters written */
+int db_count_from_query(char *query) {
+	char *count_query = NULL;
+	char select_count_outline[] = "SELECT COUNT(*) FROM ()";
+	int count = 0; /* number of rows returned from the count query */
+	int length = 0; /* length of the sqlite3 count query */
+	int written = 0; /* characters written by snprintf */
 	sqlite3 *conn = NULL;
 	sqlite3_stmt *res = NULL;
 
 	DEBUG(ENTRY);
 
-	assert(tag_id > 0);
+	assert(query != NULL);
 
-	DEBUG("Retrieving tag name for tag ID %d", tag_id);
+	DEBUG("Calculating number of results returned from query: %s", query);
 
-	/* prepare query */
-	num_digits_in_id = num_digits(tag_id);
-	query_outline_length = strlen(query_outline) + num_digits_in_id;
-	query_length = query_outline_length + num_digits_in_id;
-	query = malloc(query_outline_length * sizeof(*query) + 1);
-	written = snprintf(query, query_outline_length + 1, "%s%d", query_outline, tag_id);
-	assert(written == query_outline_length + num_digits_in_id);
+	/* calculate query length */
+	length = strlen(query) + strlen(select_count_outline);
+	DEBUG("Length of query to count the results: %d", length);
 
-	/* connect to database */
+	/* build count query */
+	count_query = malloc(length * sizeof(*count_query) + 1);
+	assert(count_query != NULL);
+	written = snprintf(count_query, length + 1, "SELECT COUNT(*) FROM (%s)", query);
+	assert(written == length);
+	DEBUG("Complete query: %s", count_query);
+
 	conn = db_connect();
-	assert(conn != NULL);
 
-	db_execute_statement(conn, query, &res);
+	/* compile prepared statement */	
+	db_execute_statement(conn, count_query, &res);
 
-	/* get name corresponding to tag_id */
-	tag_name = (char *)sqlite3_column_text(res, 0); 
+	/* get result of count */
+	count = sqlite3_column_int(res, 0);
 
-	db_finalize_statement(conn, query, res);
+	db_finalize_statement(conn, count_query, res);
 	db_disconnect(conn);
+	free_single_ptr((void **)&count_query);
 
-	DEBUG("Tag ID %d corresponds to tag %s", tag_id, tag_name);
+	DEBUG("Query returns a count of %d", count);
 	DEBUG(EXIT);
-	return tag_name;
-} /* db_tag_name_from_tag_id */
+	return count;
+} /* db_count_from_query */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//char *db_tag_name_from_tag_id(int tag_id) {
+//	char *query = NULL;
+//	char *tag_name = NULL;
+//	char query_outline[] = "SELECT tag_name FROM tags WHERE tag_id = ";
+//	int num_digits_in_id = 0;
+//	int query_length = 0;
+//	int query_outline_length = 0;
+//	int written = 0; /* number of characters written */
+//	sqlite3 *conn = NULL;
+//	sqlite3_stmt *res = NULL;
+//	int rc = SQLITE_ERROR;
+//
+//	DEBUG(ENTRY);
+//
+//	assert(tag_id > 0);
+//
+//	DEBUG("Retrieving tag name for tag ID %d", tag_id);
+//
+//	/* prepare query */
+//	num_digits_in_id = num_digits(tag_id);
+//	query_outline_length = strlen(query_outline);
+//	query_length = query_outline_length + num_digits_in_id;
+//	query = malloc(query_length * sizeof(*query) + 1);
+//	assert(query != NULL);
+//	written = snprintf(query, query_length + 1, "%s%d", query_outline, tag_id);
+//	assert(written == query_length);
+//
+//	/* connect to database */
+//	conn = db_connect();
+//	assert(conn != NULL);
+//
+//	rc = db_execute_statement(conn, query, &res);
+//	printf("Statement executed with rc: %d\n", rc);
+//
+//	/* get name corresponding to tag_id */
+//	tag_name = (char *)sqlite3_column_text(res, 0); 
+//
+//	db_finalize_statement(conn, query, res);
+//	db_disconnect(conn);
+//
+//	DEBUG("Tag ID %d corresponds to tag %s", tag_id, tag_name);
+//	DEBUG(EXIT);
+//	return tag_name;
+//} /* db_tag_name_from_tag_id */
 
 
 
@@ -579,95 +637,54 @@ int db_get_all_tags(int **folders) {
 	return 4;
 }
 
-//char *db_tag_name_from_tag_id(int tag_id) {
-//	char * foo = NULL;
-//
-//	DEBUG(ENTRY);
-//
-//	assert(tag_id > 0);
-//
-//	if(tag_id == 1) {
-//		foo = malloc(6 * sizeof(*foo));
-//		snprintf(foo, 6, "Video");
-//	} else if(tag_id == 2) {
-//		foo = malloc(6 * sizeof(*foo));
-//		snprintf(foo, 6, "Audio");
-//	} else if(tag_id == 3) {
-//		foo = malloc(4 * sizeof(*foo));
-//		snprintf(foo, 4, "ogg");
-//	} else if(tag_id == 4) {
-//		foo = malloc(4 * sizeof(*foo));
-//		snprintf(foo, 4, "mov");
-//	}
-//
-//	DEBUG(EXIT);
-//	return foo;
-//} /* db_tag_name_from_tag_id */
-
-
-
-
-
-
-int db_count_from_query(char *query) {
-	char *count_query = NULL;
-	char select_count_outline[] = "SELECT COUNT(*) FROM ()";
-	int count = 0; /* number of rows returned from the count query */
-	int length = 0; /* length of the sqlite3 count query */
-	int written = 0; /* characters written by snprintf */
-	sqlite3 *conn = NULL;
-	sqlite3_stmt *res = NULL;
+char *db_tag_name_from_tag_id(int tag_id) {
+	char * foo = NULL;
 
 	DEBUG(ENTRY);
 
-	assert(query != NULL);
+	assert(tag_id > 0);
 
-	DEBUG("Calculating number of results returned from query: %s", query);
+	if(tag_id == 1) {
+		foo = malloc(6 * sizeof(*foo));
+		snprintf(foo, 6, "Video");
+	} else if(tag_id == 2) {
+		foo = malloc(6 * sizeof(*foo));
+		snprintf(foo, 6, "Audio");
+	} else if(tag_id == 3) {
+		foo = malloc(4 * sizeof(*foo));
+		snprintf(foo, 4, "ogg");
+	} else if(tag_id == 4) {
+		foo = malloc(4 * sizeof(*foo));
+		snprintf(foo, 4, "mov");
+	}
 
-	/* calculate query length */
-	length = strlen(query) + strlen(select_count_outline);
-	DEBUG("Length of query to count the results: %d", length);
-
-	/* build count query */
-	count_query = malloc(length * sizeof(*query) + 1);
-	assert(count_query != NULL);
-	written = snprintf(count_query, length + 1, "SELECT COUNT(*) FROM (%s)", query);
-	assert(written == length);
-
-	db_connect(conn);
-
-	/* compile prepared statement */	
-	db_execute_statement(conn, query, &res);
-
-	/* get result of count */
-	count = sqlite3_column_int(res, 0);
-
-	db_finalize_statement(conn, query, res);
-	db_disconnect(conn);
-	free_single_ptr((void **)&count_query);
-
-	DEBUG("Query returns a count of %d", count);
 	DEBUG(EXIT);
-	return count;
-} /* db_count_from_query */
+	return foo;
+} /* db_tag_name_from_tag_id */
+
+
+
+
+
+
 
 int db_array_from_query(char *desired_column_name, char *result_query, char ***result_array) {
-	DEBUG(ENTRY);
 	bool column_match = false;
-	char *tail = NULL;
-	unsigned char *result = NULL;
 	int column_count = 0;
 	int desired_column_index = 0;
 	int i = 0;
 	int num_results = 0;
+	sqlite3 *conn = NULL;
 	sqlite3_stmt *res = NULL;
-	int foo = 0;
+	char *result = NULL;
 
+	DEBUG(ENTRY);
 
+	assert(desired_column_name != NULL);
 	assert(result_query != NULL);
-	assert(result_array != NULL);
 	assert(*result_array == NULL);
 
+	DEBUG("Creating array from the %s column of the query: %s", desired_column_name, result_query);
 
 	num_results = db_count_from_query(result_query);
 
@@ -675,38 +692,35 @@ int db_array_from_query(char *desired_column_name, char *result_query, char ***r
 		*result_array = malloc(num_results * sizeof(**result_array));
 		assert(*result_array != NULL);
 
-
-		foo = sqlite3_prepare_v2(TAGFS_DATA->db_conn, result_query, strlen(result_query), &res, &tail);
+		db_prepare_statement(conn, result_query, &res);
 		column_count = sqlite3_column_count(res);
 
 		for(desired_column_index = 0; desired_column_index < column_count; desired_column_index++) { /* find the requested column */
 			if(strcmp(desired_column_name, sqlite3_column_name(res, desired_column_index)) == 0) { 
-				DEBUG("COLUMN FOUND");
+				DEBUG("Matching column found (%s)", desired_column_name);
 				column_match = true;
 				break; 
 			}
 		}
 
 		if(column_match == false) {
-			DEBUG("COLUMN NOT FOUND");
+			DEBUG("Matching column not found (%s)", desired_column_name);
+			ERROR("Unexpected input received from database.");
 		}
-		for(i = 0; sqlite3_step(res) == SQLITE_ROW; i++) {
+		for(i = 0; db_step_statement(conn, result_query, res) == SQLITE_ROW; i++) {
 			result = (char *)sqlite3_column_text(res, desired_column_index); 
 			(*result_array)[i] = malloc(result == NULL ? sizeof(NULL) : strlen((char *)result) * sizeof(*result) + 1);
 			assert((*result_array)[i] != NULL);
 			if(result != NULL) {
 				strcpy((*result_array)[i], (char*)result);
-				DEBUG("BAR: %s", (char*)result);
 			}
 			else {
 				(*result_array)[i] = NULL;
 			}
-
 		}
 
-		(void)sqlite3_finalize(res);
-	}
-	else {
+		db_finalize_statement(conn, result_query, res);
+		db_disconnect(conn);
 	}
 
 	DEBUG(EXIT);

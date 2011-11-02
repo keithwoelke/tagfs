@@ -590,24 +590,5 @@ int main(int argc, char *argv[]) {
 	debug_init();
 	tagfs_data.exec_dir = get_exec_dir(argv[0]);
 
-//	int foo[] = {1, 3, 4};
-//	heap_sort(foo, 3);
-//	int bar[] = {7, 9, 15};
-//	heap_sort(bar, 3);
-//	int *baz = NULL;
-
-//	int baz_count = 0;//array_intersection(foo, 3, bar, 3, &baz);
-
-//	baz_count = files_at_location("/Video", &baz);
-
-//	int i = 0;
-//	for(;i<baz_count;i++) {
-//		printf("%d", baz[i]);
-//	}
-
-//	printf("\n");
-
-//	free_single_ptr((void *)&baz);
-
-	return /*0;*/fuse_main(argc, argv, &tagfs_oper, &tagfs_data);
+	return fuse_main(argc, argv, &tagfs_oper, &tagfs_data);
 } /* main */
