@@ -37,6 +37,14 @@ int db_tags_from_files(int *files, int num_files, int **folders);
  */
 int db_count_from_query(char *query);
 
+/**
+ * Converts a tag ID into its corresponding tag name.
+ *
+ * @param tag_id The tag ID to match to its corresponding tag name.
+ * @return The tag name corresponding to the specified tag ID.
+ */
+char *db_tag_name_from_tag_id(int tag_id);
+
 
 
 
@@ -71,7 +79,5 @@ int db_files_from_tag_id(int tag_id, int **file_array);
 int db_tag_id_from_tag_name(char *tag);
 
 int db_get_all_tags(int **folders);
-
-char *db_tag_name_from_tag_id(int tag_id);
 
 #endif
