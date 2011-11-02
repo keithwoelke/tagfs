@@ -61,7 +61,7 @@ static int db_step_statement(sqlite3 *conn, char *query, sqlite3_stmt *res) {
 	rc = sqlite3_step(res);
 
 	/* handle result code */
-	if(rc != SQLITE_ROW) {
+	if(rc != SQLITE_ROW && rc != SQLITE_DONE) {
 		DEBUG("WARNING: Executing statement \"%s\" failed with result code %d: %s", query, rc, sqlite3_errmsg(conn));
 		WARN("An error occured while communicating with the database");
 	}
@@ -667,6 +667,7 @@ int db_array_from_query(char *desired_column_name, char *result_query, char ***r
 		*result_array = malloc(num_results * sizeof(**result_array));
 		assert(*result_array != NULL);
 
+		conn = db_connect();
 		db_prepare_statement(conn, result_query, &res);
 		column_count = sqlite3_column_count(res);
 
@@ -682,6 +683,7 @@ int db_array_from_query(char *desired_column_name, char *result_query, char ***r
 			DEBUG("Matching column not found (%s)", desired_column_name);
 			ERROR("Unexpected input received from database.");
 		}
+
 		for(i = 0; db_step_statement(conn, result_query, res) == SQLITE_ROW; i++) {
 			result = (char *)sqlite3_column_text(res, desired_column_index); 
 			(*result_array)[i] = malloc(result == NULL ? sizeof(NULL) : strlen((char *)result) * sizeof(*result) + 1);
