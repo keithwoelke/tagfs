@@ -45,39 +45,39 @@ int db_count_from_query(char *query);
  */
 char *db_tag_name_from_tag_id(int tag_id);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
- * Returns an array representing a column in the database.
+ * Returns an integer array representing a column in the database where the results correspond to those returned from a query.
  *
  * @param desired_column_name The name of the column to pull results from.
- * @param result_query The query to run.
+ * @param result_query The query to run against the database.
  * @param result_array The array with which to store results from the column returned from result_query matching the name desired_column_name.
  * @return The number of results returned from the query.
  */
-int db_array_from_query(char *desired_column_name, char *result_query, char ***result_array);
+int db_int_array_from_query(char *desired_column_name, char *result_query, int **result_array);
 
+/**
+ * Returns an array of all tags.
+ *
+ * @param tags OUT: A collection of all available tags.
+ * @return The number of tags returned.
+ */
+int db_get_all_tags(int **tags);
+
+/**
+ * Returns files associated with a tag ID.
+ *
+ * @param tag_id The tag ID to use when checking for files.
+ * @param file_array OUT: The files which match the tag ID.
+ * @return The number of files matching the tag ID.
+ */
 int db_files_from_tag_id(int tag_id, int **file_array);
 
-int db_tag_id_from_tag_name(char *tag);
-
-int db_get_all_tags(int **folders);
+/**
+ * Retrieve the tag ID from a tag name.
+ *
+ * @param tag_name The tag to match to its corresponding tag ID.
+ * @return The tag ID which matches the tag name.
+ */
+int db_tag_id_from_tag_name(char *tag_name);
 
 #endif

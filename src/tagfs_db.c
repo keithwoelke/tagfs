@@ -442,7 +442,6 @@ int db_count_from_query(char *query) {
 
 	/* calculate query length */
 	length = strlen(query) + strlen(select_count_outline);
-	DEBUG("Length of query to count the results: %d", length);
 
 	/* build count query */
 	count_query = malloc(length * sizeof(*count_query) + 1);
@@ -452,6 +451,7 @@ int db_count_from_query(char *query) {
 	DEBUG("Complete query: %s", count_query);
 
 	conn = db_connect();
+	assert(conn != NULL);
 
 	/* compile prepared statement */	
 	db_execute_statement(conn, count_query, &res);
@@ -512,146 +512,15 @@ char *db_tag_name_from_tag_id(int tag_id) {
 	return tag_name;
 } /* db_tag_name_from_tag_id */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-int db_files_from_tag_id(int tag_id, int **file_array) {
-	DEBUG(ENTRY);
-
-	if(tag_id == 2) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 2;
-
-		DEBUG(EXIT);
-		return 1;
-	} else if(tag_id == 4) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 3;
-
-		DEBUG(EXIT);
-		return 1;
-	} else if(tag_id == 3) {
-		(*file_array) = malloc(2 * sizeof(**file_array));
-		(*file_array)[0] = 1;
-		(*file_array)[1] = 2;
-
-		DEBUG(EXIT);
-		return 2;
-	} else if(tag_id == 1) {
-		(*file_array) = malloc(2 * sizeof(**file_array));
-		(*file_array)[0] = 1;
-		(*file_array)[1] = 3;
-
-		DEBUG(EXIT);
-		return 2;
-	} else if(tag_id == 0) {
-		(*file_array) = malloc(1 * sizeof(**file_array));
-		(*file_array)[0] = 4;
-
-		DEBUG(EXIT);
-		return 1;
-	}
-
-	WARN("Tag ID is %d.", tag_id);
-	DEBUG(EXIT);
-	return 0;
-} /* db_files_from_tag_id */
-
-int db_tag_id_from_tag_name(char *tag) {
-	DEBUG(ENTRY);
-
-	if(strcmp(tag, "Video") == 0) {
-		DEBUG(EXIT);
-		return 1;
-	} else if(strcmp(tag, "Audio") == 0) {
-		DEBUG(EXIT);
-		return 2;
-	} else if(strcmp(tag, "ogg") == 0) {
-		DEBUG(EXIT);
-		return 3;
-	} else if(strcmp(tag, "mov") == 0) {
-		DEBUG(EXIT);
-		return 4;
-	} else if(strcmp(tag, "/") == 0) {
-		DEBUG(EXIT);
-		return 0;
-	}
-
-	DEBUG(EXIT);
-	return -1;
-} /* db_tag_id_from_tag_name */
-
-int db_get_all_tags(int **folders) {
-	int *array = NULL;
-
-	DEBUG(ENTRY);
-
-	array = malloc(4 * sizeof(*array));
-	array[0] = 1;
-	array[1] = 2;
-	array[2] = 3;
-	array[3] = 4;
-
-	*folders = array;
-	DEBUG(EXIT);
-	return 4;
-}
-
-
-
-
-
-
-
-
-int db_array_from_query(char *desired_column_name, char *result_query, char ***result_array) {
+int db_int_array_from_query(char *desired_column_name, char *result_query, int **result_array) {
 	bool column_match = false;
+	int result = 0;
 	int column_count = 0;
 	int desired_column_index = 0;
 	int i = 0;
 	int num_results = 0;
 	sqlite3 *conn = NULL;
 	sqlite3_stmt *res = NULL;
-	char *result = NULL;
 
 	DEBUG(ENTRY);
 
@@ -668,6 +537,8 @@ int db_array_from_query(char *desired_column_name, char *result_query, char ***r
 		assert(*result_array != NULL);
 
 		conn = db_connect();
+		assert(conn != NULL);
+
 		db_prepare_statement(conn, result_query, &res);
 		column_count = sqlite3_column_count(res);
 
@@ -685,15 +556,8 @@ int db_array_from_query(char *desired_column_name, char *result_query, char ***r
 		}
 
 		for(i = 0; db_step_statement(conn, result_query, res) == SQLITE_ROW; i++) {
-			result = (char *)sqlite3_column_text(res, desired_column_index); 
-			(*result_array)[i] = malloc(result == NULL ? sizeof(NULL) : strlen((char *)result) * sizeof(*result) + 1);
-			assert((*result_array)[i] != NULL);
-			if(result != NULL) {
-				strcpy((*result_array)[i], (char*)result);
-			}
-			else {
-				(*result_array)[i] = NULL;
-			}
+			result = sqlite3_column_int(res, desired_column_index); 
+			(*result_array)[i] = result;
 		}
 
 		db_finalize_statement(conn, result_query, res);
@@ -702,4 +566,110 @@ int db_array_from_query(char *desired_column_name, char *result_query, char ***r
 
 	DEBUG(EXIT);
 	return num_results;
-} /* db_array_from_query */
+} /* db_int_array_from_query */
+
+int db_get_all_tags(int **tags) {
+	char query[] = "SELECT tag_id FROM tags";
+	int count = 0;
+	sqlite3 *conn = NULL;
+
+	DEBUG(ENTRY);
+
+	assert(*tags == NULL);
+
+	DEBUG("Retrieving all tags");
+
+	conn = db_connect();
+	assert(conn != NULL);
+
+	count = db_int_array_from_query("tag_id", query, tags);
+	db_disconnect(conn);
+
+	DEBUG("Returning a list of %d tags", count);
+	DEBUG(EXIT);
+	return count;
+} /* db_get_all_tags */
+
+int db_files_from_tag_id(int tag_id, int **files) {
+	char query_outline[] = "SELECT file_id FROM all_tables WHERE tag_id = ";
+	int query_outline_length = 0;
+	char *query = NULL;
+	int count = 0;
+	int query_length = 0;
+	int written = 0; /* number of characters written */
+	int num_digits_in_id = 0;
+
+	DEBUG(ENTRY);
+
+	assert(*files == NULL);
+
+	DEBUG("Retrieving files from tag ID %d", tag_id);
+
+	if(tag_id > 0) {
+		/* prepare query */
+		num_digits_in_id = num_digits(tag_id);
+		query_outline_length = strlen(query_outline);
+		query_length = query_outline_length + num_digits_in_id;
+		query = malloc(query_length * sizeof(*query) + 1);
+		assert(query != NULL);
+		written = snprintf(query, query_length + 1, "%s%d", query_outline, tag_id);
+		assert(written == query_length);
+
+		count = db_int_array_from_query("file_id", query, files);
+		free_single_ptr((void **)&query);
+	} else {
+		count = db_int_array_from_query("file_id", "SELECT * FROM files WHERE file_id NOT IN (SELECT file_id FROM file_has_tag)", files);
+	}
+
+	DEBUG("Returning a list of %d files", count);
+	DEBUG(EXIT);
+	return count;
+} /* db_files_from_tag_id */
+
+int db_tag_id_from_tag_name(char *tag_name) {
+	char *query = NULL;
+	int tag_id = 0;
+	char query_outline[] = "SELECT tag_id FROM tags WHERE tag_name = \"\"";
+	int query_length = 0;
+	int written = 0; /* number of characters written */
+	sqlite3 *conn = NULL;
+	sqlite3_stmt *res = NULL;
+
+	DEBUG(ENTRY);
+
+	assert(tag_name != NULL);
+
+	DEBUG("Retrieving tag name for tag ID %s", tag_name);
+
+	if(strcmp(tag_name, "/") == 0) {
+		tag_id = 0;
+	} else {
+		/* prepare query */
+		query_length = strlen(query_outline) + strlen(tag_name);
+		query = malloc(query_length * sizeof(*query) + 1);
+		assert(query != NULL);
+		written = snprintf(query, query_length + 1, "SELECT tag_id FROM tags WHERE tag_name = \"%s\"", tag_name);
+		assert(written == query_length);
+
+		/* connect to database */
+		conn = db_connect();
+		assert(conn != NULL);
+
+		db_execute_statement(conn, query, &res);
+
+		/* get name corresponding to tag_id */
+		tag_id = sqlite3_column_int(res, 0);
+
+		if(tag_id == 0) {
+			tag_id = -1;
+		}
+
+		db_finalize_statement(conn, query, res);
+		db_disconnect(conn);
+		free_single_ptr((void **)&query);
+	}
+
+	DEBUG("Tag %s corresponds to tag ID %d", tag_name, tag_id);
+	DEBUG(EXIT);
+	return tag_id;
+} /* db_tag_id_from_tag_name */
