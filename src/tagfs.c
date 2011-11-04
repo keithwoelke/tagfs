@@ -196,11 +196,15 @@ int tagfs_open(const char *path, struct fuse_file_info *fi) {
 }
 
 int tagfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+	int fd = 0;
 	int retstat = 0;
+	int file_id = 0;
 
 	DEBUG(ENTRY);
 
-	ERROR("TODO: %s", __FUNCTION__);
+	file_id = file_id_from_path(path);
+	fd = open(db_get_file_location(file_id), O_RDONLY);
+	retstat = pread(fd, buf, size, offset);
 
 	DEBUG(EXIT);
 	return retstat;
@@ -550,7 +554,7 @@ int tagfs_fgetattr(const char *path, struct stat *statbuf, struct fuse_file_info
 struct fuse_operations tagfs_oper = {
 	.getattr = tagfs_getattr,
 	.readlink = tagfs_readlink,
-	.mknod = tagfs_mknod,
+	/*.mknod = tagfs_mknod,*/
 	.mkdir = tagfs_mkdir,
 	.unlink = tagfs_unlink,
 	.rmdir = tagfs_rmdir,
@@ -562,7 +566,7 @@ struct fuse_operations tagfs_oper = {
 	.truncate = tagfs_truncate,
 	.utime = tagfs_utime,
 	/* .open = tagfs_open, */
-	/* .read = tagfs_read, */
+	.read = tagfs_read,
 	.write = tagfs_write,
 	/* .statfs = tagfs_statfs, */
 	/* .flush = tagfs_flush, */
