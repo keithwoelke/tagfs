@@ -666,3 +666,9 @@ int file_id_from_path(const char *path) {
 	DEBUG(EXIT);
 	return file_id;
 } /* file_id_from_path */
+
+char *get_file_location(int file_id) {
+	DEBUG(ENTRY);
+	return db_get_file_location(file_id);
+	DEBUG(EXIT);
+} /* get_file_location */

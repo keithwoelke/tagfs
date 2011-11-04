@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <fuse.h>
 #include <string.h>
+#include <unistd.h>
 
 /*
  * Get file attributes.
@@ -196,14 +197,17 @@ int tagfs_open(const char *path, struct fuse_file_info *fi) {
 }
 
 int tagfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+	char *file_location = NULL;
 	int fd = 0;
-	int retstat = 0;
 	int file_id = 0;
+	int retstat = 0;
 
 	DEBUG(ENTRY);
 
 	file_id = file_id_from_path(path);
-	fd = open(db_get_file_location(file_id), O_RDONLY);
+	file_location = get_file_location(file_id);
+	fd = open(file_location, O_RDONLY);
+	free_single_ptr((void **)&file_location);
 	retstat = pread(fd, buf, size, offset);
 
 	DEBUG(EXIT);

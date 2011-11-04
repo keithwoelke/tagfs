@@ -184,4 +184,12 @@ bool valid_path_to_file(const char *path);
  */
 int file_id_from_path(const char *path);
 
+/**
+ * Wrapper for db_get_file_location. Returns the location of a file on the physical filesystem.
+ *
+ * @param file_id The file ID in the database to match against.
+ * @return The physical location on the filesystem.
+ */
+char *get_file_location(int file_id);
+
 #endif
