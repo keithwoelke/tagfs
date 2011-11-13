@@ -387,8 +387,10 @@ int folders_at_location(const char *path, int *files, int num_files, int **folde
 	DEBUG(ENTRY);
 
 	assert(path != NULL);
-	assert(files != NULL);
-	assert(num_files > 0);
+	if(strcmp(path, "/") != 0) {  /* only root is allowed to have no files */
+		assert(files != NULL);
+		assert(num_files > 0);
+	}
 	assert(*folders == NULL);
 
 	/* show all tags at root level */
@@ -669,6 +671,10 @@ int file_id_from_path(const char *path) {
 
 char *get_file_location(int file_id) {
 	DEBUG(ENTRY);
+
+	assert(file_id > 0);
+
 	return db_get_file_location(file_id);
+
 	DEBUG(EXIT);
 } /* get_file_location */
