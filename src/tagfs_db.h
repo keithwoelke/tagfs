@@ -80,4 +80,18 @@ int db_files_from_tag_id(int tag_id, int **file_array);
  */
 int db_tag_id_from_tag_name(char *tag_name);
 
+/**
+ * Delete a file from the TagFS by its corresponding file ID.
+ *
+ * @param file_id The ID of the file to delete.
+ */
+void db_delete_file(int file_id);
+
+/**
+ * Delete a tag from the TagFS by its corresponding tag ID.
+ *
+ * @param tag_id The ID of the tag to delete.
+ */
+void db_delete_tag(int tag_id);
+
 #endif

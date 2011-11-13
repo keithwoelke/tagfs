@@ -478,7 +478,7 @@ int files_at_location(const char *path, int **file_array) {
 	num_tokens = path_to_array(path, &tag_array);
 	DEBUG("Path broken up into %d tokens for %s.", num_tokens, path);
 
-	if(num_tokens == 0) {
+	if(num_tokens == 0) { /* if root */
 		DEBUG("Retrieving a list of files with no tags for root view.");
 		/* get all untagged files */
 		tag_id = db_tag_id_from_tag_name("/");
@@ -486,38 +486,44 @@ int files_at_location(const char *path, int **file_array) {
 		num_prev_files = db_files_from_tag_id(tag_id, &prev_files);
 	} else {
 		DEBUG("Retrieving files for %s.", tag_array[i]);
-		/* get first tag files */
-		tag_id = db_tag_id_from_tag_name(tag_array[i]);
+		tag_id = db_tag_id_from_tag_name(tag_array[i]); /* get tag ID for first tag */
 
-		if(tag_id >= 0) {
+		if(tag_id >= 0) { /* if first tag is valid */
 			DEBUG("Tag ID of %s is %d.", tag_array[i], tag_id);
 			num_prev_files = db_files_from_tag_id(tag_id, &prev_files);
-			DEBUG("%d file(s) with %s tag.", num_prev_files, tag_array[i]);
 
-			for(i = 1; i < num_tokens; i++) {
-				/* get files with tag */
-				tag_id = db_tag_id_from_tag_name(tag_array[i]);
+			printf("num_prev_files is %d for tag ID %d\n", num_prev_files, tag_id);
+			if(num_prev_files == 0) { /* This shouldn't happen if database is purged properly after a delete */
+				WARN("Tag ID %d has no files.", tag_id);
+				WARN("Purging database of tag ID %d", tag_id);
+				db_delete_tag(tag_id);
+			} else if(num_prev_files > 0) {
+				DEBUG("%d file(s) with %s tag.", num_prev_files, tag_array[i]);
 
-				if(tag_id < 0) {
-					free_single_ptr((void *)&prev_files);
-					num_prev_files = 0;
-					break;
+				for(i = 1; i < num_tokens; i++) {
+					tag_id = db_tag_id_from_tag_name(tag_array[i]); /* get files with tag */
+
+					if(tag_id > 0) { /* if tag is valid */
+						num_cur_files = db_files_from_tag_id(tag_id, &cur_files);
+
+						if(num_prev_files > 0) {
+							/* find intersection of both arrays */
+							heap_sort(prev_files, num_prev_files);
+							heap_sort(cur_files, num_cur_files);
+
+							num_intersection_files = array_intersection(prev_files, num_prev_files, cur_files, num_cur_files, &intersection_files);
+
+							free_single_ptr((void *)&cur_files);
+							free_single_ptr((void *)&prev_files);
+
+							/* assign result to prev_files array */
+							prev_files = intersection_files;
+							num_prev_files = num_intersection_files;
+						}
+					}
 				}
-
-				num_cur_files = db_files_from_tag_id(tag_id, &cur_files);
-				/* find intersection of both arrays */
-				heap_sort(prev_files, num_prev_files);
-				heap_sort(cur_files, num_cur_files);
-
-				num_intersection_files = array_intersection(prev_files, num_prev_files, cur_files, num_cur_files, &intersection_files);
-
-				free_single_ptr((void *)&prev_files);
-				free_single_ptr((void *)&cur_files);
-
-				/* assign result to prev_files array */
-				prev_files = intersection_files;
-				num_prev_files = num_intersection_files;
 			}
+
 		}
 
 		free_double_ptr((void ***)&tag_array, num_tokens);
@@ -643,21 +649,24 @@ int file_id_from_path(const char *path) {
 	dirpath = dirname(path);
 	filename = basename(path);
 
+	DEBUG("Retrieving files from %s", dirpath);
 	file_count = files_at_location(dirpath, &file_array);
 	free_single_ptr((void **)&dirpath);
 
-	for(i = 0; i < file_count; i++) {
-		file_found = file_name_from_id(file_array[i]);
+	if(file_array != NULL) {
+		for(i = 0; i < file_count; i++) {
+			file_found = file_name_from_id(file_array[i]);
 
-		if(strcmp(file_found, filename) == 0) {
-			file_id = file_array[i];
-			valid = true;
-		}
+			if(strcmp(file_found, filename) == 0) {
+				file_id = file_array[i];
+				valid = true;
+			}
 
-		free_single_ptr((void **)&file_found);
+			free_single_ptr((void **)&file_found);
 
-		if(valid == true) {
-			break;
+			if(valid == true) {
+				break;
+			}
 		}
 	}
 
@@ -674,7 +683,6 @@ char *get_file_location(int file_id) {
 
 	assert(file_id > 0);
 
-	return db_get_file_location(file_id);
-
 	DEBUG(EXIT);
+	return db_get_file_location(file_id);
 } /* get_file_location */
