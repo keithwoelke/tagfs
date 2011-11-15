@@ -492,7 +492,6 @@ int files_at_location(const char *path, int **file_array) {
 			DEBUG("Tag ID of %s is %d.", tag_array[i], tag_id);
 			num_prev_files = db_files_from_tag_id(tag_id, &prev_files);
 
-			printf("num_prev_files is %d for tag ID %d\n", num_prev_files, tag_id);
 			if(num_prev_files == 0) { /* This shouldn't happen if database is purged properly after a delete */
 				WARN("Tag ID %d has no files.", tag_id);
 				WARN("Purging database of tag ID %d", tag_id);
@@ -668,9 +667,10 @@ int file_id_from_path(const char *path) {
 				break;
 			}
 		}
+
+		free_single_ptr((void **)&file_array);
 	}
 
-	free_single_ptr((void **)&file_array);
 	free_single_ptr((void **)&filename);
 
 	DEBUG("%s has file ID of %d.", path, file_id); 
@@ -679,10 +679,23 @@ int file_id_from_path(const char *path) {
 } /* file_id_from_path */
 
 char *get_file_location(int file_id) {
+	char *file_location = NULL;
+
 	DEBUG(ENTRY);
 
 	assert(file_id > 0);
 
+	file_location = db_get_file_location(file_id);
+
 	DEBUG(EXIT);
-	return db_get_file_location(file_id);
+	return file_location;
 } /* get_file_location */
+
+void delete_file(int file_id) {
+	DEBUG(ENTRY);
+
+	db_delete_file(file_id);
+	db_delete_empty_tags();
+
+	DEBUG(EXIT);
+} /* delete_file */

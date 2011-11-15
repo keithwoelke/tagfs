@@ -9,7 +9,10 @@
 #ifndef TAGFS_COMMON_H
 #define TAGFS_COMMON_H
 
+#include <semaphore.h>
 #include <stdbool.h>
+
+sem_t sem;
 
 /**
  * Counts the number if digits in an integer.
@@ -191,5 +194,12 @@ int file_id_from_path(const char *path);
  * @return The physical location on the filesystem.
  */
 char *get_file_location(int file_id);
+
+/**
+ * Delete a file from the TagFS by its corresponding file ID.
+ *
+ * @param file_id The ID of the file to delete.
+ */
+void delete_file(int file_id);
 
 #endif

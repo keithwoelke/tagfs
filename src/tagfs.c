@@ -32,10 +32,15 @@ int tagfs_getattr(const char *path, struct stat *statbuf) {
 
 	if (valid_path_to_file(path)) {
 		file_id = file_id_from_path(path);
-		file_location = db_get_file_location(file_id);
+		file_location = get_file_location(file_id);
 
 		/* read information from actual file */
 		retstat = stat(file_location, statbuf);
+
+		if(retstat < 0) {
+			WARN("Reading information from file %s failed", file_location);
+			delete_file(file_id);
+		}
 
 		free_single_ptr((void **)&file_location);
 	}
@@ -92,7 +97,7 @@ int tagfs_unlink(const char *path) {
 	DEBUG(ENTRY);
 	INFO("Deleting %s", path);
 
-	db_delete_file(file_id_from_path(path));
+	delete_file(file_id_from_path(path));
 
 	DEBUG(EXIT);
 	return retstat;
@@ -186,12 +191,43 @@ int tagfs_utime(const char *path, struct utimbuf *ubuf) {
 	return retstat;
 }
 
+/*
+ * File open operation
+ *
+ * No creation (O_CREAT, O_EXCL) and by default also no truncation (O_TRUNC)
+ * flags will be passed to open(). If an application specifies O_TRUNC,
+ * fuse first calls truncate() and then open(). Only if 'atomic_o_trunc' has
+ * been specified and kernel version is 2.6.24 or later, O_TRUNC is passed on
+ * to open.
+ *
+ * Unless the 'default_permissions' mount option is given, open should check if
+ * the operation is permitted for the given flags. Optionally open may also
+ * return an arbitrary filehandle in the fuse_file_info structure, which will
+ * be passed to all file operations.
+ *
+ * Changed in version 2.2
+ */
 int tagfs_open(const char *path, struct fuse_file_info *fi) {
+	char *file_location = NULL;
+	int fd = 0;
+	int file_id = 0;
 	int retstat = 0;
 
 	DEBUG(ENTRY);
+	INFO("Opening file: %s", path);
 
-	ERROR("TODO: %s", __FUNCTION__);
+	file_id = file_id_from_path(path);
+	file_location = get_file_location(file_id);
+
+	fd = open(file_location, fi->flags);
+
+	if(fd < 0) {
+		WARN("Opening file %s failed", file_location);
+		retstat = -errno;
+	}
+
+	free_single_ptr((void **)&file_location);
+	fi->fh = fd;
 
 	DEBUG(EXIT);
 	return retstat;
@@ -572,45 +608,46 @@ int tagfs_fgetattr(const char *path, struct stat *statbuf, struct fuse_file_info
 /* TODO: Implement these */
 struct fuse_operations tagfs_oper = {
 	.getattr = tagfs_getattr,
-	/*.readlink = tagfs_readlink,*/
-	/*.mknod = tagfs_mknod,*/
+	.readlink = tagfs_readlink,
+	.mknod = tagfs_mknod,
 	/*.mkdir = tagfs_mkdir,*/
 	.unlink = tagfs_unlink,
-	/*.rmdir = tagfs_rmdir,*/
-	/*.symlink = tagfs_symlink,*/
-	/*.rename = tagfs_rename,*/
-	/*.link = tagfs_link,*/
-	/*.chmod = tagfs_chmod,*/
-	/*.chown = tagfs_chown,*/
-	/*.truncate = tagfs_truncate,*/
-	/*.utime = tagfs_utime,*/
-	/* .open = tagfs_open,*/
+	.rmdir = tagfs_rmdir,
+	.symlink = tagfs_symlink,
+	.rename = tagfs_rename,
+	.link = tagfs_link,
+	.chmod = tagfs_chmod,
+	.chown = tagfs_chown,
+	.truncate = tagfs_truncate,
+	.utime = tagfs_utime,
+	.open = tagfs_open,
 	.read = tagfs_read,
-	/*.write = tagfs_write,*/
+	.write = tagfs_write,
 	/*.statfs = tagfs_statfs,*/
 	/*.flush = tagfs_flush,*/
-	/*.release = tagfs_release,*/
-	/*.fsync = tagfs_fsync,*/
-	/*.setxattr = tagfs_setxattr,*/
-	/*.getxattr = tagfs_getxattr,*/
-	/*.listxattr = tagfs_listxattr,*/
-	/*.removexattr = tagfs_removexattr,*/
+	.release = tagfs_release,
+	.fsync = tagfs_fsync,
+	.setxattr = tagfs_setxattr,
+	.getxattr = tagfs_getxattr,
+	.listxattr = tagfs_listxattr,
+	.removexattr = tagfs_removexattr,
 	/*.opendir = tagfs_opendir,*/
 	.readdir = tagfs_readdir,
 	/*.releasedir = tagfs_releasedir,*/
-	/*.fsyncdir = tagfs_fsyncdir,*/
+	.fsyncdir = tagfs_fsyncdir,
 	.init = tagfs_init,
 	.destroy = tagfs_destroy,
 	/*.access = tagfs_access,*/
-	/*.create = tagfs_create,*/
-	/*.ftruncate = tagfs_ftruncate,*/
-	/*.fgetattr = tagfs_fgetattr*/
+	.create = tagfs_create,
+	.ftruncate = tagfs_ftruncate,
+	.fgetattr = tagfs_fgetattr
 };
 
 int main(int argc, char *argv[]) {
 	struct tagfs_state tagfs_data;
 
 	debug_init();
+	sem_init(&sem, 0, 1);
 	tagfs_data.exec_dir = get_exec_dir(argv[0]);
 
 	return fuse_main(argc, argv, &tagfs_oper, &tagfs_data);

@@ -94,4 +94,9 @@ void db_delete_file(int file_id);
  */
 void db_delete_tag(int tag_id);
 
+/**
+ * Deletes all tags from the database which are not associated with files.
+ */
+void db_delete_empty_tags();
+
 #endif

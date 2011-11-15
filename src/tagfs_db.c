@@ -5,8 +5,11 @@
 #include <assert.h>
 #include <glib.h>
 #include <math.h>
+#include <semaphore.h>
 #include <sqlite3.h>
 #include <string.h>
+
+sem_t sem;
 
 /**
  * Compiles an SQL statement into byte-code.
@@ -697,6 +700,7 @@ void db_delete_file(int file_id) {
 	assert(written == query_length);
 
 	/* connect to database */
+	sem_wait(&sem);
 	conn = db_connect();
 	assert(conn != NULL);
 
@@ -704,6 +708,7 @@ void db_delete_file(int file_id) {
 
 	db_finalize_statement(conn, query, res);
 	db_disconnect(conn);
+	sem_post(&sem);
 	free_single_ptr((void **)&query);
 
 	DEBUG("File with ID %d was %sdeleted successfully.", file_id, rc == 0 ? "" : "not ")
@@ -733,6 +738,7 @@ void db_delete_tag(int tag_id) {
 	assert(written == query_length);
 
 	/* connect to database */
+	sem_wait(&sem);
 	conn = db_connect();
 	assert(conn != NULL);
 
@@ -740,8 +746,33 @@ void db_delete_tag(int tag_id) {
 
 	db_finalize_statement(conn, query, res);
 	db_disconnect(conn);
+	sem_post(&sem);
 	free_single_ptr((void **)&query);
 
 	DEBUG("File with ID %d was %sdeleted successfully.", tag_id, rc == 0 ? "" : "not ")
 	DEBUG(EXIT);
 } /* db_delete_tag */
+
+void db_delete_empty_tags() {
+	int rc = SQLITE_ERROR; /* return code of sqlite operation */
+	sqlite3 *conn = NULL;
+	sqlite3_stmt *res = NULL;
+	char query[] = "DELETE FROM tags WHERE tag_name NOT IN (SELECT DISTINCT tag_name FROM all_tables)";
+
+	DEBUG(ENTRY);
+	DEBUG("Preparing to purge all empty tags from the database.");
+
+	/* connect to database */
+	sem_wait(&sem);
+	conn = db_connect();
+	assert(conn != NULL);
+
+	rc = db_execute_statement(conn, query, &res);
+
+	db_finalize_statement(conn, query, res);
+	db_disconnect(conn);
+	sem_post(&sem);
+
+	DEBUG("Purging empty tags was %ssuccessful", rc == SQLITE_OK ? "" : "not");
+	DEBUG(EXIT);
+}
