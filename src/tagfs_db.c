@@ -775,4 +775,4 @@ void db_delete_empty_tags() {
 
 	DEBUG("Purging empty tags was %ssuccessful", rc == SQLITE_OK ? "" : "not");
 	DEBUG(EXIT);
-}
+} /* db_delete_empty_tags */
