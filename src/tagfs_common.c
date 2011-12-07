@@ -517,8 +517,12 @@ int files_at_location(const char *path, int **file_array) {
 
 							/* assign result to prev_files array */
 							prev_files = intersection_files;
+							intersection_files = NULL;
 							num_prev_files = num_intersection_files;
 						}
+					}
+					else { /* path is not valid */
+						num_prev_files = 0;
 					}
 				}
 			}
