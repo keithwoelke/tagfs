@@ -55,17 +55,6 @@ int tagfs_getattr(const char *path, struct stat *statbuf) {
 	return retstat;
 } /* tagfs_getattr */
 
-int tagfs_readlink(const char *path, char *link, size_t size) {
-	int retstat = 0;
-
-	DEBUG(ENTRY);
-
-	ERROR("TODO: %s", __FUNCTION__);
-
-	DEBUG(EXIT);
-	return retstat;
-}
-
 int tagfs_mknod(const char *path, mode_t mode, dev_t dev) {
 	int retstat = 0;
 
@@ -104,17 +93,6 @@ int tagfs_unlink(const char *path) {
 }
 
 int tagfs_rmdir(const char *path) {
-	int retstat = 0;
-
-	DEBUG(ENTRY);
-
-	ERROR("TODO: %s", __FUNCTION__);
-
-	DEBUG(EXIT);
-	return retstat;
-}
-
-int tagfs_symlink(const char *path, const char *link) {
 	int retstat = 0;
 
 	DEBUG(ENTRY);
@@ -608,12 +586,10 @@ int tagfs_fgetattr(const char *path, struct stat *statbuf, struct fuse_file_info
 /* TODO: Implement these */
 struct fuse_operations tagfs_oper = {
 	.getattr = tagfs_getattr,
-	.readlink = tagfs_readlink,
 	.mknod = tagfs_mknod,
 	/*.mkdir = tagfs_mkdir,*/
 	.unlink = tagfs_unlink,
 	.rmdir = tagfs_rmdir,
-	.symlink = tagfs_symlink,
 	.rename = tagfs_rename,
 	.link = tagfs_link,
 	.chmod = tagfs_chmod,
