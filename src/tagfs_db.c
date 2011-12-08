@@ -9,8 +9,6 @@
 #include <sqlite3.h>
 #include <string.h>
 
-sem_t sem;
-
 /**
  * Compiles an SQL statement into byte-code.
  *
@@ -41,7 +39,7 @@ static int db_prepare_statement(sqlite3 *conn, char *query, sqlite3_stmt **res) 
 		WARN("An error occured while communicating with the database");
 	}
 
-	DEBUG("Query compilation was %ssuccessful", rc == SQLITE_OK ? "" : "un");
+	DEBUG("Query compilation was %ssuccessful", rc == SQLITE_DONE ? "" : "un");
 	DEBUG(EXIT);
 	return rc;
 } /* db_prepare_statement */
@@ -135,7 +133,7 @@ static int db_finalize_statement(sqlite3 *conn, char *query, sqlite3_stmt *res) 
 	DEBUG("Statement finalization completed with result code: %d", rc);
 	DEBUG(EXIT);
 	return rc;
-} /* db_step_statement */
+} /* db_finalize_statement */
 
 /**
  * Insert the results of the specified query into the specified table. Only the results of the first column are entered into the table, and the values are assumed to be integers.
@@ -700,7 +698,6 @@ void db_delete_file(int file_id) {
 	assert(written == query_length);
 
 	/* connect to database */
-	sem_wait(&sem);
 	conn = db_connect();
 	assert(conn != NULL);
 
@@ -708,7 +705,6 @@ void db_delete_file(int file_id) {
 
 	db_finalize_statement(conn, query, res);
 	db_disconnect(conn);
-	sem_post(&sem);
 	free_single_ptr((void **)&query);
 
 	DEBUG("File with ID %d was %sdeleted successfully.", file_id, rc == 0 ? "" : "not ")
@@ -738,7 +734,6 @@ void db_delete_tag(int tag_id) {
 	assert(written == query_length);
 
 	/* connect to database */
-	sem_wait(&sem);
 	conn = db_connect();
 	assert(conn != NULL);
 
@@ -746,7 +741,6 @@ void db_delete_tag(int tag_id) {
 
 	db_finalize_statement(conn, query, res);
 	db_disconnect(conn);
-	sem_post(&sem);
 	free_single_ptr((void **)&query);
 
 	DEBUG("File with ID %d was %sdeleted successfully.", tag_id, rc == 0 ? "" : "not ")
@@ -763,7 +757,6 @@ void db_delete_empty_tags() {
 	DEBUG("Preparing to purge all empty tags from the database.");
 
 	/* connect to database */
-	sem_wait(&sem);
 	conn = db_connect();
 	assert(conn != NULL);
 
@@ -771,8 +764,7 @@ void db_delete_empty_tags() {
 
 	db_finalize_statement(conn, query, res);
 	db_disconnect(conn);
-	sem_post(&sem);
 
-	DEBUG("Purging empty tags was %ssuccessful", rc == SQLITE_OK ? "" : "not");
+	DEBUG("Purging empty tags was %ssuccessful", rc == SQLITE_DONE ? "" : "not");
 	DEBUG(EXIT);
 } /* db_delete_empty_tags */
