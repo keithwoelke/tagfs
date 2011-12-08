@@ -100,11 +100,16 @@ void db_delete_tag(int tag_id);
 void db_delete_empty_tags();
 
 /**
- * Adds a tag by tag ID to a file by file ID.
+ * Adds an existing tag to a file.
  *
  * @param tag_id The ID of the tag to add to the file.
  * @param file_id The ID of the file to add the tag to.
  */
 void db_add_tag_to_file(int tag_id, int file_id);
+
+/**
+ * Removes a tag from a file.
+ */
+void db_remove_tag_from_file(int tag_id, int file_id);
 
 #endif
