@@ -86,7 +86,7 @@ int tagfs_unlink(const char *path) {
 	DEBUG(ENTRY);
 	INFO("Deleting %s", path);
 
-	delete_file(file_id_from_path(path));
+	remove_tags(file_id_from_path(path));
 
 	DEBUG(EXIT);
 	return retstat;
@@ -587,7 +587,7 @@ int tagfs_fgetattr(const char *path, struct stat *statbuf, struct fuse_file_info
 struct fuse_operations tagfs_oper = {
 	.getattr = tagfs_getattr,
 	.mknod = tagfs_mknod,
-	/*.mkdir = tagfs_mkdir,*/
+	.mkdir = tagfs_mkdir,
 	.unlink = tagfs_unlink,
 	.rmdir = tagfs_rmdir,
 	.rename = tagfs_rename,
@@ -599,21 +599,21 @@ struct fuse_operations tagfs_oper = {
 	.open = tagfs_open,
 	.read = tagfs_read,
 	.write = tagfs_write,
-	/*.statfs = tagfs_statfs,*/
-	/*.flush = tagfs_flush,*/
+	.statfs = tagfs_statfs,
+	.flush = tagfs_flush,
 	.release = tagfs_release,
 	.fsync = tagfs_fsync,
 	.setxattr = tagfs_setxattr,
 	.getxattr = tagfs_getxattr,
 	.listxattr = tagfs_listxattr,
 	.removexattr = tagfs_removexattr,
-	/*.opendir = tagfs_opendir,*/
+	.opendir = tagfs_opendir,
 	.readdir = tagfs_readdir,
-	/*.releasedir = tagfs_releasedir,*/
+	.releasedir = tagfs_releasedir,
 	.fsyncdir = tagfs_fsyncdir,
 	.init = tagfs_init,
 	.destroy = tagfs_destroy,
-	/*.access = tagfs_access,*/
+	.access = tagfs_access,
 	.create = tagfs_create,
 	.ftruncate = tagfs_ftruncate,
 	.fgetattr = tagfs_fgetattr

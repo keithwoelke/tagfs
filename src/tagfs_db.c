@@ -768,3 +768,38 @@ void db_delete_empty_tags() {
 	DEBUG("Purging empty tags was %ssuccessful", rc == SQLITE_DONE ? "" : "not");
 	DEBUG(EXIT);
 } /* db_delete_empty_tags */
+
+void db_add_tag_to_file(int tag_id, int file_id) {
+	char *query = NULL;
+	char query_outline[] = "INSERT INTO file_has_tag VALUES(, )";
+	int query_length = 0;
+	int rc = SQLITE_ERROR; /* return code of sqlite operation */
+	int written = 0; /* number of characters written */
+	sqlite3 *conn = NULL;
+	sqlite3_stmt *res = NULL;
+
+	DEBUG(ENTRY);
+
+	assert(tag_id >= 0);
+	assert(file_id > 0);
+
+	/* prepare query */
+	query_length = strlen(query_outline) + num_digits(tag_id) + num_digits(file_id);
+	query = malloc(query_length * sizeof(*query) + 1);
+	assert(query != NULL);
+	written = snprintf(query, query_length + 1, "INSERT INTO file_has_tag VALUES(%d, %d)", file_id, tag_id);
+	assert(written == query_length);
+
+	/* connect to database */
+	conn = db_connect();
+	assert(conn != NULL);
+
+	rc = db_execute_statement(conn, query, &res);
+
+	db_finalize_statement(conn, query, res);
+	db_disconnect(conn);
+	free_single_ptr((void **)&query);
+
+	DEBUG("Adding tag ID %d to file ID %d was %ssuccessful", tag_id, file_id, rc == SQLITE_DONE ? "" : "not ");
+	DEBUG(EXIT);
+} /* db_add_tag_to_file */
