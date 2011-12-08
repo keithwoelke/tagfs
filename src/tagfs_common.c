@@ -654,6 +654,7 @@ int file_id_from_path(const char *path) {
 
 	DEBUG("Retrieving files from %s", dirpath);
 	file_count = files_at_location(dirpath, &file_array);
+	DEBUG("%d files at %s", file_count, dirpath);
 	free_single_ptr((void **)&dirpath);
 
 	if(file_array != NULL) {
