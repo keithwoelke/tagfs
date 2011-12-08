@@ -704,3 +704,39 @@ void delete_file(int file_id) {
 
 	DEBUG(EXIT);
 } /* delete_file */
+
+void remove_tags(int file_id) {
+	int *tags = NULL;
+	int i = 0;
+	int num_tags = 0;
+
+	DEBUG(ENTRY);
+
+	assert(file_id > 0);
+
+	DEBUG("Removing tags from file with ID %d", file_id);
+
+	num_tags = tags_from_file(file_id, &tags);
+	DEBUG("File ID %d has %d tags to remove", file_id, num_tags);
+
+	for(i = 0; i < num_tags; i++) {
+		db_remove_tag_from_file(tags[i], file_id);
+	}
+
+	DEBUG(EXIT);
+} /* remove_tags */
+
+int tags_from_file(int file_id, int **tags) {
+	int num_tags = 0;
+
+	DEBUG(ENTRY);
+
+	assert(file_id > 0);
+
+	DEBUG("Retrieving tags from file ID %d", file_id);
+
+	num_tags = db_tags_from_files(&file_id, 1, tags);
+
+	DEBUG(EXIT);
+	return num_tags;
+} /* tags_from_files */

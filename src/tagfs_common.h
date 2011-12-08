@@ -202,4 +202,20 @@ char *get_file_location(int file_id);
  */
 void delete_file(int file_id);
 
+/**
+ * Remove all tags from a file.
+ *
+ * @param file_id The ID of the file to remove all tags from.
+ */
+void remove_tags(int file_id);
+
+/**
+ * Retrieve all tags on a file.
+ *
+ * @param file_id The ID of the file to retrieve.
+ * @param tags The collection of tags on the specified file.
+ * @return The number of tags on the specified file.
+ */
+int tags_from_file(int file_id, int **tags);
+
 #endif

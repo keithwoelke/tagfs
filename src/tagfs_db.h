@@ -109,6 +109,9 @@ void db_add_tag_to_file(int tag_id, int file_id);
 
 /**
  * Removes a tag from a file.
+ *
+ * @param tag_id The ID of the tag to add to the file.
+ * @param file_id The ID of the file to add the tag to.
  */
 void db_remove_tag_from_file(int tag_id, int file_id);
 
