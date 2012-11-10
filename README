@@ -1,3 +1,20 @@
 To compile this program, you will need the sqlite3 (libsqlite3-dev), FUSE (libfuse-dev), and glib (libglib2.0-dev) development files.
 
-If you run into problems with TagFS, try running TagFS in single-thread mode. This may help solve the problem. If not, it will still make it easier to identify the problem in the logs. This is accomplished with the -s flag. Example: ./tagfs -s TagFS/
+TagFS must be run in single-thread mode, otherwise the behavior is undefined. This can be accomplished with the -s flag. Example: ./tagfs -s TagFS/
+
+Operations implemented:
+
+Delete -> Remove all tags
+
+Fuse behaviors:
+
+Copy = Open (src) -> Create (dest) -> Read (src) -> Write (dest)
+Move = Rename
+Copy in = Create (dest) -> Write (dest)
+Move in = Create (dest) -> Write (dest)
+Copy out = Open (src) -> Read (src)
+Move out = Open (src) -> Read (src)
+Copy over = Open (src) -> Open (dest) -> Truncate (dest) -> Read (src) -> Write (dest)
+Move over = Rename
+Copy in over = Open(dest) -> Truncate (dest) -> Write (dest)
+Move in over = Create (dest) -> Write (dest)
