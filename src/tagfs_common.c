@@ -21,6 +21,7 @@ static int remove_path_from_hash_table(const char *path, GHashTable **table) {
 	long unsigned int tag_id = 0;
 
 	DEBUG(ENTRY);
+	DEBUG("Removing tags from %s from hash table of size %d", path, g_hash_table_size(*table));
 
 	num_tags_in_path = path_to_array(path, &path_array);
 
@@ -35,6 +36,7 @@ static int remove_path_from_hash_table(const char *path, GHashTable **table) {
 		free_double_ptr((void ***)&path_array, num_tags_in_path);
 	}
 
+	DEBUG("Returning a hash table of size %d", g_hash_table_size(*table));
 	DEBUG(EXIT);
 	return g_hash_table_size(*table);
 } /* remove_path_from_hash_table */
@@ -427,6 +429,7 @@ int smart_tags_from_files(const char *path, int *files, int num_files, int **tag
 	int popular_tag = -1;
 
 	DEBUG(ENTRY);
+	DEBUG("Browsing for minimal set of tags on %d files at %s", num_files, path);
 
 	/* populate hash table with file IDs */
 	table = g_hash_table_new(NULL, NULL);
@@ -461,6 +464,7 @@ int smart_tags_from_files(const char *path, int *files, int num_files, int **tag
 
 	g_hash_table_destroy(table);
 
+	DEBUG("Returning %d tags", exclude_tags_count);
 	DEBUG(EXIT);
 	return exclude_tags_count;
 } /* smart_tags_from_files */
@@ -854,6 +858,7 @@ int most_popular_tag_on_files_at_location(const char *path, int *files, int num_
 	long unsigned int tag_id = 0;
 
 	DEBUG(ENTRY);
+	DEBUG("Looking for the most popular tag on %d files at %s, excluding %d tags", num_files, path, *exclude_tags_count);
 
 	table = g_hash_table_new(NULL, NULL);
 
@@ -900,6 +905,7 @@ int most_popular_tag_on_files_at_location(const char *path, int *files, int num_
 		(*exclude_tags)[(*exclude_tags_count)++] = GPOINTER_TO_INT(largest_key);
 	}
 
+	DEBUG("The most popular tag on the %d files at %s has ID %d", num_files, path, GPOINTER_TO_INT(largest_key));
 	DEBUG(EXIT);
 	return GPOINTER_TO_INT(largest_key);
 } /* most_popular_tag_on_files_at_location */
