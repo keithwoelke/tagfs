@@ -146,7 +146,7 @@ int array_intersection(int *a, int a_size, int *b, int b_size, int **intersectio
  * @param tags The array of tags to display at the location.
  * @return The number of folders at the specified location.
  */
-int smart_tags_from_files(const char *path, int *files, int num_files, int **tags) {
+int smart_tags_from_files(const char *path, int *files, int num_files, int **tags);
 
 /**
  * Returns a collection of the files at the specified path in the filesystem.
@@ -228,5 +228,16 @@ void remove_tags(int file_id);
  * @return The number of tags on the specified file.
  */
 int tags_from_file(int file_id, int **tags);
+
+/**
+ * Given a path and a collection of files at that location, calculate which tag is used the most among all files.
+ *
+ * @param path A directory path.
+ * @param files An array of file IDs.
+ * @param num_files The number of files.
+ * @param exclude_tags An array of tag IDs to exclude from consideration.
+ * @param exclude_tags_count The number tags to exclude.
+ */
+int most_popular_tag_on_files_at_location(const char *path, int *files, int num_files, int **exclude_tags, int *exclude_tags_count);
 
 #endif

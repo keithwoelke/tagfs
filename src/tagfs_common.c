@@ -8,80 +8,6 @@
 #include <string.h>
 
 /**
- * Given a path and a collection of files at that location, calculate which tag is used the most among all files.
- *
- * @param path A directory path.
- * @param files An array of file IDs.
- * @param num_files The number of files.
- * @param exclude_tags An array of tag IDs to exclude from consideration.
- * @param exclude_tags_count The number tags to exclude.
- */
-static int most_popular_tag_on_files_at_location(const char *path, int *files, int num_files, int **exclude_tags, int *exclude_tags_count) {
-	GHashTable *table = NULL;
-	GHashTableIter iter;
-	gpointer key = NULL;
-	gpointer largest_key = NULL;
-	gpointer largest_value = NULL;
-	gpointer value = NULL;
-	int *tags_on_file = NULL;
-	int file_id = 0;
-	int i = 0;
-	int j = 0;
-	int num_tags = 0;
-	long unsigned int tag_id = 0;
-
-	DEBUG(ENTRY);
-
-	table = g_hash_table_new(NULL, NULL);
-
-	for(i = 0; i < num_files; i++) {
-		file_id = files[i];
-		num_tags = tags_from_file(file_id, &tags_on_file);
-
-		for(j = 0; j < num_tags; j++) {
-			tag_id = tags_on_file[j];
-
-			if(g_hash_table_lookup(table, (gpointer)tag_id) == NULL) {
-				g_hash_table_insert(table, (gpointer)tag_id, (gpointer)1);
-			} else {
-				value = g_hash_table_lookup(table, (gpointer)tag_id);
-				g_hash_table_insert(table, (gpointer)tag_id, (gpointer)value++);
-			}
-		}
-
-		free_single_ptr((void **)&tags_on_file);
-	}
-
-	remove_path_from_hash_table(path, &table);
-
-	if(*exclude_tags == NULL) {
-		*exclude_tags = malloc(sizeof(**exclude_tags) * g_hash_table_size(table));
-	}
-
-	for(i = 0; i < *exclude_tags_count; i++) {
-		tag_id = (*exclude_tags)[i];
-		g_hash_table_remove(table, (gpointer)tag_id);
-	}
-
-	g_hash_table_iter_init(&iter, table);
-	while(g_hash_table_iter_next(&iter, &key, &value)) {
-		if(value > largest_value) {
-			largest_key = key;
-			largest_value = value;
-		}
-	}
-
-	g_hash_table_destroy(table);
-
-	if(largest_key != 0) { /* add tag to list of exclusions */
-		(*exclude_tags)[(*exclude_tags_count)++] = GPOINTER_TO_INT(largest_key);
-	}
-
-	DEBUG(EXIT);
-	return GPOINTER_TO_INT(largest_key);
-} /* most_popular_tag_on_files_at_location */
-
-/**
  * Given a hash table, remove all matching path elements (tags).
  *
  * @param path A directory path.
@@ -89,6 +15,7 @@ static int most_popular_tag_on_files_at_location(const char *path, int *files, i
  */
 static int remove_path_from_hash_table(const char *path, GHashTable **table) {
 	char **path_array = NULL;
+	char *tag_name = NULL;
 	int i = 0;
 	int num_tags_in_path = 0;
 	long unsigned int tag_id = 0;
@@ -98,6 +25,7 @@ static int remove_path_from_hash_table(const char *path, GHashTable **table) {
 	num_tags_in_path = path_to_array(path, &path_array);
 
 	for(i = 0; i < num_tags_in_path; i++) {
+		tag_name = path_array[i];
 		tag_id = db_tag_id_from_tag_name(tag_name);
 
 		g_hash_table_remove(*table, (gpointer)tag_id);
@@ -514,7 +442,7 @@ int smart_tags_from_files(const char *path, int *files, int num_files, int **tag
 		i = 0;
 		g_hash_table_iter_init(&iter, table); /* copy files from hash table to array */
 		while(g_hash_table_iter_next(&iter, &key, &value)) {
-				file_array[i++] = key;
+				file_array[i++] = GPOINTER_TO_INT(key);
 		}
 
 		popular_tag = most_popular_tag_on_files_at_location(path, file_array, num_files, tags, &exclude_tags_count);
@@ -910,3 +838,68 @@ int tags_from_file(int file_id, int **tags) {
 	DEBUG(EXIT);
 	return num_tags;
 } /* tags_from_files */
+
+int most_popular_tag_on_files_at_location(const char *path, int *files, int num_files, int **exclude_tags, int *exclude_tags_count) {
+	GHashTable *table = NULL;
+	GHashTableIter iter;
+	gpointer key = NULL;
+	gpointer largest_key = NULL;
+	gpointer largest_value = NULL;
+	gpointer value = NULL;
+	int *tags_on_file = NULL;
+	int file_id = 0;
+	int i = 0;
+	int j = 0;
+	int num_tags = 0;
+	long unsigned int tag_id = 0;
+
+	DEBUG(ENTRY);
+
+	table = g_hash_table_new(NULL, NULL);
+
+	for(i = 0; i < num_files; i++) {
+		file_id = files[i];
+		num_tags = tags_from_file(file_id, &tags_on_file);
+
+		for(j = 0; j < num_tags; j++) {
+			tag_id = tags_on_file[j];
+
+			if(g_hash_table_lookup(table, (gpointer)tag_id) == NULL) {
+				g_hash_table_insert(table, (gpointer)tag_id, (gpointer)1);
+			} else {
+				value = g_hash_table_lookup(table, (gpointer)tag_id);
+				g_hash_table_insert(table, (gpointer)tag_id, (gpointer)value++);
+			}
+		}
+
+		free_single_ptr((void **)&tags_on_file);
+	}
+
+	remove_path_from_hash_table(path, &table);
+
+	if(*exclude_tags == NULL) {
+		*exclude_tags = malloc(sizeof(**exclude_tags) * g_hash_table_size(table));
+	}
+
+	for(i = 0; i < *exclude_tags_count; i++) {
+		tag_id = (*exclude_tags)[i];
+		g_hash_table_remove(table, (gpointer)tag_id);
+	}
+
+	g_hash_table_iter_init(&iter, table);
+	while(g_hash_table_iter_next(&iter, &key, &value)) {
+		if(value > largest_value) {
+			largest_key = key;
+			largest_value = value;
+		}
+	}
+
+	g_hash_table_destroy(table);
+
+	if(largest_key != 0) { /* add tag to list of exclusions */
+		(*exclude_tags)[(*exclude_tags_count)++] = GPOINTER_TO_INT(largest_key);
+	}
+
+	DEBUG(EXIT);
+	return GPOINTER_TO_INT(largest_key);
+} /* most_popular_tag_on_files_at_location */
