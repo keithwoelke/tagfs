@@ -24,6 +24,7 @@ struct tagfs_state {
 	const char *exec_dir;
 	const char *db_path;
 };
+
 #define TAGFS_DATA ((struct tagfs_state *)fuse_get_context()->private_data)
 
 #endif

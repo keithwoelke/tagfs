@@ -58,10 +58,18 @@ int db_int_array_from_query(char *desired_column_name, char *result_query, int *
 /**
  * Returns an array of all tags.
  *
- * @param tags OUT: A collection of all available tags.
+ * @param tags A collection of all available tags.
  * @return The number of tags returned.
  */
 int db_get_all_tags(int **tags);
+
+/**
+ * Returns an array of all files.
+ *
+ * @param tags A collection of all available files.
+ * @return The number of files returned.
+ */
+int db_get_all_files(int **files);
 
 /**
  * Returns files associated with a tag ID.

@@ -1,5 +1,5 @@
-tagfs :
-	gcc -g -lsqlite3 -lglib-2.0 -Wall `pkg-config fuse --cflags --libs` -I/usr/include/glib-2.0/ -I/usr/lib/x86_64-linux-gnu/glib-2.0/include/ tagfs.c tagfs_db.c tagfs_common.c tagfs_debug.c -o tagfs
+tagfs : tagfs.c tagfs_db.c tagfs_common.c tagfs_debug.c
+	gcc -g -Wall -I/usr/lib/x86_64-linux-gnu/glib-2.0/include/ tagfs.c tagfs_db.c tagfs_common.c tagfs_debug.c -o tagfs `pkg-config fuse --cflags --libs` -lsqlite3 -I/usr/include/glib-2.0/ -lglib-2.0
 
 run : tagfs
 	./tagfs -f -s TagFS

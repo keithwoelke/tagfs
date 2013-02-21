@@ -154,15 +154,16 @@ static void db_insert_query_results_into_hashtable(sqlite3 *conn, char *query, G
 
 	DEBUG("Inserting into table results from query: %s", query);
 
-	db_execute_statement(conn, query, &res);
+	rc = db_execute_statement(conn, query, &res);
 
 	/* insert results into hashset */
-	do {
+	while(rc == SQLITE_ROW) {
 		int_from_table = sqlite3_column_int(res, 0);
 		g_hash_table_insert(table, (gpointer)int_from_table, (gpointer)int_from_table);
 
 		rc = db_step_statement(conn, query, res);
-	} while(rc == SQLITE_ROW);
+		if(int_from_table == 0)printf("%d\n", rc);
+	}
 
 	db_finalize_statement(conn, query, res);
 
@@ -343,7 +344,7 @@ int db_tags_from_files(int *files, int num_files, int **tags) {
 
 	/* prepare query/table */
 	query_outline_length = strlen(query_outline);
-	table = g_hash_table_new(NULL, NULL); 
+	table = g_hash_table_new(NULL, NULL);
 	assert(table != NULL);
 
 	/* connect to database */
@@ -591,6 +592,28 @@ int db_get_all_tags(int **tags) {
 	return count;
 } /* db_get_all_tags */
 
+int db_get_all_files(int **files) {
+	char query[] = "SELECT file_id FROM files";
+	int count = 0;
+	sqlite3 *conn = NULL;
+
+	DEBUG(ENTRY);
+
+	assert(*files == NULL);
+
+	DEBUG("Retrieving all files");
+
+	conn = db_connect();
+	assert(conn != NULL);
+
+	count = db_int_array_from_query("file_id", query, files);
+	db_disconnect(conn);
+
+	DEBUG("Returning a list of %d files", count);
+	DEBUG(EXIT);
+	return count;
+} /* db_get_all_files */
+
 int db_files_from_tag_id(int tag_id, int **files) {
 	char query_outline[] = "SELECT file_id FROM all_tables WHERE tag_id = ";
 	int query_outline_length = 0;
@@ -803,6 +826,7 @@ void db_add_tag_to_file(int tag_id, int file_id) {
 	DEBUG("Adding tag ID %d to file ID %d was %ssuccessful", tag_id, file_id, rc == SQLITE_DONE ? "" : "not ");
 	DEBUG(EXIT);
 } /* db_add_tag_to_file */
+
 void db_remove_tag_from_file(int tag_id, int file_id) {
 	char *query = NULL;
 	char query_outline[] = "DELETE FROM file_has_tag WHERE file_id =  AND tag_id = ";

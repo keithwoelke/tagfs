@@ -138,6 +138,17 @@ int num_tags_in_path(const char *path);
 int array_intersection(int *a, int a_size, int *b, int b_size, int **intersection);
 
 /**
+ * Returns a collection of the tags at a location, attempting to remove superfluous paths for reaching files.
+ *
+ * @param path A string representing a path in the filesystem.
+ * @param files An array containing the files IDs of the files location at the specified path.
+ * @param num_files The number of file IDs.
+ * @param tags The array of tags to display at the location.
+ * @return The number of folders at the specified location.
+ */
+int smart_tags_from_files(const char *path, int *files, int num_files, int **tags) {
+
+/**
  * Returns a collection of the files at the specified path in the filesystem.
  *
  * @param path A string representing a path in the filesystem.
