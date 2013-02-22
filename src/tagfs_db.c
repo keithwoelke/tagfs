@@ -863,3 +863,39 @@ void db_remove_tag_from_file(int tag_id, int file_id) {
 	DEBUG("Removing tag ID %d from file with ID %d was %ssuccessful", tag_id, file_id, rc == SQLITE_DONE ? "" : "not ");
 	DEBUG(EXIT);
 } /* db_remove_tag_from_file */
+
+void db_remove_file(int file_id) {
+	char *query = NULL;
+	char query_outline[] = "DELETE FROM files WHERE file_id = ";
+	int query_length = 0;
+	int rc = SQLITE_ERROR; /* return code of sqlite operation */
+	int written = 0; /* number of characters written */
+	sqlite3 *conn = NULL;
+	sqlite3_stmt *res = NULL;
+
+	DEBUG(ENTRY);
+
+	assert(file_id > 0);
+
+	DEBUG("Removing file ID %d", file_id);
+
+	/* prepare query */
+	query_length = strlen(query_outline) + num_digits(file_id);
+	query = malloc(query_length * sizeof(*query) + 1);
+	assert(query != NULL);
+	written = snprintf(query, query_length + 1, "DELETE FROM files WHERE file_id = %d", file_id);
+	assert(written == query_length);
+
+	/* connect to database */
+	conn = db_connect();
+	assert(conn != NULL);
+
+	rc = db_execute_statement(conn, query, &res);
+
+	db_finalize_statement(conn, query, res);
+	db_disconnect(conn);
+	free_single_ptr((void **)&query);
+
+	DEBUG("Removing file ID %d was %ssuccessful", file_id, rc == SQLITE_DONE ? "" : "not ");
+	DEBUG(EXIT);
+} /* db_remove_file */

@@ -240,4 +240,11 @@ int tags_from_file(int file_id, int **tags);
  */
 int most_popular_tag_on_files_at_location(const char *path, int *files, int num_files, int **exclude_tags, int *exclude_tags_count);
 
+/**
+ * Remove a file from the filesystem.
+ *
+ * @param file_id The ID of the file to be removed from the filesystem.
+ */
+void remove_file(int file_id);
+
 #endif

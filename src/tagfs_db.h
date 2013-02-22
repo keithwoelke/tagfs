@@ -123,4 +123,11 @@ void db_add_tag_to_file(int tag_id, int file_id);
  */
 void db_remove_tag_from_file(int tag_id, int file_id);
 
+/**
+ * Remove a file from the filesystem.
+ *
+ * @param file_id The ID of the file to be removed from the filesystem.
+ */
+void db_remove_file(int file_id);
+
 #endif

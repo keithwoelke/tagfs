@@ -909,3 +909,13 @@ int most_popular_tag_on_files_at_location(const char *path, int *files, int num_
 	DEBUG(EXIT);
 	return GPOINTER_TO_INT(largest_key);
 } /* most_popular_tag_on_files_at_location */
+
+void remove_file(int file_id) {
+	DEBUG(ENTRY);
+
+	assert(file_id > 0);
+
+	db_remove_file(file_id);
+
+	DEBUG(EXIT);
+} /* get_file_location */

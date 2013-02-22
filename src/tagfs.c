@@ -82,11 +82,18 @@ int tagfs_mkdir(const char *path, mode_t mode) {
  */
 int tagfs_unlink(const char *path) {
 	int retstat = 0;
+	int file_id = 0;
 
 	DEBUG(ENTRY);
 	INFO("Deleting %s", path);
 
-	remove_tags(file_id_from_path(path));
+	file_id = file_id_from_path(path);
+
+	if(strcmp(dirname(path), "/") == 0) {
+		remove_file(file_id);
+	} else {
+		remove_tags(file_id);
+	}
 
 	DEBUG(EXIT);
 	return retstat;
