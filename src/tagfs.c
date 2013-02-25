@@ -416,7 +416,7 @@ int tagfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t off
 	}
 
 	/* if there are files at the requested location, or we are at root, show folders */
-	if(num_files > 0) {
+	if(num_files > 0 || strcmp("/", path) == 0) {
 		/* add folders */
 		num_folders = folders_at_location(path, files, num_files, &folders);
 
