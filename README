@@ -4,7 +4,9 @@ TagFS must be run in single-thread mode, otherwise the behavior is undefined. Th
 
 Operations implemented:
 
-Delete -> Remove all tags
+Delete (Non-Root Location) -> Remove all tags
+Delete (Root) - Remove file
+Move - Remove all tags and apply tags at new location
 
 Fuse behaviors:
 

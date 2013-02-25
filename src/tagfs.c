@@ -111,11 +111,27 @@ int tagfs_rmdir(const char *path) {
 }
 
 int tagfs_rename(const char *path, const char *newpath) {
+	char **tag_array = NULL;
+	int file_id = 0;
+	int i = 0;
+	int num_tags = 0;
 	int retstat = 0;
 
 	DEBUG(ENTRY);
+	INFO("Moving %s to %s", path, newpath);
 
-	ERROR("TODO: %s", __FUNCTION__);
+	file_id = file_id_from_path(path);
+	remove_tags(file_id);
+
+	if(strcmp(dirname(newpath), "/") != 0) { /* deleting will put the file at root. Nothing to add */
+		num_tags = path_to_array(dirname(newpath), &tag_array);
+
+		for(i = 0; i < num_tags; i++) {
+			add_tag_to_file(tag_id_from_tag_name(tag_array[i]), file_id);
+		}
+
+		free_double_ptr((void ***)&tag_array, num_tags);
+	}
 
 	DEBUG(EXIT);
 	return retstat;
