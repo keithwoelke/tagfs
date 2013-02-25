@@ -459,7 +459,9 @@ int smart_tags_from_files(const char *path, int *files, int num_files, int **tag
 			g_hash_table_remove(table, GINT_TO_POINTER(files_with_tag[i]));
 		}
 
-		free_single_ptr((void *)&files_with_tag);
+		if(files_with_tag != NULL) {
+			free_single_ptr((void *)&files_with_tag);
+		}
 	}
 
 	g_hash_table_destroy(table);
@@ -594,9 +596,10 @@ int files_at_location(const char *path, int **file_array) {
 			DEBUG("Tag ID of %s is %d.", tag_array[i], tag_id);
 			num_prev_files = db_files_from_tag_id(tag_id, &prev_files);
 
-			if(num_prev_files == 0) { /* This shouldn't happen if database is purged properly after a delete */
+			if(num_prev_files == 0 && tag_id != 0) { /* This shouldn't happen if database is purged properly after a delete */
 				WARN("Tag ID %d has no files.", tag_id);
 				WARN("Purging database of tag ID %d", tag_id);
+
 				db_delete_tag(tag_id);
 			} else if(num_prev_files > 0) {
 				DEBUG("%d file(s) with %s tag.", num_prev_files, tag_array[i]);
