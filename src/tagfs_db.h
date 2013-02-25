@@ -130,4 +130,11 @@ void db_remove_tag_from_file(int tag_id, int file_id);
  */
 void db_remove_file(int file_id);
 
+/**
+ * Retrieve the tag ID from a tag name.
+ *
+ * @param tag_name The tag name.
+ */
+int db_tag_id_from_tag_name(char *tag_name);
+
 #endif

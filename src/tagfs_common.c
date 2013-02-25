@@ -915,6 +915,7 @@ int most_popular_tag_on_files_at_location(const char *path, int *files, int num_
 
 void remove_file(int file_id) {
 	DEBUG(ENTRY);
+	DEBUG("Removing file ID %d from the filesystem.", file_id);
 
 	assert(file_id > 0);
 
@@ -922,3 +923,31 @@ void remove_file(int file_id) {
 
 	DEBUG(EXIT);
 } /* get_file_location */
+
+void add_tag_to_file(int tag_id, int file_id) {
+	DEBUG(ENTRY);
+
+	assert(tag_id > 0);
+	assert(file_id > 0);
+
+	db_add_tag_to_file(tag_id, file_id);
+
+	DEBUG("Adding tag ID %d to file ID %d", tag_id, file_id);
+
+	DEBUG(EXIT);
+} /* add_tag_to_file */
+
+int tag_id_from_tag_name(char *tag_name) {
+	int tag_id = 0;
+
+	DEBUG(ENTRY);
+
+	assert(tag_name != NULL);
+
+	tag_id = db_tag_id_from_tag_name(tag_name);
+
+	DEBUG("Tag ID %d corresponds to tag %s", tag_id, tag_name);
+
+	DEBUG(EXIT);
+	return tag_id;
+} /* tag_id_from_tag_name */

@@ -247,4 +247,19 @@ int most_popular_tag_on_files_at_location(const char *path, int *files, int num_
  */
 void remove_file(int file_id);
 
+/**
+ * Add a tag to a file.
+ *
+ * @param tag_id The tag to add to the file.
+ * @param file_id The file to which to add the tag.
+ */
+void add_tag_to_file(int tag_id, int file_id);
+
+/**
+ * Retrieve the tag ID which corresponds with a tag name.
+ *
+ * @param tag The tag for which to return an ID.
+ */
+int tag_id_from_tag_name(char *tag_name);
+
 #endif

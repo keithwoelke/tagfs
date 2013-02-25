@@ -650,54 +650,6 @@ int db_files_from_tag_id(int tag_id, int **files) {
 	return count;
 } /* db_files_from_tag_id */
 
-int db_tag_id_from_tag_name(char *tag_name) {
-	char *query = NULL;
-	int tag_id = 0;
-	char query_outline[] = "SELECT tag_id FROM tags WHERE tag_name = \"\"";
-	int query_length = 0;
-	int written = 0; /* number of characters written */
-	sqlite3 *conn = NULL;
-	sqlite3_stmt *res = NULL;
-
-	DEBUG(ENTRY);
-
-	assert(tag_name != NULL);
-
-	DEBUG("Retrieving tag name for tag ID %s", tag_name);
-
-	if(strcmp(tag_name, "/") == 0) {
-		tag_id = 0;
-	} else {
-		/* prepare query */
-		query_length = strlen(query_outline) + strlen(tag_name);
-		query = malloc(query_length * sizeof(*query) + 1);
-		assert(query != NULL);
-		written = snprintf(query, query_length + 1, "SELECT tag_id FROM tags WHERE tag_name = \"%s\"", tag_name);
-		assert(written == query_length);
-
-		/* connect to database */
-		conn = db_connect();
-		assert(conn != NULL);
-
-		db_execute_statement(conn, query, &res);
-
-		/* get name corresponding to tag_id */
-		tag_id = sqlite3_column_int(res, 0);
-
-		if(tag_id == 0) {
-			tag_id = -1;
-		}
-
-		db_finalize_statement(conn, query, res);
-		db_disconnect(conn);
-		free_single_ptr((void **)&query);
-	}
-
-	DEBUG("Tag %s corresponds to tag ID %d", tag_name, tag_id);
-	DEBUG(EXIT);
-	return tag_id;
-} /* db_tag_id_from_tag_name */
-
 void db_delete_file(int file_id) {
 	char *query = NULL;
 	char query_outline[] = "DELETE FROM files WHERE file_id = \"\"";
@@ -899,3 +851,47 @@ void db_remove_file(int file_id) {
 	DEBUG("Removing file ID %d was %ssuccessful", file_id, rc == SQLITE_DONE ? "" : "not ");
 	DEBUG(EXIT);
 } /* db_remove_file */
+
+int db_tag_id_from_tag_name(char *tag_name) {
+	char *query = NULL;
+	int tag_id = -1;
+	char query_outline[] = "SELECT tag_id FROM tags WHERE tag_name = \"\"";
+	int query_length = 0;
+	int written = 0; /* number of characters written */
+	sqlite3 *conn = NULL;
+	sqlite3_stmt *res = NULL;
+
+	DEBUG(ENTRY);
+
+	assert(tag_name != NULL);
+
+	DEBUG("Retrieving tag name for tag ID %s", tag_name);
+
+	if(strcmp(tag_name, "/") == 0) {
+		tag_id = 0;
+	} else {
+		/* prepare query */
+		query_length = strlen(query_outline) + strlen(tag_name);
+		query = malloc(query_length * sizeof(*query) + 1);
+		assert(query != NULL);
+		written = snprintf(query, query_length + 1, "SELECT tag_id FROM tags WHERE tag_name = \"%s\"", tag_name);
+		assert(written == query_length);
+
+		/* connect to database */
+		conn = db_connect();
+		assert(conn != NULL);
+
+		db_execute_statement(conn, query, &res);
+
+		/* get name corresponding to tag_id */
+		tag_id = sqlite3_column_int(res, 0);
+
+		db_finalize_statement(conn, query, res);
+		db_disconnect(conn);
+		free_single_ptr((void **)&query);
+	}
+
+	DEBUG("Tag %s corresponds to tag ID %d", tag_name, tag_id);
+	DEBUG(EXIT);
+	return tag_id;
+} /* db_tag_id_from_tag_name */
